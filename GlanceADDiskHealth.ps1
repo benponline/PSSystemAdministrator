@@ -49,14 +49,17 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
     [string]$searchOU = ""
+    #Defines the OU that will be search.
 )
 
 $domaininfo = Get-ADDomain
 $physicalDiskHealthLog = @()
 
 if($searchOU -eq ""){
+#If the script is not given a value for searchOU then a list of every computer in AD is created in computerSearch.
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
 }else{
+#If searchOU is given a value, then a list of the computers on that OU is created in computerSearch.
     $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
 }
 
