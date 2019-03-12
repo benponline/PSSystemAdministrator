@@ -73,3 +73,5 @@ foreach($computerName in $computerSearch){
 }
 
 $driveSpaceLog
+
+return

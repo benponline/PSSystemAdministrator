@@ -70,3 +70,5 @@ foreach($computerName in $computerSearch){
 }
 
 $failedLoginLog
+
+return 

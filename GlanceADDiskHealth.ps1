@@ -74,3 +74,5 @@ foreach($computerName in $computerSearch){
 }
 
 $physicalDiskHealthLog
+
+Return

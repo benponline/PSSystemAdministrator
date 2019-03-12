@@ -63,3 +63,5 @@ $physicalDisk = Get-PhysicalDisk -CimSession $computerName |
     @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
     
 $physicalDisk
+
+Return

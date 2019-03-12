@@ -48,7 +48,7 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$ComputerName = "$env:COMPUTERNAME"
+    [string]$ComputerName = $env:COMPUTERNAME
 
 )
 
