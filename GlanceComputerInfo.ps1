@@ -77,15 +77,13 @@ $computerInfo.model = (Get-CimInstance -ComputerName $ComputerName -ClassName Wi
 $computerInfo.CPU = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_Processor -Property Name).name
 #Gather computer CPU info
 
-$computerInfo.memorygb = ((Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB)
+$computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
 #Gather RAM amount in GB
 
-$computerInfo.storagegb = ((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Size) | 
-    Where-Object -Property DeviceID -eq "C:").size / 1GB
+$computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Size) | Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
 #Gather storage space in GB
 
-$computerInfo.freespacegb = ((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Freespace) | 
-    Where-Object -Property DeviceID -eq "C:").freespace / 1GB
+$computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Freespace) | Where-Object -Property DeviceID -eq "C:").freespace / 1GB),1)
 #Gather freeSpace in GB
 
 if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
