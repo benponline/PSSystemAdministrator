@@ -55,8 +55,10 @@ $domaininfo = Get-ADDomain
 $physicalDiskHealthLog = @()
 
 if($searchOU -eq ""){
+#If searchOU is not given a value, then the script creates a list of all AD computers.
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
 }else{
+#The value passed to searchOU is used to pull a list of computers from the desired OU.
     $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
 }
 
