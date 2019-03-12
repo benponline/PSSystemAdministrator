@@ -72,5 +72,3 @@ foreach($computerName in $computerSearch){
 }
 
 $physicalDiskHealthLog
-
-#test change
