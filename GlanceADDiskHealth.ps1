@@ -13,7 +13,7 @@ GlanceADDiskHealth [-searchOU<string>]
 This script can search an entire domain or specific OU for the health status of the disks of the computers that belong to it.
 
 .PARAMETERS
--searchOU <string>
+-searchOU<string>
 Specifies the top level OU the cmdlet will search.
 
 Defaul Vaule                    ""
@@ -39,7 +39,6 @@ GlanceADDiskHealth -searchOU "Servers"
 Returns disk health information for all computers in the "Servers" OU.
 
 .RELATED LINKS
-
 By Ben Peterson
 linkedin.com/in/bpetersonmcts/
 https://github.com/BenPetersonIT

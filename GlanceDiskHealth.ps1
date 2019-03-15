@@ -16,7 +16,7 @@ This script returns the health status of the physical disks on the local or remo
 -ComputerName <string>
 Specifies the top level OU the cmdlet will search.
 
-Defaul Vaule                    ""
+Defaul Vaule                    $env:ComputerName
 Required?                       False
 Accept pipeline input?          False
 Accept wildcard characters?     False
@@ -49,12 +49,8 @@ https://github.com/BenPetersonIT
 
 [CmdletBinding()]
 Param(
-    [string]$computerName = ""
+    [string]$computerName = $env:COMPUTERNAME
 )
-
-if($computerName -eq ""){
-    $computerName = $env:COMPUTERNAME
-}
 
 $physicalDisk = Get-PhysicalDisk -CimSession $computerName | 
     Where-Object -Property HealthStatus | 

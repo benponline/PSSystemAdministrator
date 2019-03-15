@@ -31,16 +31,13 @@ Returns objects with computer names, time writtes, and event IDs for failed logo
 
 .EXAMPLE 1
 GlanceADFailedLogon
-
 Returns failed logon events from all computers in the domain.
 
 .EXAMPLE 2
 GlanceADFailedLogon -searchOU "Servers"
-
 Returns failed logon events from all computers in the "Servers" OU.
 
 .RELATED LINKS
-
 By Ben Peterson
 linkedin.com/in/bpetersonmcts/
 https://github.com/BenPetersonIT

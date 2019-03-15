@@ -34,11 +34,9 @@ in GB, if less than 20 percent of storage is left, and the current user.
 
 .EXAMPLE 1
 GlanceComputerInfo -ComputerName Server1
-
 This returns computer into on Server1.
 
 .RELATED LINKS
-
 By Ben Peterson
 linkedin.com/in/bpetersonmcts/
 https://github.com/BenPetersonIT

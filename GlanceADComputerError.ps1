@@ -10,7 +10,7 @@ This cmdlet gathers system errors in the last day from AD computers.
 GetComputerError [-searchOU <string>] [-daysBack <int>]
 
 .DESCRIPTION
-This cmdlet gathers system errors from all AD computers. You can limit its 
+This cmdlet gathers system errors from all AD computers. You can limit the 
 scope to any top level OU in AD or the "Computers" container. By default it gathers
 errors going back one day, but can be set to search as many days back as needed. 
 
@@ -19,7 +19,7 @@ errors going back one day, but can be set to search as many days back as needed.
 	Specifies the top level OU the cmdlet will search.
 
 	Required?                   False
-	Default value               Active Directory
+	Default value               ""
 	Accept pipeline input?      False
 	Accept wildcard characters? False
 
@@ -40,10 +40,11 @@ and Message.
 
 .NOTES
 Requires "Printer and file sharing" and "Network Discovery" to be enabled on computers 
-that are searched.
+that are searched. This script can take a long time to finish if there are a large number of
+computers being contacted.
 
 .EXAMPLE 1
-GetComputerError
+GlanceADComputerError
 
 This cmdlet returns system errors from all AD computers from the last day.
 
@@ -67,7 +68,7 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$searchOU,
+    [string]$searchOU = "",
     #Contains OU in Active Directory to be searched.
 
     [int]$daysBack
@@ -78,10 +79,7 @@ Param(
 #Variables
 
 $domainInfo = Get-ADDomain
-#Gathers domain info for searching AD.
-
 $errorLog = @()
-#Will contain all system errors.
 
 #Main code
 
@@ -91,7 +89,7 @@ if($daysBack -eq ""){
     $daysBack = -1
 
 }else{
-
+#The script is passed a possitive number, but it needs to be negative when passed to get-date.  
     $daysBack *= -1
 
 }
@@ -99,7 +97,6 @@ if($daysBack -eq ""){
 if($searchOU -eq ""){
 #If $searchOU is left blank it will gather all AD computers.
 
-    $searchOU = "Active Directory"
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
     #If no parameter is passed to $searchOU the cmdlet it pulls from all AD computers.
 

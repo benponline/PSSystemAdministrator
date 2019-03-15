@@ -7,7 +7,7 @@ GlanceADDriveSpace
 This script returns the free space of the drives connected to computers in a domain.
 
 .SYNTAX
-GlanceADDriveSpace [-searchOU<string>]
+GlanceADDriveSpace [-searchOU <string>]
 
 .DESCRIPTION
 This script can search an entire domain or specific OU for the freespace on the drives of computers that belong to it.
@@ -35,11 +35,9 @@ Returns drive free space info for all computers in the domain.
 
 .EXAMPLE 2
 GlanceADDriveSpace -searchOU "Servers"
-
 Returns drive space information for all computers in the "Servers" OU.
 
 .RELATED LINKS
-
 By Ben Peterson
 linkedin.com/in/bpetersonmcts/
 https://github.com/BenPetersonIT

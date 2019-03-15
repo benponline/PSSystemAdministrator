@@ -4,7 +4,7 @@
 GlanceOldADUsers
 
 .SYNOPSIS
-Returns a list of all the users in AD that have not been online for 6 months.
+Returns a list of all the users in AD that have not logged on for 6 months.
 
 .SYNTAX
 GetADUserOldLogon
@@ -27,7 +27,6 @@ None.
 
 .EXAMPLE 1
 GetADUserOldLogon
-
 Returns a list of all the users in AD that have not been online for 6 months.
 
 .RELATED LINKS

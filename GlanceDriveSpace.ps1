@@ -61,14 +61,8 @@ https://github.com/BenPetersonIT
 
 [CmdletBinding()]
 Param(
-    [string]$computerName = ""
+    [string]$computerName = $env:COMPUTERNAME
 )
-
-if($computerName -eq ""){
-    $computerName = $env:COMPUTERNAME
-}
-
-#Variables
 
 $discSpaceLog = @()
 

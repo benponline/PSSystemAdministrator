@@ -17,7 +17,7 @@ This cmdlet gathers system errors from a computer. You can set the number of err
 	Specifies the computer where the errors are returned from.
 
 	Required?                   False
-	Default value               None
+	Default value               $env:ComputerName
 	Accept pipeline input?      False
 	Accept wildcard characters? False
 
@@ -41,13 +41,11 @@ Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" 
 that are searched.
 
 .EXAMPLE 1
-GetComputerError -computer localhost
-
+GetComputerError
 This cmdlet returns the last 5 system errors from localhost.
 
 .EXAMPLE 2
 GetComputerError -computer Server -newest 2
-
 This cmdlet returns the last 2 system errors from server.
 
 .RELATED LINKS

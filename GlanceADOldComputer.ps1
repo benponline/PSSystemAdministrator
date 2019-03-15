@@ -27,6 +27,7 @@ None.
 
 .EXAMPLE 1
 GetADComputerOldLogon
+Lists all computers in the domain that have not checked in for more than 6 months.
 
 .RELATED LINKS
 

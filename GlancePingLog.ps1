@@ -37,21 +37,17 @@ status, response time, hour, minute, month, day, and year.
 
 .EXAMPLE 1
 Record pings from a URL for 10 minutes.
-    
-    GetPingLog -Target “www.website.com” -Minutes 10
+GetPingLog -Target “www.website.com” -Minutes 10
     
 .EXAMPLE 2
 Record pings from an IP address for 5 minutes. 
-
-    GetPingLog -Target "8.8.8.8" -Minutes 5
+GetPingLog -Target "8.8.8.8" -Minutes 5
 
 .EXAMPLE 3
 Record pings from a host name for 10 minutes.
-
-    GetPingLog -Target "computername" -Minutes 7
+GetPingLog -Target "computername" -Minutes 10
 
 .RELATED LINKS
-
 By Ben Peterson
 linkedin.com/in/bpetersonmcts/
 https://github.com/BenPetersonIT
@@ -89,40 +85,50 @@ $minuteTicker = Get-Date
 #Incrimented up a minute after every ping. Prevents the cmdlt from pinging the target
 #more than once a minute.
 
-$timeRecord = @()
-
 #Functions
 
-function Create-PingObject{
+function CreatePingObject{
 #Creates an object out of the information from a ping that returns information.
-    
-    $pingResults = New-Object –TypeName PSObject –Prop (@{`
-        "Status"=$targetPing.Status;`
-        "Target"=$targetPing.Address;`
-        "Time"=Get-Date;
-        "ResponseTime"=$targetPing.RoundtripTime})
+
+    param(
+
+        $pinged
+
+    )
+
+    $pingResults = New-Object -TypeName psobject -Property (@{`
+        "Status"=$pinged.Status;`
+        "Target"=$pinged.Address;`
+        "Time"=Get-Date;`
+        "ResponseTime"=$pinged.RoundtripTime})
+
     
     $pingResults
+
+    return
 
 }
 
-function Create-FailedPingObject{
+function CreateFailedPingObject{
 #Creates an object with information about a ping that does not return information.
-    
-    $pingResults = New-Object –TypeName PSObject –Prop (@{`
+
+    $pingResults = New-Object -TypeName psobject –Property @{`
         "Status"="Failure";`
         "Target"=$Target;`
-        "Time"=Get-Date;
-        "ResponseTime"= 0})
+        "Time"=Get-Date;`
+        "ResponseTime"= 0}
 
+    
     $pingResults
+
+    return
 
 }
 
 #Main code
 
 While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
-#Runs for the number of minutes stored in $jobMinutes.
+#Runs for the number of minutes stored in $Minutes.
     
     if((Get-Date) -ge $minuteTicker){
         
@@ -133,17 +139,17 @@ While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
             if($targetPing.Status -eq "Success"){
             #Ping found target.
             
-                $pingRecord += Create-PingObject
+                $pingRecord += CreatePingObject -pinged $targetPing
                                         
             }else{
             #Ping to target timed out.
             
-                $pingRecord += Create-PingObject
+                $pingRecord += CreatePingObject -pinged $targetPing
             }
         }catch{
         #Ping could not find target.
 
-            $pingRecord += Create-FailedPingObject
+            $pingRecord += CreateFailedPingObject
 
         }
 
@@ -153,6 +159,6 @@ While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
 
 }
 
-$pingRecord | Format-Table -Property Target,Status,Time
+$pingRecord
 
 Return
