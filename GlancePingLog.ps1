@@ -136,7 +136,7 @@ While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
 
             $targetPing = $pingObject.Send($Target)
 
-            if($targetPing.Status -eq "Success"){
+            if(($targetPing.Status) -eq "Success"){
             #Ping found target.
             
                 $pingRecord += CreatePingObject -pinged $targetPing
