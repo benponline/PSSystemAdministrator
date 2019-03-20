@@ -90,19 +90,12 @@ $minuteTicker = Get-Date
 function CreatePingObject{
 #Creates an object out of the information from a ping that returns information.
 
-    param(
+    $pingResults = New-Object -TypeName psobject -Property @{`
+        "Status"=$targetPing.Status;`
+        "Target"=$targetPing.Address;`
+        "Time"=(Get-Date -Format g);`
+        "ResponseTime"=$targetPing.RoundtripTime}
 
-        $pinged
-
-    )
-
-    $pingResults = New-Object -TypeName psobject -Property (@{`
-        "Status"=$pinged.Status;`
-        "Target"=$pinged.Address;`
-        "Time"=Get-Date;`
-        "ResponseTime"=$pinged.RoundtripTime})
-
-    
     $pingResults
 
     return
@@ -112,10 +105,10 @@ function CreatePingObject{
 function CreateFailedPingObject{
 #Creates an object with information about a ping that does not return information.
 
-    $pingResults = New-Object -TypeName psobject –Property @{`
+    $pingResults = New-Object -TypeName psobject -Property @{`
         "Status"="Failure";`
         "Target"=$Target;`
-        "Time"=Get-Date;`
+        "Time"=(Get-Date -Format g);`
         "ResponseTime"= 0}
 
     
@@ -139,12 +132,12 @@ While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
             if(($targetPing.Status) -eq "Success"){
             #Ping found target.
             
-                $pingRecord += CreatePingObject -pinged $targetPing
+                $pingRecord += CreatePingObject
                                         
             }else{
             #Ping to target timed out.
             
-                $pingRecord += CreatePingObject -pinged $targetPing
+                $pingRecord += CreatePingObject
             }
         }catch{
         #Ping could not find target.
