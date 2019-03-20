@@ -140,6 +140,6 @@ Foreach($computer in $computerSearch){
 
 }
 
-$errorLog | Format-Table
+$errorLog
 
 return
