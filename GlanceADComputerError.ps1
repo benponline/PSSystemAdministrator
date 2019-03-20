@@ -1,7 +1,7 @@
 <#
 
 .NAME
-GlanceADComputerError.ps1
+GlanceADComputerError
 
 .SYNOPSIS
 This cmdlet gathers system errors in the last day from AD computers.
