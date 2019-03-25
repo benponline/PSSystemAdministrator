@@ -40,7 +40,7 @@ Returns disk health information for all computers in the "Servers" OU.
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/bpetersonmcts/
+linkedin.com/in/benpetersonIT
 https://github.com/BenPetersonIT
 
 #>

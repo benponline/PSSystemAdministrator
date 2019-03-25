@@ -1,13 +1,13 @@
 <#
 
 .NAME
-GlanceADOldComputer
+GlanceADOldComputers
 
 .SYNOPSIS
 Returns a list of all the computers in AD that have not been online for 6 months.
 
 .SYNTAX
-GetADComputerOldLogon
+GlanceADOldComputers
 
 .DESCRIPTION
 Returns a list of all the computers in AD that have not been online for 6 months and the last date 
@@ -32,7 +32,7 @@ Lists all computers in the domain that have not checked in for more than 6 month
 .RELATED LINKS
 
 By Ben Peterson
-linkedin.com/in/bpetersonmcts/
+linkedin.com/in/benpetersonIT
 https://github.com/BenPetersonIT
 
 #>

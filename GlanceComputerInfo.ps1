@@ -38,7 +38,7 @@ This returns computer into on Server1.
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/bpetersonmcts/
+linkedin.com/in/benpetersonIT
 https://github.com/BenPetersonIT
 
 #>

@@ -7,7 +7,7 @@ GlancePingLog
 Pings a target URL, IP address, or network host name over time and returns the results.
 
 .SYNTAX
-TestConnectivity -Target <String> -Minutes <Int>
+GlancePingLog -Target <String> -Minutes <Int>
 
 .DESCRIPTION
 Pings a target URL or IP address over time and returns the results in a table. A ping is
@@ -49,7 +49,7 @@ GetPingLog -Target "computername" -Minutes 10
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/bpetersonmcts/
+linkedin.com/in/benpetersonIT/
 https://github.com/BenPetersonIT
 
 Credits:

@@ -60,7 +60,7 @@ This cmdlet returns system errors from all computers in the AD “Servers” OU 
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/bpetersonmcts/
+linkedin.com/in/benpetersonIT
 https://github.com/BenPetersonIT
 
 #>

@@ -7,7 +7,7 @@ GlanceComputerError
 This cmdlet gathers system errors from a computer.
 
 .SYNTAX
-GetComputerError [-computer <string>] [-newest <int>]
+GlanceComputerError [-computer <string>] [-newest <int>]
 
 .DESCRIPTION
 This cmdlet gathers system errors from a computer. You can set the number of errors returned. 
@@ -50,7 +50,7 @@ This cmdlet returns the last 2 system errors from server.
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/bpetersonmcts/
+linkedin.com/in/benpetersonIT
 https://github.com/BenPetersonIT
 
 #>

@@ -9,7 +9,7 @@ name, size, free space, and indicates those under 20% desc space remaining. Can 
 specific OU.
 
 .SYNTAX
-GetADComputerDiscSpace [-searchOU<string>]
+GlanceDriveSpace [-searchOU<string>]
 
 .DESCRIPTION
 Gets all the C drive information for every AD computer and logs the computer name, drive, volume 
@@ -54,7 +54,7 @@ Gets C drive information for every computer in the "servers" OU.
 .RELATED LINKS
 
 By Ben Peterson
-linkedin.com/in/bpetersonmcts/
+linkedin.com/in/benpetersonIT
 https://github.com/BenPetersonIT
 
 #>

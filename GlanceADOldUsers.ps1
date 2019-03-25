@@ -7,7 +7,7 @@ GlanceOldADUsers
 Returns a list of all the users in AD that have not logged on for 6 months.
 
 .SYNTAX
-GetADUserOldLogon
+GlanceOldADUsers
 
 .DESCRIPTION
 Returns a list of all the users in AD that have not been online for 6 months and the last date 
@@ -31,7 +31,7 @@ Returns a list of all the users in AD that have not been online for 6 months.
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/bpetersonmcts/
+linkedin.com/in/benpetersonIT
 https://github.com/BenPetersonIT
 
 #>
