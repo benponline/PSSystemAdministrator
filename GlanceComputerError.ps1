@@ -10,7 +10,8 @@ This cmdlet gathers system errors from a computer.
 GlanceComputerError [-computer <string>] [-newest <int>]
 
 .DESCRIPTION
-This cmdlet gathers system errors from a computer. You can set the number of errors returned. 
+This cmdlet gathers system errors from a computer. You can set the number of recent errors 
+returned.
 
 .PARAMETERS
 -computer <string>
@@ -33,7 +34,7 @@ This cmdlet gathers system errors from a computer. You can set the number of err
 None. You cannot pipe input to this cmdlet.
 
 .OUTPUTS
-Returns computer system errors along with Computer, TimeWritten, EventID, InstanceId, 
+Returns PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, 
 and Message.
 
 .NOTES
@@ -41,11 +42,13 @@ Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" 
 that are searched.
 
 .EXAMPLE 1
-GetComputerError
+GlanceComputerError
+
 This cmdlet returns the last 5 system errors from localhost.
 
 .EXAMPLE 2
 GetComputerError -computer Server -newest 2
+
 This cmdlet returns the last 2 system errors from server.
 
 .RELATED LINKS

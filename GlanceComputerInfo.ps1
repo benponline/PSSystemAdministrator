@@ -7,19 +7,19 @@ GlanceComputerInfo
 This cmdlet gathers infomation about a computer.
 
 .SYNTAX
-GlanceComputerInfo [-computer<string>]
+GlanceComputerInfo [-computer <string>]
 
 .DESCRIPTION
-This cmdlet gathers infomation about a computer. The information includes computer name, 
-model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of 
-storage is left, the current user, and IP address.
+This cmdlet gathers infomation about a computer. The information includes computer name, model, 
+CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is left, the
+current user, and IP address.
 
 .PARAMETERS
 -ComputerName <string>
-	Specifies the computer whos information is gathered.
+	Specifies the computer.
 
 	Required?                   False
-	Default value               Localhost
+	Default value               $env:COMPUTERNAME
 	Accept pipeline input?      False
 	Accept wildcard characters? False
 
@@ -27,13 +27,14 @@ storage is left, the current user, and IP address.
 None. You cannot pipe input to this cmdlet.
 
 .OUTPUTS
-Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space
-in GB, if less than 20 percent of storage is left, and the current user.
+Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if
+less than 20 percent of storage is left, and the current user.
 
 .NOTES
 
 .EXAMPLE 1
 GlanceComputerInfo -ComputerName Server1
+
 This returns computer into on Server1.
 
 .RELATED LINKS

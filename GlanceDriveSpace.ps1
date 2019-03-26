@@ -9,50 +9,43 @@ name, size, free space, and indicates those under 20% desc space remaining. Can 
 specific OU.
 
 .SYNTAX
-GlanceDriveSpace [-searchOU<string>]
+GlanceDriveSpace [-computerName <string>]
 
 .DESCRIPTION
-Gets all the C drive information for every AD computer and logs the computer name, drive, volume 
-name, size, free space, and indicates those under 20% desc space remaining. Can be focused the 
-"computers" CN or on a specific top level OU.
+Gets information for all drives on a specific computer. Information includes computer name, drive, 
+volume name, size, free space, and indicates those under 20% desc space remaining.
 
 .PARAMETERS
--searchOU <string>
-	Specifies the top level OU the cmdlet will search.
+-computerName <string>
+	Specifies the computer the cmdlet will search.
 
-	Required?                    False
-	Accept pipeline input?       False
-	Accept wildcard characters?  False
+    Required?                   False
+    Defaul value                $env:COMPUTERNAME       
+	Accept pipeline input?      False
+	Accept wildcard characters? False
 
 .INPUTS
 None.
 	You cannot pipe input to this cmdlet.
 
 .OUTPUTS
-Writes to the host the following information about the C drive of AD computers: computer name, 
-drive, volume name, size, free space, and indicates those under 20% desc space remaining.  
+Returns PS objects to the host the following information about the drives on a computer: computer name, drive, 
+volume name, size, free space, and indicates those under 20% desc space remaining.  
 
 .NOTES
-The cmdlet tests each computer to see it if is online. If it is not reachable then it is 
-noted in the results returned to the host.
+
 
 .EXAMPLE 1
-GetADComputerDiscSpace
+GlanceDriveSpace
 
-Gets C drive information for every AD computer.
+Gets drive information for the local host.
 
 .EXAMPLE 2
-GetADComputerDiscSpace -searchOU computers
+GlanceDriveSpace -computerName computer
 
-Gets C drive information for every computer in the "computers" CN.
-
-.EXAMPLE 3
-GetDiscSpace -searchOU servers
-
-Gets C drive information for every computer in the "servers" OU.
+Gets drive information for "computer".
 
 .RELATED LINKS
-
 By Ben Peterson
 linkedin.com/in/benpetersonIT
 https://github.com/BenPetersonIT
