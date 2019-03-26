@@ -68,11 +68,9 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$searchOU = "",
-    #Contains OU in Active Directory to be searched.
+    [string]$searchOU,
 
     [int]$daysBack = 1
-    #Sets how many days back the script will look for errors.
 
 )
 
@@ -83,7 +81,7 @@ $errorLog = @()
 
 #Main code
 
-if($searchOU -eq ""){
+if($searchOU -eq $null){
 #If $searchOU is left blank it will gather all AD computers.
 
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
@@ -99,7 +97,7 @@ if($searchOU -eq ""){
 #If a value is passed to $searchOU then it is used to gather computers from the OU that shares its
 #name.
 
-    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domaininfo").name) |
+    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU,$domaininfo").name) |
         Sort-Object
 
 }
