@@ -39,9 +39,13 @@ Returns computer system errors along with Computer, TimeWritten, EventID, Instan
 and Message.
 
 .NOTES
-Requires "Printer and file sharing" and "Network Discovery" to be enabled on computers 
-that are searched. This script can take a long time to finish if there are a large number of
+This script can take a long time to finish if there are a large number of
 computers being contacted.
+
+Requires:
+- "Printer and file sharing" and "Network Discovery" to be enabled.
+- Windows Server 2012, Windows 7, or newer. "Get-EventLog: No matched found" is returned when 
+  the script contacts a computer running an OS older then is required.
 
 .EXAMPLE 1
 GlanceADComputerError
@@ -68,7 +72,7 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$searchOU,
+    [string]$searchOU = $null,
 
     [int]$newest = 5
 
@@ -77,7 +81,7 @@ Param(
 $domainInfo = Get-ADDomain
 $errorLog = @()
 
-if($searchOU -eq ""){
+if($searchOU -eq $null){
 
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
 
