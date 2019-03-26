@@ -4,15 +4,14 @@
 GlanceADComputerError
 
 .SYNOPSIS
-This cmdlet gathers system errors in the last day from AD computers.
+This cmdlet gathers the newest system errors from AD computers.
 
 .SYNTAX
-GlanceADComputerError [-searchOU <string>] [-daysBack <int>]
+GlanceADComputerError [-searchOU <string>] [-newest <int>]
 
 .DESCRIPTION
-This cmdlet gathers system errors from all AD computers. You can limit the 
-scope to any top level OU in AD or the "Computers" container. By default it gathers
-errors going back one day, but can be set to search as many days back as needed. 
+This cmdlet gathers system errors from all AD computers, specific OUs, or the "Computers" container.
+By default it searches every computer in AD and gathers the 5 newest system errors 
 
 .PARAMETERS
 -searchOU <string>
@@ -23,11 +22,11 @@ errors going back one day, but can be set to search as many days back as needed.
 	Accept pipeline input?      False
 	Accept wildcard characters? False
 
--daysBack <int>
-    Specifies the numbers of days back the cmdlet will search for errors.
+-newest <int>
+    Specifies the number of recent system errors to be returned.
 
     Required?                   False
-    Default value               1
+    Default value               5
     Accept pipeline input?      False
 	Accept wildcard characters? False
 
@@ -35,12 +34,11 @@ errors going back one day, but can be set to search as many days back as needed.
 None. You cannot pipe input to this cmdlet.
 
 .OUTPUTS
-Returns computer system errors along with Computer, TimeWritten, EventID, InstanceId, 
+Returns PS objects containing system error information including Computer, TimeWritten, EventID, InstanceId, 
 and Message.
 
 .NOTES
-This script can take a long time to finish if there are a large number of
-computers being contacted.
+This script can take a long time to finish if there are a large number of computers being contacted.
 
 Requires:
 - "Printer and file sharing" and "Network Discovery" to be enabled.
@@ -50,17 +48,17 @@ Requires:
 .EXAMPLE 1
 GlanceADComputerError
 
-This cmdlet returns system errors from all AD computers from the last day.
+This cmdlet returns the 5 newest system errors from all AD computers.
 
 .EXAMPLE 2
-GetComputerError -searchOU “computers” -daysBack 2
+GetComputerError -searchOU “computers” -newest 2
 
-This cmdlet returns system errors from all computers in the AD “Computers” CN from the last 2 days.
+This cmdlet returns the 2 newest system errors from all computers in the “Computers” CN.
 
 .EXAMPLE 3
 GetComputerError -searchOU “Servers”
 
-This cmdlet returns system errors from all computers in the AD “Servers” OU from the last day.
+This cmdlet returns the 5 newest system errors from computers in the AD “Servers” OU.
 
 .RELATED LINKS
 By Ben Peterson

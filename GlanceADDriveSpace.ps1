@@ -4,22 +4,24 @@
 GlanceADDriveSpace
 
 .SYNOPSIS
-This script returns the free space of the drives connected to computers in a domain.
+This script returns the free space of the drives connected to computers in a domain. It also warns
+if the drive has less than 20% freespace.
 
 .SYNTAX
 GlanceADDriveSpace [-searchOU <string>]
 
 .DESCRIPTION
-This script can search an entire domain or specific OU for the freespace on the drives of computers that belong to it.
+This script can search an entire domain or specific OU for the free space on the disks of the computers that belong to it.
 
 .PARAMETERS
 -searchOU <string>
-Specifies the top level OU the cmdlet will search.
 
-Defaul Vaule                    ""
-Required?                       False
-Accept pipeline input?          False
-Accept wildcard characters?     False
+    Specifies the top level OU the cmdlet will search.
+
+    Defaul Vaule                    ""
+    Required?                       False
+    Accept pipeline input?          False
+    Accept wildcard characters?     False
 
 .INPUTS
 None. You cannot pipe input to this cmdlet.
@@ -31,10 +33,12 @@ Returns objects with disk info including computer name, device ID, storage in GB
 
 .EXAMPLE 1
 GlanceADDriveSpace
+
 Returns drive free space info for all computers in the domain.
 
 .EXAMPLE 2
 GlanceADDriveSpace -searchOU "Servers"
+
 Returns drive space information for all computers in the "Servers" OU.
 
 .RELATED LINKS
@@ -58,9 +62,15 @@ if($searchOU -eq ""){
 
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
 
+}elseif($searchOU -eq "computers"){
+
+    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "CN=$searchOU, $domainInfo").name) | 
+        Sort-Object
+
 }else{
 
-    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
+    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | 
+        Sort-Object
 
 }
 

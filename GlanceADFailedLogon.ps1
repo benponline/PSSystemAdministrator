@@ -7,34 +7,37 @@ GlanceADFailedLogon
 This script returns a list of failed logon events from computers on a domain.
 
 .SYNTAX
-GlanceADFailedLogon [-searchOU<string>]
+GlanceADFailedLogon [-searchOU <string>]
 
 .DESCRIPTION
-This script can search all the computers in a domain or specific OU for failed log events on computers.
+This script can search all the computers in a domain or specific OU for failed log on events.
 
 .PARAMETERS
 -searchOU <string>
-Specifies the top level OU the cmdlet will search.
 
-Defaul Vaule                    ""
-Required?                       False
-Accept pipeline input?          False
-Accept wildcard characters?     False
+    Specifies the top level OU the cmdlet will search.
+
+    Defaul Vaule                    ""
+    Required?                       False
+    Accept pipeline input?          False
+    Accept wildcard characters?     False
 
 .INPUTS
 None. You cannot pipe input to this cmdlet.
 
 .OUTPUTS
-Returns objects with computer names, time writtes, and event IDs for failed logon events.
+Returns objects with computer names, time written, and event IDs for failed logon events.
 
 .NOTES
 
 .EXAMPLE 1
 GlanceADFailedLogon
+
 Returns failed logon events from all computers in the domain.
 
 .EXAMPLE 2
 GlanceADFailedLogon -searchOU "Servers"
+
 Returns failed logon events from all computers in the "Servers" OU.
 
 .RELATED LINKS

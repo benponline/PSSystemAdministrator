@@ -1,20 +1,27 @@
 <#
 
 .NAME
-GlanceOldADUsers
+GlanceOldADUser
 
 .SYNOPSIS
 Returns a list of all the users in AD that have not logged on for 6 months.
 
 .SYNTAX
-GlanceOldADUsers
+GlanceOldADUser
 
 .DESCRIPTION
 Returns a list of all the users in AD that have not been online for 6 months and the last date 
 they were seen online.
 
 .PARAMETERS
-None.
+-monthsOld <int>
+
+    Determines how long the computer account has to be inactive for it to be returned.
+
+    Defaul Vaule                    6
+    Required?                       False
+    Accept pipeline input?          False
+    Accept wildcard characters?     False
 
 .INPUTS
 None.
@@ -26,8 +33,14 @@ List of user names and dates.
 None.
 
 .EXAMPLE 1
-GetADUserOldLogon
-Returns a list of all the users in AD that have not been online for 6 months.
+GlanceADOldUser
+
+Lists all users in the domain that have not checked in for more than 6 months.
+
+.EXAMPLE 2
+GlanceADOldUser -monthsOld 2
+
+Lists all users in the domain that have not checked in for more than 2 months.
 
 .RELATED LINKS
 By Ben Peterson

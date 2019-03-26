@@ -1,33 +1,46 @@
 <#
 
 .NAME
-GlanceADOldComputers
+GlanceADOldComputer
 
 .SYNOPSIS
 Returns a list of all the computers in AD that have not been online for 6 months.
 
 .SYNTAX
-GlanceADOldComputers
+GlanceADOldComputer [-monthsOld <int>]
 
 .DESCRIPTION
 Returns a list of all the computers in AD that have not been online for 6 months and the last date 
 they were seen online.
 
 .PARAMETERS
-None.
+-monthsOld <int>
+
+    Determines how long the computer account has to be inactive for it to be returned.
+
+    Defaul Vaule                    6
+    Required?                       False
+    Accept pipeline input?          False
+    Accept wildcard characters?     False
 
 .INPUTS
 None.
 
 .OUTPUTS
-List of Computer names and dates.
+List of Computer names and the date it last connected to the domain.
 
 .NOTES
 None.
 
 .EXAMPLE 1
-GetADComputerOldLogon
+GlanceADOldComputer
+
 Lists all computers in the domain that have not checked in for more than 6 months.
+
+.EXAMPLE 2
+GlanceADOldComputer -monthsOld 2
+
+Lists all computers in the domain that have not checked in for more than 2 months.
 
 .RELATED LINKS
 

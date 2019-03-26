@@ -14,12 +14,12 @@ This script can search an entire domain or specific OU for the health status of 
 
 .PARAMETERS
 -searchOU<string>
-Specifies the top level OU the cmdlet will search.
+    Specifies the top level OU the cmdlet will search.
 
-Defaul Vaule                    ""
-Required?                       False
-Accept pipeline input?          False
-Accept wildcard characters?     False
+    Defaul Vaule                    ""
+    Required?                       False
+    Accept pipeline input?          False
+    Accept wildcard characters?     False
 
 .INPUTS
 None. You cannot pipe input to this cmdlet.
@@ -32,10 +32,12 @@ Only returns information from computers running Windows Server 2012, Windows 7 o
 
 .EXAMPLE 1
 GlanceADDiskHealth
+
 Returns disk health information for all computers in the domain.
 
 .EXAMPLE 2
 GlanceADDiskHealth -searchOU "Servers"
+
 Returns disk health information for all computers in the "Servers" OU.
 
 .RELATED LINKS
@@ -59,6 +61,11 @@ if($searchOU -eq ""){
 
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
 
+}elseif($searchOU -eq "computers"){
+
+    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "CN=$searchOU, $domainInfo").name) | 
+        Sort-Object
+
 }else{
 
     $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
@@ -81,6 +88,6 @@ foreach($computerName in $computerSearch){
 
 }
 
-$physicalDiskHealthLog
+$physicalDiskHealthLog | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
 
 Return
