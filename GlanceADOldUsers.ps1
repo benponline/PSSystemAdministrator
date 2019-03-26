@@ -36,14 +36,21 @@ https://github.com/BenPetersonIT
 
 #>
 
+[cmdletbinding()]
+param(
+
+    [int]$monthsOld = 6
+
+)
+
 $lastLogonList = @()
 
 $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | 
-Select-Object -Property lastlogon,name | Sort-Object -Property name
+    Select-Object -Property lastlogon,name | Sort-Object -Property name
 
 foreach($user in $users){
 
-    if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddMonths(-6))){
+    if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddMonths($monthsOld * -1))){
 
         $lastLogonProperties = @{
             "Last Logon" = ([datetime]::fromfiletime($user.lastlogon));

@@ -59,10 +59,8 @@ https://github.com/BenPetersonIT
 Param(
 
     [string]$computer = "$env:COMPUTERNAME",
-    #Contains OU in Active Directory to be searched.
 
     [int]$newest = 5
-    #Sets how many days back the script will look for errors.
 
 )
 
@@ -75,7 +73,6 @@ if((Test-Connection $computer -Quiet) -eq $true){
         Select-Object -Property @{n="Computer";e={$computer}},TimeWritten,EventID,InstanceID,Message
 
 }else{
-#The computer is not online.
     
     Write-Host "$computer is not online."
 

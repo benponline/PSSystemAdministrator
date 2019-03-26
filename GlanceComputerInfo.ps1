@@ -101,6 +101,6 @@ $computerInfo.currentuser = (Get-CimInstance -ComputerName $ComputerName -ClassN
 $computerInfo.IPAddress = (Test-Connection -ComputerName $ComputerName -Count 1).IPV4Address
 #add computer IPv4.
 
-$computerInfo | Format-List -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress
+$computerInfo | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress
 
 return

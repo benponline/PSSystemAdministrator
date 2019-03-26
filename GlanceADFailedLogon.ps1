@@ -46,24 +46,35 @@ https://github.com/BenPetersonIT
 
 [CmdletBinding()]
 Param(
-    [string]$searchOU = ""
+
+    [string]$searchOU
+
 )
 
 $failedLoginLog = @()
 $domainInfo = Get-ADDomain
 
 if($searchOU -eq ""){
+
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
+
 }else{
+
     $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
+
 }
 
 foreach($computerName in $computerSearch){
+
     try{
+
         $failedLogin = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays(-1)) |
             Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID
+
         $failedLoginLog += $failedLogin
+
     }catch{}
+    
 }
 
 $failedLoginLog

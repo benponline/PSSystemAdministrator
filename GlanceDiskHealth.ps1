@@ -49,7 +49,9 @@ https://github.com/BenPetersonIT
 
 [CmdletBinding()]
 Param(
+
     [string]$computerName = $env:COMPUTERNAME
+
 )
 
 $physicalDisk = Get-PhysicalDisk -CimSession $computerName | 
@@ -58,6 +60,6 @@ $physicalDisk = Get-PhysicalDisk -CimSession $computerName |
     FriendlyName,MediaType,OperationalStatus,HealthStatus,`
     @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
     
-$physicalDisk
+$physicalDisk | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
 
 Return

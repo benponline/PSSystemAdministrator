@@ -37,6 +37,13 @@ https://github.com/BenPetersonIT
 
 #>
 
+[cmdletbinding()]
+param(
+
+    [int]$monthsOld = 6
+
+)
+
 $lastLogonList = @()
 
 $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon | 
@@ -44,7 +51,7 @@ $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Sel
 
 foreach($computer in $computers){
 
-    if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(-6))){
+    if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
 
         $lastLogonProperties = @{
             "Last Logon" = ([datetime]::fromfiletime($computer.lastlogon));

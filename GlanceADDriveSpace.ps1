@@ -46,28 +46,39 @@ https://github.com/BenPetersonIT
 
 [CmdletBinding()]
 Param(
-    [string]$searchOU = ""
+
+    [string]$searchOU
+
 )
 
 $domainInfo = Get-ADDomain
 $driveSpaceLog = @()
 
 if($searchOU -eq ""){
+
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
+
 }else{
+
     $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
+
 }
 
 foreach($computerName in $computerSearch){
+
     try{
+
         $driveSpace = Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk | 
             Select-Object -Property @{name="ComputerName";expression={$computerName}},`
             @{name="DeviceID";expression={$_.deviceid}},`
             @{name="StorageGB";expression={[math]::Round(($_.size / 1GB),1)}},`
             @{name="FreeSpaceGB";expression={[math]::Round(($_.freespace / 1GB),1)}},`
             @{name="Under20Percent";expression={if($_.freespace / $_.size -le 0.2){"True"}else{"False"}}}
+
         $driveSpaceLog += $driveSpace
+
     }catch{}
+
 }
 
 $driveSpaceLog

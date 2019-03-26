@@ -61,7 +61,9 @@ https://github.com/BenPetersonIT
 
 [CmdletBinding()]
 Param(
+
     [string]$computerName = $env:COMPUTERNAME
+
 )
 
 $discSpaceLog = @()
@@ -77,6 +79,6 @@ $discSpaceLog += Get-CimInstance -ComputerName $computerName -ClassName win32_lo
     @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
     @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}}}
 
-$discSpaceLog | Format-Table -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent -Force
+$discSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
 
 return

@@ -28,7 +28,7 @@ None. You cannot pipe input to this cmdlet.
 Returns array of objects with disk info including computer name, friendly name, media type, operational status, health status, and size in GB.
 
 .NOTES
-Only returns information from computers running Windows Server 2012 or higher.
+Only returns information from computers running Windows Server 2012, Windows 7 or higher.
 
 .EXAMPLE 1
 GlanceADDiskHealth
@@ -47,29 +47,38 @@ https://github.com/BenPetersonIT
 
 [CmdletBinding()]
 Param(
-    [string]$searchOU = ""
+
+    [string]$searchOU
+
 )
 
 $domaininfo = Get-ADDomain
 $physicalDiskHealthLog = @()
 
 if($searchOU -eq ""){
-#If searchOU is not given a value, then the script creates a list of all AD computers.
+
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
+
 }else{
-#The value passed to searchOU is used to pull a list of computers from the desired OU.
+
     $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
+
 }
 
 foreach($computerName in $computerSearch){
+
     try{
+
         $physicalDisk = Get-PhysicalDisk -CimSession $computerName | 
             Where-Object -Property HealthStatus | 
             Select-Object -Property @{n="ComputerName";e={$computerName}},`
             FriendlyName,MediaType,OperationalStatus,HealthStatus,`
             @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
+
         $physicalDiskHealthLog += $physicalDisk
+
     }catch{}
+
 }
 
 $physicalDiskHealthLog
