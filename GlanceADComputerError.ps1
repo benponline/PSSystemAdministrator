@@ -71,7 +71,7 @@ Param(
     [string]$searchOU = "",
     #Contains OU in Active Directory to be searched.
 
-    [int]$daysBack
+    [int]$daysBack = 1
     #Sets how many days back the script will look for errors.
 
 )
@@ -82,17 +82,6 @@ $domainInfo = Get-ADDomain
 $errorLog = @()
 
 #Main code
-
-if($daysBack -eq ""){
-#If $daysBack is left blank it is set to -1.
-    
-    $daysBack = -1
-
-}else{
-#The script is passed a possitive number, but it needs to be negative when passed to get-date.  
-    $daysBack *= -1
-
-}
 
 if($searchOU -eq ""){
 #If $searchOU is left blank it will gather all AD computers.
@@ -120,9 +109,8 @@ Foreach($computer in $computerSearch){
     if((Test-Connection $computer -Quiet) -eq $true){
     #Tests to see if the computer is online.
 
-        $errorLog += Get-EventLog -ComputerName $computer -LogName System -EntryType Error -After ((Get-Date).AddDays($daysBack)) |
+        $errorLog += Get-EventLog -ComputerName $computer -LogName System -EntryType Error -After (Get-Date).AddDays(($daysBack *= -1)) | 
             Select-Object -Property @{n="Computer";e={$computer}},TimeWritten,EventID,InstanceID,Message
-        #Adds the last 5 system errors to the error log.
         
     }else{
     #The computer is not online.
