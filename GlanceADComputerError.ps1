@@ -7,7 +7,7 @@ GlanceADComputerError
 This cmdlet gathers system errors in the last day from AD computers.
 
 .SYNTAX
-GetComputerError [-searchOU <string>] [-daysBack <int>]
+GlanceADComputerError [-searchOU <string>] [-daysBack <int>]
 
 .DESCRIPTION
 This cmdlet gathers system errors from all AD computers. You can limit the 
@@ -72,7 +72,7 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$searchOU = $null,
+    [string]$searchOU,
 
     [int]$newest = 5
 
@@ -81,7 +81,7 @@ Param(
 $domainInfo = Get-ADDomain
 $errorLog = @()
 
-if($searchOU -eq $null){
+if($searchOU -eq ""){
 
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
 
