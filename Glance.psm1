@@ -2,8 +2,6 @@
 
     Glance Module
 
-    This is an edit to the dev branch
-
 #>
 
 function GlanceADComputerError{
