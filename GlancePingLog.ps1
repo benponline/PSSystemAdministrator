@@ -88,7 +88,7 @@ function CreatePingObject{
 
     $pingResults = New-Object -TypeName psobject -Property @{`
         "Status"=$targetPing.Status;`
-        "Target"=$targetPing.Address;`
+        "Target"=$Target;`
         "Time"=(Get-Date -Format g);`
         "ResponseTime"=$targetPing.RoundtripTime}
 
