@@ -38,12 +38,12 @@ volume name, size, free space, and indicates those under 20% desc space remainin
 .EXAMPLE 1
 GlanceDriveSpace
 
-Gets drive information for the local host.
+    Gets drive information for the local host.
 
 .EXAMPLE 2
 GlanceDriveSpace -computerName computer
 
-Gets drive information for "computer".
+    Gets drive information for "computer".
 
 .RELATED LINKS
 By Ben Peterson
