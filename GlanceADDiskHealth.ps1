@@ -4,16 +4,18 @@
 GlanceADDiskHealth
 
 .SYNOPSIS
-This script returns the health status of the physical disks in computers conntected to a domain.
+This cmdlet returns the health status of the physical disks in AD computers.
 
 .SYNTAX
-GlanceADDiskHealth [-searchOU<string>]
+GlanceADDiskHealth [-searchOU <string>]
 
 .DESCRIPTION
-This script can search an entire domain or specific OU for the health status of the disks of the computers that belong to it.
+This cmdlet returns physical disk health information from all AD computers, specific 
+organizational units, or the "computers" container. By default, it returns disk info from all AD
+computers.
 
 .PARAMETERS
--searchOU<string>
+-SearchOU <string>
     Specifies the top level OU the cmdlet will search.
 
     Defaul Vaule                    ""
@@ -25,7 +27,8 @@ This script can search an entire domain or specific OU for the health status of 
 None. You cannot pipe input to this cmdlet.
 
 .OUTPUTS
-Returns array of objects with disk info including computer name, friendly name, media type, operational status, health status, and size in GB.
+Returns array of objects with physical disk info including computer name, friendly name, media 
+type, operational status, health status, and size in GB.
 
 .NOTES
 Only returns information from computers running Windows Server 2012, Windows 7 or higher.
@@ -55,8 +58,10 @@ Param(
 )
 
 $domaininfo = Get-ADDomain
+
 $physicalDiskHealthLog = @()
 
+#Gathers a list of computers based on what is passed to the SearchOU parameter.
 if($searchOU -eq ""){
 
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
@@ -72,6 +77,7 @@ if($searchOU -eq ""){
 
 }
 
+#Gathers the physical disk info from the list of computers created above.
 foreach($computerName in $computerSearch){
 
     try{
@@ -88,6 +94,7 @@ foreach($computerName in $computerSearch){
 
 }
 
+#Returns the array of PS objects to the console with the properties in the order shown in the command.
 $physicalDiskHealthLog | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
 
 Return
