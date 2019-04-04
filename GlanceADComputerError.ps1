@@ -70,9 +70,9 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$searchOU,
+    [string]$SearchOU,
 
-    [int]$newest = 5
+    [int]$Newest = 5
 
 )
 

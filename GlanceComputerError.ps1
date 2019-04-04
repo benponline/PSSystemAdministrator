@@ -61,7 +61,7 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$computer = "$env:COMPUTERNAME",
+    [string]$ComputerName = "$env:COMPUTERNAME",
 
     [int]$newest = 5
 
@@ -69,15 +69,15 @@ Param(
 
 #Main code
 
-if((Test-Connection $computer -Quiet) -eq $true){
+if((Test-Connection $ComputerName -Quiet) -eq $true){
 #Tests to see if the computer is online.
 
-    $errors = Get-EventLog -ComputerName "$computer" -LogName System -EntryType Error -Newest $newest |
-        Select-Object -Property @{n="Computer";e={$computer}},TimeWritten,EventID,InstanceID,Message
+    $errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
+        Select-Object -Property @{n="Computer";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
 
 }else{
     
-    Write-Host "$computer is not online."
+    Write-Host "$ComputerName is not online."
 
 }
 

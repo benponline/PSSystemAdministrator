@@ -52,7 +52,7 @@ https://github.com/BenPetersonIT
 [cmdletbinding()]
 param(
 
-    [int]$monthsOld = 6
+    [int]$MonthsOld = 6
 
 )
 

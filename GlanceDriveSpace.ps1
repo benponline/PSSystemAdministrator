@@ -55,7 +55,7 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$computerName = $env:COMPUTERNAME
+    [string]$ComputerName = $env:COMPUTERNAME
 
 )
 
@@ -63,14 +63,14 @@ $discSpaceLog = @()
 
 #Main code
 
-$discSpaceLog += Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
+$discSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
     Where-Object -Property DeviceID -NE $null | 
-    Select-Object -Property @{n="Computer";e={$computerName}},`
+    Select-Object -Property @{n="Computer";e={$ComputerName}},`
     @{n="Drive";e={$_.deviceid}},`
     @{n="VolumeName";e={$_.volumename}},`
     @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
     @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
-    @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}}}
+    @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
 
 $discSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
 

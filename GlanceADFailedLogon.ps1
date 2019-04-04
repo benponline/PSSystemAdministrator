@@ -50,7 +50,7 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$searchOU
+    [string]$SearchOU
 
 )
 

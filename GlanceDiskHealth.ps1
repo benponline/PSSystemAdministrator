@@ -51,13 +51,13 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$computerName = $env:COMPUTERNAME
+    [string]$ComputerName = $env:COMPUTERNAME
 
 )
 
-$physicalDisk = Get-PhysicalDisk -CimSession $computerName | 
+$physicalDisk = Get-PhysicalDisk -CimSession $ComputerName | 
     Where-Object -Property HealthStatus | 
-    Select-Object -Property @{n="ComputerName";e={$computerName}},`
+    Select-Object -Property @{n="ComputerName";e={$ComputerName}},`
     FriendlyName,MediaType,OperationalStatus,HealthStatus,`
     @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
     

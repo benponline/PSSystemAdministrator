@@ -9,9 +9,9 @@ function GlanceADComputerError{
     [CmdletBinding()]
     Param(
     
-        [string]$searchOU,
+        [string]$SearchOU,
     
-        [int]$newest = 5
+        [int]$Newest = 5
     
     )
     
@@ -60,7 +60,7 @@ function GlanceADDiskHealth{
     [CmdletBinding()]
     Param(
     
-        [string]$searchOU
+        [string]$SearchOU
     
     )
     
@@ -104,7 +104,7 @@ function GlanceADDriveSpace{
     [CmdletBinding()]
     Param(
 
-        [string]$searchOU
+        [string]$SearchOU
 
     )
 
@@ -155,7 +155,7 @@ function GlanceADFailedLogon{
     [CmdletBinding()]
     Param(
     
-        [string]$searchOU
+        [string]$SearchOU
     
     )
     
@@ -196,7 +196,7 @@ function GlanceADOldComputer{
     [cmdletbinding()]
     param(
     
-        [int]$monthsOld = 6
+        [int]$MonthsOld = 6
     
     )
     
@@ -233,7 +233,7 @@ function GlanceADOldUser{
     [cmdletbinding()]
     param(
     
-        [int]$monthsOld = 6
+        [int]$MonthsOld = 6
     
     )
     
@@ -270,23 +270,23 @@ function GlanceComputerError{
     [CmdletBinding()]
     Param(
     
-        [string]$computer = "$env:COMPUTERNAME",
+        [string]$ComputerName = "$env:COMPUTERNAME",
     
-        [int]$newest = 5
+        [int]$Newest = 5
     
     )
     
     #Main code
     
-    if((Test-Connection $computer -Quiet) -eq $true){
+    if((Test-Connection $ComputerName -Quiet) -eq $true){
     #Tests to see if the computer is online.
     
-        $errors = Get-EventLog -ComputerName "$computer" -LogName System -EntryType Error -Newest $newest |
-            Select-Object -Property @{n="Computer";e={$computer}},TimeWritten,EventID,InstanceID,Message
+        $errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
+            Select-Object -Property @{n="Computer";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
     
     }else{
         
-        Write-Host "$computer is not online."
+        Write-Host "$ComputerName is not online."
     
     }
     
@@ -367,13 +367,13 @@ function GlanceDiskHealth{
     [CmdletBinding()]
     Param(
     
-        [string]$computerName = $env:COMPUTERNAME
+        [string]$ComputerName = $env:COMPUTERNAME
     
     )
     
-    $physicalDisk = Get-PhysicalDisk -CimSession $computerName | 
+    $physicalDisk = Get-PhysicalDisk -CimSession $ComputerName | 
         Where-Object -Property HealthStatus | 
-        Select-Object -Property @{n="ComputerName";e={$computerName}},`
+        Select-Object -Property @{n="ComputerName";e={$ComputerName}},`
         FriendlyName,MediaType,OperationalStatus,HealthStatus,`
         @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
         
@@ -388,7 +388,7 @@ function GlanceDriveSpace{
     [CmdletBinding()]
     Param(
     
-        [string]$computerName = $env:COMPUTERNAME
+        [string]$ComputerName = $env:COMPUTERNAME
     
     )
     
@@ -396,14 +396,14 @@ function GlanceDriveSpace{
     
     #Main code
     
-    $discSpaceLog += Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
+    $discSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
         Where-Object -Property DeviceID -NE $null | 
-        Select-Object -Property @{n="Computer";e={$computerName}},`
+        Select-Object -Property @{n="Computer";e={$ComputerName}},`
         @{n="Drive";e={$_.deviceid}},`
         @{n="VolumeName";e={$_.volumename}},`
         @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
         @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
-        @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}}}
+        @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
     
     $discSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
     
