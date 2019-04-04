@@ -7,14 +7,14 @@ GlanceComputerError
 This cmdlet gathers system errors from a computer.
 
 .SYNTAX
-GlanceComputerError [-computer <string>] [-newest <int>]
+GlanceComputerError [-ComputerName <string>] [-Newest <int>]
 
 .DESCRIPTION
-This cmdlet gathers system errors from a computer. You can set the number of recent errors 
-returned.
+This cmdlet gathers system errors from a computer. By default it gathers them from the local 
+computer. Computer and number of errors returned can be set by user.
 
 .PARAMETERS
--computer <string>
+-ComputerName <string>
 	Specifies the computer where the errors are returned from.
 
 	Required?                   False
@@ -22,7 +22,7 @@ returned.
 	Accept pipeline input?      False
 	Accept wildcard characters? False
 
--newest <int>
+-Newest <int>
     Specifies the numbers of errors returned.
 
     Required?                   False
@@ -47,13 +47,13 @@ GlanceComputerError
 This cmdlet returns the last 5 system errors from localhost.
 
 .EXAMPLE 2
-GetComputerError -computer Server -newest 2
+GetComputerError -ComputerName Server -Newest 2
 
 This cmdlet returns the last 2 system errors from server.
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/benpetersonIT
+linkedin.com/in/BenPetersonIT
 https://github.com/BenPetersonIT
 
 #>
@@ -63,24 +63,16 @@ Param(
 
     [string]$ComputerName = "$env:COMPUTERNAME",
 
-    [int]$newest = 5
+    [int]$Newest = 5
 
 )
 
-#Main code
+#Gathers system errors. 
+$errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
+    Select-Object -Property @{n="ComputerName";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
 
-if((Test-Connection $ComputerName -Quiet) -eq $true){
-#Tests to see if the computer is online.
-
-    $errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
-        Select-Object -Property @{n="Computer";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
-
-}else{
-    
-    Write-Host "$ComputerName is not online."
-
-}
-
+#Returns array of PS objects with system error information including computer name, time written, 
+#event ID, instance ID, and message.
 $errors
 
 return

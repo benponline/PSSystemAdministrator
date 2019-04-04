@@ -4,17 +4,17 @@
 GlanceADFailedLogon
 
 .SYNOPSIS
-This script returns a list of failed logon events from computers on a domain.
+This cmdlet returns a list of failed logon events from AD computers.
 
 .SYNTAX
-GlanceADFailedLogon [-searchOU <string>]
+GlanceADFailedLogon [-SearchOU <string>]
 
 .DESCRIPTION
-This script can search all the computers in a domain or specific OU for failed log on events.
+This cmdlet can return failed logon events from all AD computers, computers in a specific 
+organizational unit, or computers in the "computers" container.
 
 .PARAMETERS
--searchOU <string>
-
+-SearchOU <string>
     Specifies the top level OU the cmdlet will search.
 
     Defaul Vaule                    ""
@@ -26,7 +26,7 @@ This script can search all the computers in a domain or specific OU for failed l
 None. You cannot pipe input to this cmdlet.
 
 .OUTPUTS
-Returns objects with computer names, time written, and event IDs for failed logon events.
+Returns PS objects with computer names, time written, and event IDs for failed logon events.
 
 .NOTES
 
@@ -42,7 +42,7 @@ Returns failed logon events from all computers in the "Servers" OU.
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/benpetersonIT
+linkedin.com/in/BenPetersonIT
 https://github.com/BenPetersonIT
 
 #>
@@ -55,8 +55,10 @@ Param(
 )
 
 $failedLoginLog = @()
+
 $domainInfo = Get-ADDomain
 
+#Gathers a list of computers based on what is passed to the SearchOU parameter.
 if($searchOU -eq ""){
 
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
@@ -67,6 +69,7 @@ if($searchOU -eq ""){
 
 }
 
+#Gathers the failed logon info from the list of computers created above.
 foreach($computerName in $computerSearch){
 
     try{
@@ -80,6 +83,7 @@ foreach($computerName in $computerSearch){
     
 }
 
-$failedLoginLog
+#Returns an array of PS objects with failed logon events.
+$failedLoginLog | Select-Object -Property ComputerName,TimeWritten,EventID
 
 return 

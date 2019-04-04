@@ -4,18 +4,18 @@
 GlanceADOldComputer
 
 .SYNOPSIS
-Returns a list of all the computers in AD that have not been online for 6 months.
+This cmdlet returns a list of all the computers in AD that have not been online for a specific 
+amount of time.
 
 .SYNTAX
-GlanceADOldComputer [-monthsOld <int>]
+GlanceADOldComputer [-MonthsOld <int>]
 
 .DESCRIPTION
-Returns a list of all the computers in AD that have not been online for 6 months and the last date 
-they were seen online.
+Returns a list of all the computers in AD that have not been online a number of months. The default
+amount of months is 6. Can be set by the user by passing a value to MonthsOld.
 
 .PARAMETERS
--monthsOld <int>
-
+-MonthsOld <int>
     Determines how long the computer account has to be inactive for it to be returned.
 
     Defaul Vaule                    6
@@ -27,7 +27,8 @@ they were seen online.
 None.
 
 .OUTPUTS
-List of Computer names and the date it last connected to the domain.
+Array of PS objects with information including computer names and the date it last connected to the
+domain.
 
 .NOTES
 None.
@@ -38,7 +39,7 @@ GlanceADOldComputer
 Lists all computers in the domain that have not checked in for more than 6 months.
 
 .EXAMPLE 2
-GlanceADOldComputer -monthsOld 2
+GlanceADOldComputer -MonthsOld 2
 
 Lists all computers in the domain that have not checked in for more than 2 months.
 
@@ -59,9 +60,11 @@ param(
 
 $lastLogonList = @()
 
+#Creates a list with all AD computers.
 $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon | 
     Sort-Object -Property name
 
+#Adds computers that have not been online for the amount of months in MonthsOld.
 foreach($computer in $computers){
 
     if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
@@ -79,6 +82,7 @@ foreach($computer in $computers){
 
 }
 
+#Returns an array of PS objects with the computer name and last logon date.
 $lastLogonList
 
 return
