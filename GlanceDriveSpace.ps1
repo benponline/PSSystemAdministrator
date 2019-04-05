@@ -4,19 +4,18 @@
 GlanceDriveSpace
 
 .SYNOPSIS
-Gets information for the C drive of every AD computer and logs the computer name, drive, volume 
-name, size, free space, and indicates those under 20% desc space remaining. Can be focused on a 
-specific OU.
+Gathers information for the drives on a computer including computer name, drive, volume, name, 
+size, free space, and indicates those under 20% desc space remaining.
 
 .SYNTAX
-GlanceDriveSpace [-computerName <string>]
+GlanceDriveSpace [-ComputerName <string>]
 
 .DESCRIPTION
-Gets information for all drives on a specific computer. Information includes computer name, drive, 
-volume name, size, free space, and indicates those under 20% desc space remaining.
+Gathers information for the drives on a computer including computer name, drive, volume, name, 
+size, free space, and indicates those under 20% desc space remaining.
 
 .PARAMETERS
--computerName <string>
+-ComputerName <string>
 	Specifies the computer the cmdlet will search.
 
     Required?                   False
@@ -25,8 +24,7 @@ volume name, size, free space, and indicates those under 20% desc space remainin
 	Accept wildcard characters? False
 
 .INPUTS
-None.
-	You cannot pipe input to this cmdlet.
+None. You cannot pipe input to this cmdlet.
 
 .OUTPUTS
 Returns PS objects to the host the following information about the drives on a computer: computer name, drive, 
@@ -38,16 +36,16 @@ volume name, size, free space, and indicates those under 20% desc space remainin
 .EXAMPLE 1
 GlanceDriveSpace
 
-    Gets drive information for the local host.
+Gets drive information for the local host.
 
 .EXAMPLE 2
 GlanceDriveSpace -computerName computer
 
-    Gets drive information for "computer".
+Gets drive information for "computer".
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/benpetersonIT
+linkedin.com/in/BenPetersonIT
 https://github.com/BenPetersonIT
 
 #>
@@ -60,8 +58,6 @@ Param(
 )
 
 $discSpaceLog = @()
-
-#Main code
 
 $discSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
     Where-Object -Property DeviceID -NE $null | 

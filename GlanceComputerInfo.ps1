@@ -7,12 +7,12 @@ GlanceComputerInfo
 This cmdlet gathers infomation about a computer.
 
 .SYNTAX
-GlanceComputerInfo [-computer <string>]
+GlanceComputerInfo [-ComputerName <string>]
 
 .DESCRIPTION
-This cmdlet gathers infomation about a computer. The information includes computer name, model, 
-CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is left, the
-current user, and IP address.
+This cmdlet gathers infomation about a computer. By default it gathers info from the local host.
+The information includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, 
+if less than 20 percent of storage is left, the current user, and IP address.
 
 .PARAMETERS
 -ComputerName <string>
@@ -39,7 +39,7 @@ This returns computer into on Server1.
 
 .RELATED LINKS
 By Ben Peterson
-linkedin.com/in/benpetersonIT
+linkedin.com/in/BenPetersonIT
 https://github.com/BenPetersonIT
 
 #>
@@ -51,6 +51,7 @@ Param(
 
 )
 
+#PS object properties for to store computer info.
 $computerObjectProperties = @{
   "ComputerName" = "";
   "Model" = "";
@@ -62,29 +63,25 @@ $computerObjectProperties = @{
   "CurrentUser" = "";
   "IPAddress" = ""
 }
-#Creates properties that will be gathered from the computer.
 
+#PS object that will store computer info.
 $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
-#Creates the PowerShell Object that will hold the computer info being gathered.
 
 $computerInfo.computername = $ComputerName
-#Store computer name
 
 $computerInfo.model = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property Model).model
-#Gathers computer model
 
 $computerInfo.CPU = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_Processor -Property Name).name
-#Gather computer CPU info
 
 $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
-#Gather RAM amount in GB
 
+#Gathers storage size of the C: drive.
 $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Size) | Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
-#Gather storage space in GB
 
+#Gathers free space of the C: drive.
 $computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Freespace) | Where-Object -Property DeviceID -eq "C:").freespace / 1GB),1)
-#Gather freeSpace in GB
 
+#Calculates is there is less than 20% free space on the C: drive.
 if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
     
     $computerInfo.under20percent = "TRUE"
@@ -94,13 +91,10 @@ if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
     $computerInfo.under20percent = "FALSE"
 
 }
-#Records if there is less than 20 percent of stogare space left.
 
 $computerInfo.currentuser = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property UserName).UserName
-#Gathers name of current user
 
 $computerInfo.IPAddress = (Test-Connection -ComputerName $ComputerName -Count 1).IPV4Address
-#add computer IPv4.
 
 $computerInfo | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress
 

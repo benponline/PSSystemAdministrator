@@ -109,6 +109,7 @@ function GlanceADDriveSpace{
     )
 
     $domainInfo = Get-ADDomain
+
     $driveSpaceLog = @()
 
     if($searchOU -eq ""){
@@ -160,6 +161,7 @@ function GlanceADFailedLogon{
     )
     
     $failedLoginLog = @()
+
     $domainInfo = Get-ADDomain
     
     if($searchOU -eq ""){
@@ -276,10 +278,7 @@ function GlanceComputerError{
     
     )
     
-    #Main code
-    
     if((Test-Connection $ComputerName -Quiet) -eq $true){
-    #Tests to see if the computer is online.
     
         $errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
             Select-Object -Property @{n="Computer";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
@@ -316,28 +315,20 @@ function GlanceComputerInfo{
       "CurrentUser" = "";
       "IPAddress" = ""
     }
-    #Creates properties that will be gathered from the computer.
     
     $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
-    #Creates the PowerShell Object that will hold the computer info being gathered.
     
     $computerInfo.computername = $ComputerName
-    #Store computer name
     
     $computerInfo.model = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property Model).model
-    #Gathers computer model
     
     $computerInfo.CPU = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_Processor -Property Name).name
-    #Gather computer CPU info
     
     $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
-    #Gather RAM amount in GB
     
     $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Size) | Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
-    #Gather storage space in GB
     
     $computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Freespace) | Where-Object -Property DeviceID -eq "C:").freespace / 1GB),1)
-    #Gather freeSpace in GB
     
     if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
         
@@ -348,13 +339,10 @@ function GlanceComputerInfo{
         $computerInfo.under20percent = "FALSE"
     
     }
-    #Records if there is less than 20 percent of stogare space left.
     
     $computerInfo.currentuser = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property UserName).UserName
-    #Gathers name of current user
     
     $computerInfo.IPAddress = (Test-Connection -ComputerName $ComputerName -Count 1).IPV4Address
-    #add computer IPv4.
     
     $computerInfo | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress
     
@@ -394,8 +382,6 @@ function GlanceDriveSpace{
     
     $discSpaceLog = @()
     
-    #Main code
-    
     $discSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
         Where-Object -Property DeviceID -NE $null | 
         Select-Object -Property @{n="Computer";e={$ComputerName}},`
@@ -424,8 +410,6 @@ function GlancePingLog{
     
     )
     
-    #Variables
-    
     $pingObject = New-Object System.Net.NetworkInformation.Ping
     
     $pingRecord = @()
@@ -434,10 +418,7 @@ function GlancePingLog{
     
     $minuteTicker = Get-Date
     
-    #Functions
-    
     function CreatePingObject{
-    #Creates an object out of the information from a ping that returns information.
     
         $pingResults = New-Object -TypeName psobject -Property @{`
             "Status"=$targetPing.Status;`
@@ -452,7 +433,6 @@ function GlancePingLog{
     }
     
     function CreateFailedPingObject{
-    #Creates an object with information about a ping that does not return information.
     
         $pingResults = New-Object -TypeName psobject -Property @{`
             "Status"="Failure";`
@@ -467,11 +447,9 @@ function GlancePingLog{
     
     }
     
-    #Main code
-    
-    While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
     #Runs for the number of minutes stored in $Minutes.
-        
+    While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
+
         if((Get-Date) -ge $minuteTicker){
             
             Try{
@@ -479,7 +457,6 @@ function GlancePingLog{
                 $targetPing = $pingObject.Send($Target)
     
                 if(($targetPing.Status) -eq "Success"){
-                #Ping found target.
                 
                     $pingRecord += CreatePingObject
                                             
