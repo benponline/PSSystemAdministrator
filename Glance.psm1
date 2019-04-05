@@ -18,6 +18,7 @@ function GlanceADComputerError{
     $domainInfo = Get-ADDomain
     $errorLog = @()
     
+    #Gathers a list of computers based on what is passed to the SearchOU parameter.
     if($searchOU -eq ""){
     
         $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
@@ -34,6 +35,7 @@ function GlanceADComputerError{
     
     }
     
+    #Gathers the system errors from the list of computers created above.
     Foreach($computer in $computerSearch){
     
         if((Test-Connection $computer -Quiet) -eq $true){
@@ -49,7 +51,8 @@ function GlanceADComputerError{
         
     }
     
-    $errorLog
+    #Returns the array of errors to the console.
+    $errorLog | Select-Object -Property Computer,TimeWritten,EventID,InstanceID,Message
     
     return 
 
@@ -65,11 +68,18 @@ function GlanceADDiskHealth{
     )
     
     $domaininfo = Get-ADDomain
+    
     $physicalDiskHealthLog = @()
     
+    #Gathers a list of computers based on what is passed to the SearchOU parameter.
     if($searchOU -eq ""){
     
         $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
+    
+    }elseif($searchOU -eq "computers"){
+    
+        $computerSearch = ((Get-ADComputer -Filter * -SearchBase "CN=$searchOU, $domainInfo").name) | 
+            Sort-Object
     
     }else{
     
@@ -77,6 +87,7 @@ function GlanceADDiskHealth{
     
     }
     
+    #Gathers the physical disk info from the list of computers created above.
     foreach($computerName in $computerSearch){
     
         try{
@@ -93,7 +104,8 @@ function GlanceADDiskHealth{
     
     }
     
-    $physicalDiskHealthLog
+    #Returns the array of PS objects to the console with the properties in the order shown in the command.
+    $physicalDiskHealthLog | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
     
     Return
 
