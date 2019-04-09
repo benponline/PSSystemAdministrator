@@ -115,50 +115,53 @@ function GlanceADDriveSpace{
 
     [CmdletBinding()]
     Param(
-
+    
         [string]$SearchOU
-
+    
     )
-
+    
     $domainInfo = Get-ADDomain
-
+    
     $driveSpaceLog = @()
-
+    
+    #Gathers a list of computers based on what is passed to the SearchOU parameter.
     if($searchOU -eq ""){
-
+    
         $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
-
+    
     }elseif($searchOU -eq "computers"){
-
+    
         $computerSearch = ((Get-ADComputer -Filter * -SearchBase "CN=$searchOU, $domainInfo").name) | 
             Sort-Object
-
+    
     }else{
-
+    
         $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | 
             Sort-Object
-
+    
     }
-
+    
+    #Gathers the drive info from the list of computers created above.
     foreach($computerName in $computerSearch){
-
+    
         try{
-
+    
             $driveSpace = Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk | 
                 Select-Object -Property @{name="ComputerName";expression={$computerName}},`
                 @{name="DeviceID";expression={$_.deviceid}},`
                 @{name="StorageGB";expression={[math]::Round(($_.size / 1GB),1)}},`
                 @{name="FreeSpaceGB";expression={[math]::Round(($_.freespace / 1GB),1)}},`
                 @{name="Under20Percent";expression={if($_.freespace / $_.size -le 0.2){"True"}else{"False"}}}
-
+    
             $driveSpaceLog += $driveSpace
-
+    
         }catch{}
-
+    
     }
-
-    $driveSpaceLog
-
+    
+    #Returns an array of PS objects with all the drive information.
+    $driveSpaceLog | Select-Object -Property ComputerName,DeviceID,StorageGB,FreeSpaceGB,Under20Percent
+    
     return
 
 }
@@ -173,9 +176,10 @@ function GlanceADFailedLogon{
     )
     
     $failedLoginLog = @()
-
+    
     $domainInfo = Get-ADDomain
     
+    #Gathers a list of computers based on what is passed to the SearchOU parameter.
     if($searchOU -eq ""){
     
         $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
@@ -186,6 +190,7 @@ function GlanceADFailedLogon{
     
     }
     
+    #Gathers the failed logon info from the list of computers created above.
     foreach($computerName in $computerSearch){
     
         try{
@@ -199,9 +204,10 @@ function GlanceADFailedLogon{
         
     }
     
-    $failedLoginLog
+    #Returns an array of PS objects with failed logon events.
+    $failedLoginLog | Select-Object -Property ComputerName,TimeWritten,EventID
     
-    return 
+    return
 
 }
 
@@ -216,9 +222,11 @@ function GlanceADOldComputer{
     
     $lastLogonList = @()
     
+    #Creates a list with all AD computers.
     $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon | 
         Sort-Object -Property name
     
+    #Adds computers that have not been online for the amount of months in MonthsOld.
     foreach($computer in $computers){
     
         if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
@@ -236,6 +244,7 @@ function GlanceADOldComputer{
     
     }
     
+    #Returns an array of PS objects with the computer name and last logon date.
     $lastLogonList
     
     return
@@ -253,15 +262,17 @@ function GlanceADOldUser{
     
     $lastLogonList = @()
     
+    #Creates a list with all AD users.
     $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | 
         Select-Object -Property lastlogon,name | Sort-Object -Property name
     
+    #Adds users that have not been online for the amount of months in MonthsOld.
     foreach($user in $users){
     
         if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddMonths($monthsOld * -1))){
     
             $lastLogonProperties = @{
-                "Last Logon" = ([datetime]::fromfiletime($user.lastlogon));
+                "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
                 "User" = ($user.name)
             }
     
@@ -273,7 +284,8 @@ function GlanceADOldUser{
     
     }
     
-    $lastLogonList
+    #Returns an array of PS objects with user name and last logon dates.
+    $lastLogonList | Select-Object -Property User,LastLogon
     
     return
 
@@ -290,17 +302,12 @@ function GlanceComputerError{
     
     )
     
-    if((Test-Connection $ComputerName -Quiet) -eq $true){
+    #Gathers system errors. 
+    $errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
+        Select-Object -Property @{n="ComputerName";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
     
-        $errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
-            Select-Object -Property @{n="Computer";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
-    
-    }else{
-        
-        Write-Host "$ComputerName is not online."
-    
-    }
-    
+    #Returns array of PS objects with system error information including computer name, time written, 
+    #event ID, instance ID, and message.
     $errors
     
     return
@@ -429,6 +436,8 @@ function GlancePingLog{
     
     )
     
+    #Variables
+    
     $pingObject = New-Object System.Net.NetworkInformation.Ping
     
     $pingRecord = @()
@@ -437,7 +446,10 @@ function GlancePingLog{
     
     $minuteTicker = Get-Date
     
+    #Functions
+    
     function CreatePingObject{
+    #Creates an object out of the information from a ping that returns information.
     
         $pingResults = New-Object -TypeName psobject -Property @{`
             "Status"=$targetPing.Status;`
@@ -452,6 +464,7 @@ function GlancePingLog{
     }
     
     function CreateFailedPingObject{
+    #Creates an object with information about a ping that does not return information.
     
         $pingResults = New-Object -TypeName psobject -Property @{`
             "Status"="Failure";`
@@ -466,9 +479,11 @@ function GlancePingLog{
     
     }
     
-    #Runs for the number of minutes stored in $Minutes.
+    #Main code
+    
     While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
-
+    #Runs for the number of minutes stored in $Minutes.
+        
         if((Get-Date) -ge $minuteTicker){
             
             Try{
@@ -476,6 +491,7 @@ function GlancePingLog{
                 $targetPing = $pingObject.Send($Target)
     
                 if(($targetPing.Status) -eq "Success"){
+                #Ping found target.
                 
                     $pingRecord += CreatePingObject
                                             
