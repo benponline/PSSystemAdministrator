@@ -90,6 +90,16 @@ process{
 
         Write-Host "$Name is offline."
 
+        $masterKeys += (New-Object PSObject -Property @{
+            "ComputerName" = $Name;
+            "Name" = "Offline";
+            "SystemComponent" = "";
+            "ParentKeyName" = "";
+            "Version" = "";
+            "UninstallCommand" = "";
+            "InstallDate" = "";
+            "RegPath" = ""})
+
     }
 
 }
