@@ -93,8 +93,8 @@ process{
         $masterKeys += (New-Object PSObject -Property @{
             "ComputerName" = $Name;
             "Name" = "Offline";
-            "SystemComponent" = "";
-            "ParentKeyName" = "";
+            "SystemComponent" = "2";
+            "ParentKeyName" = "offline";
             "Version" = "";
             "UninstallCommand" = "";
             "InstallDate" = "";
