@@ -66,6 +66,9 @@ By Ben Peterson
 linkedin.com/in/BenPetersonIT
 https://github.com/BenPetersonIT
 
+Based on code from:
+https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
+
 #>
 
 [cmdletbinding()]
