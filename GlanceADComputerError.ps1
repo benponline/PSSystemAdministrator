@@ -52,12 +52,12 @@ GlanceADComputerError
 This cmdlet returns the 5 newest system errors from all AD computers.
 
 .EXAMPLE 2
-GetComputerError -searchOU “computers” -newest 2
+GlanceADComputerError -searchOU “computers” -newest 2
 
 This cmdlet returns the 2 newest system errors from all computers in the “Computers” CN.
 
 .EXAMPLE 3
-GetComputerError -searchOU “Servers”
+GlanceADComputerError -searchOU “Servers”
 
 This cmdlet returns the 5 newest system errors from computers in the AD “Servers” OU.
 
