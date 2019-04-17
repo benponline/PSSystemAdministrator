@@ -31,7 +31,7 @@ command, registry path.
 .NOTES
 
 Requires:
-Remote registry service running.
+Remote registry service running on remote machines.
 
 .EXAMPLE 1
 GlanceComputerSoftware
