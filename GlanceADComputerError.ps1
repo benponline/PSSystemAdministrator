@@ -71,36 +71,18 @@ https://github.com/BenPetersonIT
 [CmdletBinding()]
 Param(
 
-    [string]$SearchOU,
-
     [int]$Newest = 5
 
 )
 
-$domainInfo = Get-ADDomain
 $errorLog = @()
 
-#Gathers a list of computers based on what is passed to the SearchOU parameter.
-if($searchOU -eq ""){
-
-    $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
-
-}elseif($searchOU -eq "computers"){
-
-    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "CN=$searchOU, $domainInfo").name) | 
-        Sort-Object
-
-}else{
-
-    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) |
-        Sort-Object
-
-}
+$computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
 
 #Gathers the system errors from the list of computers created above.
 Foreach($computer in $computerSearch){
 
-    if((Test-Connection $computer -Quiet) -eq $true){
+    if(Test-Connection $computer -Quiet){
 
         try{
 
