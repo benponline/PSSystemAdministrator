@@ -44,7 +44,7 @@ GlanceComputerSoftware -ComputerName “Computer”
 This cmdlet returns all the software installed on "Computer".
 
 .EXAMPLE 3
-Get-ADComputer -Filter * | GlanceComputerSoftware
+GLanceComputerSoftware -Filter * | GlanceComputerSoftware
 
 This cmdlet returns the installed software on all computers on the domain.
 
@@ -135,25 +135,9 @@ process{
                 
             }
                 
-        }else{
+        }else{}
 
-            Write-Error -Message "Unable to contact $ComputerName. Please verify its network connectivity and try again." -Category ObjectNotFound -TargetObject $ComputerName
-            Break
-        }
-
-    }catch{
-
-        $masterKeys += (New-Object PSObject -Property @{
-            "ComputerName" = $ComputerName;
-            "Name" = "Offline";
-            "SystemComponent" = "2";
-            "ParentKeyName" = "offline";
-            "Version" = "";
-            "UninstallCommand" = "";
-            "InstallDate" = "";
-            "RegPath" = ""})
-
-    }
+    }catch{}
 
 }
 
