@@ -4,6 +4,7 @@
 #>
 
 $computers = Get-ADComputer -Filter *
+
 $offlineComputers = @()
 
 foreach($computer in $computers){

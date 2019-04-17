@@ -50,32 +50,9 @@ https://github.com/BenPetersonIT
 
 #>
 
-[CmdletBinding()]
-Param(
-
-    [string]$SearchOU
-
-)
-
-$domaininfo = Get-ADDomain
-
 $physicalDiskHealthLog = @()
 
-#Gathers a list of computers based on what is passed to the SearchOU parameter.
-if($searchOU -eq ""){
-
-    $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
-
-}elseif($searchOU -eq "computers"){
-
-    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "CN=$searchOU, $domainInfo").name) | 
-        Sort-Object
-
-}else{
-
-    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
-
-}
+$computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property name
 
 #Gathers the physical disk info from the list of computers created above.
 foreach($computerName in $computerSearch){

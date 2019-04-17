@@ -3,6 +3,7 @@
 #>
 
 $computers = Get-ADComputer -Filter *
+
 $onlineComputers = @()
 
 foreach($computer in $computers){

@@ -47,29 +47,10 @@ https://github.com/BenPetersonIT
 
 #>
 
-[CmdletBinding()]
-Param(
-
-    [string]$SearchOU
-
-)
-
 $failedLoginLog = @()
 
-$domainInfo = Get-ADDomain
+$computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
 
-#Gathers a list of computers based on what is passed to the SearchOU parameter.
-if($searchOU -eq ""){
-
-    $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
-
-}else{
-
-    $computerSearch = ((Get-ADComputer -Filter * -SearchBase "OU=$searchOU, $domainInfo").name) | Sort-Object
-
-}
-
-#Gathers the failed logon info from the list of computers created above.
 foreach($computerName in $computerSearch){
 
     try{

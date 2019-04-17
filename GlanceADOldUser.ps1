@@ -48,12 +48,7 @@ https://github.com/BenPetersonIT
 
 #>
 
-[cmdletbinding()]
-param(
-
-    [int]$MonthsOld = 6
-
-)
+$MonthsOld = 3
 
 $lastLogonList = @()
 

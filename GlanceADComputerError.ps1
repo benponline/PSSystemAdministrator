@@ -77,7 +77,7 @@ Param(
 
 $errorLog = @()
 
-$computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object
+$computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
 
 #Gathers the system errors from the list of computers created above.
 Foreach($computer in $computerSearch){
