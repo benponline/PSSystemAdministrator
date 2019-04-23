@@ -10,18 +10,9 @@ This cmdlet gathers system errors from AD computers.
 GlanceADComputerError [-searchOU <string>] [-newest <int>]
 
 .DESCRIPTION
-This cmdlet gathers system errors from all AD computers, specific organizational units, or the 
-"Computers" container. By default, it gathers the newest 5 system errors from every AD computer.  
+This cmdlet gathers system errors from all AD computers.  
 
 .PARAMETERS
--SearchOU <string>
-	Specifies the top level OU the cmdlet will search.
-
-	Required?                   False
-	Default value               ""
-	Accept pipeline input?      False
-	Accept wildcard characters? False
-
 -Newest <int>
     Specifies the number of recent system errors to be returned.
 
@@ -52,14 +43,9 @@ GlanceADComputerError
 This cmdlet returns the 5 newest system errors from all AD computers.
 
 .EXAMPLE 2
-GlanceADComputerError -searchOU “computers” -newest 2
+GlanceADComputerError -newest 2
 
-This cmdlet returns the 2 newest system errors from all computers in the “Computers” CN.
-
-.EXAMPLE 3
-GlanceADComputerError -searchOU “Servers”
-
-This cmdlet returns the 5 newest system errors from computers in the AD “Servers” OU.
+This cmdlet returns the 2 newest system errors from all AD computers.
 
 .RELATED LINKS
 By Ben Peterson
