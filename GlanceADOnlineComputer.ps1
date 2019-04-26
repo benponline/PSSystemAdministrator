@@ -1,5 +1,28 @@
 <#
 
+.NAME
+
+.SYNOPSIS
+
+.SYNTAX
+
+.DESCRIPTION
+
+.PARAMETERS
+
+.INPUTS
+
+.OUTPUTS
+
+.NOTES
+
+.EXAMPLE
+
+.RELATED LINKS
+By Ben Peterson
+linkedin.com/in/BenPetersonIT
+https://github.com/BenPetersonIT
+
 #>
 
 $computers = Get-ADComputer -Filter *
