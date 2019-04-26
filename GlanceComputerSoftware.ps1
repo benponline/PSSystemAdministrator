@@ -66,9 +66,13 @@ param(
 )
 
 $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+
 $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
+
 $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+
 $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
+
 $masterKeys = @()
 
 try{
@@ -76,6 +80,7 @@ try{
     if((Test-Connection -ComputerName $ComputerName -Count 1 -ErrorAction Stop)){
 
         $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$ComputerName)
+        
         $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$ComputerName)
 
         foreach($key in $lmKeys){
@@ -137,6 +142,9 @@ try{
 }catch{}
 
 $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
+
 $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
+
 $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
+
 $masterKeys

@@ -52,11 +52,9 @@ $MonthsOld = 3
 
 $lastLogonList = @()
 
-#Creates a list with all AD users.
 $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | 
     Select-Object -Property lastlogon,name | Sort-Object -Property name
 
-#Adds users that have not been online for the amount of months in MonthsOld.
 foreach($user in $users){
 
     if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddMonths($monthsOld * -1))){
@@ -74,7 +72,6 @@ foreach($user in $users){
 
 }
 
-#Returns an array of PS objects with user name and last logon dates.
 $lastLogonList | Select-Object -Property User,LastLogon
 
 return

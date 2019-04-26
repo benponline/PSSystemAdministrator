@@ -64,7 +64,6 @@ foreach($computerName in $computerSearch){
     
 }
 
-#Returns an array of PS objects with failed logon events.
 $failedLoginLog | Select-Object -Property ComputerName,TimeWritten,EventID
 
 return 

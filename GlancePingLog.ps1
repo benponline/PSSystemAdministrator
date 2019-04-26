@@ -71,8 +71,6 @@ Param(
 
 )
 
-#Variables
-
 $pingObject = New-Object System.Net.NetworkInformation.Ping
 
 $pingRecord = @()
@@ -81,10 +79,7 @@ $startTime = Get-Date
 
 $minuteTicker = Get-Date
 
-#Functions
-
 function CreatePingObject{
-#Creates an object out of the information from a ping that returns information.
 
     $pingResults = New-Object -TypeName psobject -Property @{`
         "Status"=$targetPing.Status;`
@@ -99,7 +94,6 @@ function CreatePingObject{
 }
 
 function CreateFailedPingObject{
-#Creates an object with information about a ping that does not return information.
 
     $pingResults = New-Object -TypeName psobject -Property @{`
         "Status"="Failure";`
@@ -114,10 +108,7 @@ function CreateFailedPingObject{
 
 }
 
-#Main code
-
 While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
-#Runs for the number of minutes stored in $Minutes.
     
     if((Get-Date) -ge $minuteTicker){
         
@@ -126,17 +117,14 @@ While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
             $targetPing = $pingObject.Send($Target)
 
             if(($targetPing.Status) -eq "Success"){
-            #Ping found target.
             
                 $pingRecord += CreatePingObject
                                         
             }else{
-            #Ping to target timed out.
             
                 $pingRecord += CreatePingObject
             }
         }catch{
-        #Ping could not find target.
 
             $pingRecord += CreateFailedPingObject
 

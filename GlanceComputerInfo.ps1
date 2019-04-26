@@ -64,7 +64,6 @@ $computerObjectProperties = @{
   "IPAddress" = ""
 }
 
-#PS object that will store computer info.
 $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
 
 $computerInfo.computername = $ComputerName
@@ -75,15 +74,12 @@ $computerInfo.CPU = (Get-CimInstance -ComputerName $ComputerName -ClassName Win3
 
 $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
 
-#Gathers storage size of the C: drive.
 $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Size) | 
     Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
 
-#Gathers free space of the C: drive.
 $computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Freespace) | 
     Where-Object -Property DeviceID -eq "C:").freespace / 1GB),1)
 
-#Calculates is there is less than 20% free space on the C: drive.
 if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
     
     $computerInfo.under20percent = "TRUE"

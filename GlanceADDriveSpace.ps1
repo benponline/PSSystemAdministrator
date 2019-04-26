@@ -53,7 +53,6 @@ $driveSpaceLog = @()
 
 $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
 
-#Gathers the drive info from the list of computers created above.
 foreach($computerName in $computerSearch){
 
     try{
@@ -71,7 +70,6 @@ foreach($computerName in $computerSearch){
 
 }
 
-#Returns an array of PS objects with all the drive information.
 $driveSpaceLog | Select-Object -Property ComputerName,DeviceID,StorageGB,FreeSpaceGB,Under20Percent
 
 return

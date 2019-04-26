@@ -67,12 +67,9 @@ Param(
 
 )
 
-#Gathers system errors. 
 $errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
     Select-Object -Property @{n="ComputerName";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
 
-#Returns array of PS objects with system error information including computer name, time written, 
-#event ID, instance ID, and message.
-$errors
+$errors | Select-Object -Property ComputerName,TimeWritten,EventID,Instance,Message
 
 return

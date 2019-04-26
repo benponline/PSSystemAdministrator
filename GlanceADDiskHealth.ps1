@@ -54,7 +54,6 @@ $physicalDiskHealthLog = @()
 
 $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property name
 
-#Gathers the physical disk info from the list of computers created above.
 foreach($computerName in $computerSearch){
 
     try{
@@ -71,7 +70,6 @@ foreach($computerName in $computerSearch){
 
 }
 
-#Returns the array of PS objects to the console with the properties in the order shown in the command.
 $physicalDiskHealthLog | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
 
 Return

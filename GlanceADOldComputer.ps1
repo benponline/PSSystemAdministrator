@@ -55,11 +55,9 @@ $MonthsOld = 3
 
 $lastLogonList = @()
 
-#Creates a list with all AD computers.
 $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon | 
     Sort-Object -Property name
 
-#Adds computers that have not been online for the amount of months in MonthsOld.
 foreach($computer in $computers){
 
     if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
@@ -77,7 +75,6 @@ foreach($computer in $computers){
 
 }
 
-#Returns an array of PS objects with the computer name and last logon date.
 $lastLogonList
 
 return

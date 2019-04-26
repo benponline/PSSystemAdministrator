@@ -65,7 +65,6 @@ $errorLog = @()
 
 $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
 
-#Gathers the system errors from the list of computers created above.
 Foreach($computer in $computerSearch){
 
     if(Test-Connection $computer -Quiet){
@@ -81,7 +80,6 @@ Foreach($computer in $computerSearch){
     
 }
 
-#Returns the array of errors to the console.
 $errorLog | Select-Object -Property Computer,TimeWritten,EventID,InstanceID,Message
 
 return
