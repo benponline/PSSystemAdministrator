@@ -57,9 +57,9 @@ Param(
 
 )
 
-$discSpaceLog = @()
+$driveSpaceLog = @()
 
-$discSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
+$driveSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
     Where-Object -Property DeviceID -NE $null | 
     Select-Object -Property @{n="Computer";e={$ComputerName}},`
     @{n="Drive";e={$_.deviceid}},`
@@ -68,6 +68,8 @@ $discSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_lo
     @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
     @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
 
-$discSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
+$driveSpaceLog = $driveSpaceLog | Where-Object -Property SizeGB -NE 0
+
+$driveSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
 
 return
