@@ -102,7 +102,7 @@ function GlanceADDriveSpace {
     
     }
 
-    $driveSpaceLog = $driveSpaceLog | Where-Object -Property SizeGB -NE 0
+    $driveSpaceLog = $driveSpaceLog | Where-Object -Property StorageGB -NE 0
     
     $driveSpaceLog | Select-Object -Property ComputerName,DeviceID,StorageGB,FreeSpaceGB,Under20Percent
     
