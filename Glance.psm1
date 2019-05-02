@@ -7,32 +7,34 @@ function GlanceADComputerError {
 
     [CmdletBinding()]
     Param(
-
-    [int]$Newest = 5
-
+    
+        [int]$Newest = 5
+    
     )
-
+    
+    $ErrorActionPreference = "Stop"
+    
     $errorLog = @()
-
+    
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
-
+    
     Foreach($computer in $computerSearch){
-
+    
         if(Test-Connection $computer -Quiet){
-
+    
             try{
-
+    
                 $errorLog += Get-EventLog -ComputerName $computer -LogName System -EntryType Error -Newest $newest | 
                     Select-Object -Property @{n="Computer";e={$computer}},TimeWritten,EventID,InstanceID,Message
             
             }catch{}
-
+    
         }
         
     }
-
+    
     $errorLog | Select-Object -Property Computer,TimeWritten,EventID,InstanceID,Message
-
+    
     return
 
 }
@@ -43,8 +45,10 @@ function GlanceADComputerError {
 
 function GlanceADDiskHealth{
 
-    $physicalDiskHealthLog = @()
+    $ErrorActionPreference = "Stop"
 
+    $physicalDiskHealthLog = @()
+    
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property name
     
     foreach($computerName in $computerSearch){
@@ -75,8 +79,10 @@ function GlanceADDiskHealth{
 
 function GlanceADDriveSpace {
 
-    $driveSpaceLog = @()
+    $ErrorActionPreference = "Stop"
 
+    $driveSpaceLog = @()
+    
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
     
     foreach($computerName in $computerSearch){
@@ -108,15 +114,24 @@ function GlanceADDriveSpace {
 
 function GlanceADFailedLogon{
 
+    [CmdletBinding()]
+    Param(
+    
+        [int]$daysBack = 1
+    
+    )
+    
+    $ErrorActionPreference = "Stop"
+    
     $failedLoginLog = @()
-
+    
     $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
     
     foreach($computerName in $computerSearch){
     
         try{
     
-            $failedLogin = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays(-1)) |
+            $failedLogin = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($daysBack * -1)) |
                 Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID
     
             $failedLoginLog += $failedLogin
@@ -127,7 +142,7 @@ function GlanceADFailedLogon{
     
     $failedLoginLog | Select-Object -Property ComputerName,TimeWritten,EventID
     
-    return 
+    return  
 
 }
 
@@ -162,8 +177,13 @@ function GlanceADOfflineComputers {
 #----------------------------#
 function GlanceADOldComputer{
 
-    $MonthsOld = 3
-
+    [CmdletBinding()]
+    Param(
+    
+        [int]$MonthsOld = 3
+    
+    )
+    
     $lastLogonList = @()
     
     $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon | 
@@ -197,8 +217,13 @@ function GlanceADOldComputer{
 #-----------------------#
 function GlanceADOldUser{
 
-    $MonthsOld = 3
-
+    [CmdletBinding()]
+    Param(
+    
+        [int]$MonthsOld = 3
+    
+    )
+    
     $lastLogonList = @()
     
     $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | 
@@ -260,7 +285,7 @@ function GlanceComputerError{
     [CmdletBinding()]
     Param(
     
-        [string]$ComputerName = "$env:COMPUTERNAME",
+        [string]$ComputerName = $env:COMPUTERNAME,
     
         [int]$Newest = 5
     
