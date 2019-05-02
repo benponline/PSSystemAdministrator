@@ -61,6 +61,8 @@ Param(
 
 )
 
+
+
 $errorLog = @()
 
 $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
