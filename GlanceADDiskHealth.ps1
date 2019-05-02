@@ -50,6 +50,8 @@ https://github.com/BenPetersonIT
 
 #>
 
+$ErrorActionPreference = "Stop"
+
 $physicalDiskHealthLog = @()
 
 $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property name

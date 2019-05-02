@@ -49,6 +49,8 @@ https://github.com/BenPetersonIT
 
 #>
 
+$ErrorActionPreference = "Stop"
+
 $driveSpaceLog = @()
 
 $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name

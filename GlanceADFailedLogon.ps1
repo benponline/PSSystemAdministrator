@@ -47,6 +47,15 @@ https://github.com/BenPetersonIT
 
 #>
 
+[CmdletBinding()]
+Param(
+
+    [int]$daysBack = 1
+
+)
+
+$ErrorActionPreference = "Stop"
+
 $failedLoginLog = @()
 
 $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
@@ -55,7 +64,7 @@ foreach($computerName in $computerSearch){
 
     try{
 
-        $failedLogin = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays(-1)) |
+        $failedLogin = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($daysBack * -1)) |
             Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID
 
         $failedLoginLog += $failedLogin

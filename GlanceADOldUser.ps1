@@ -48,7 +48,12 @@ https://github.com/BenPetersonIT
 
 #>
 
-$MonthsOld = 3
+[CmdletBinding()]
+Param(
+
+    [int]$MonthsOld = 3
+
+)
 
 $lastLogonList = @()
 
