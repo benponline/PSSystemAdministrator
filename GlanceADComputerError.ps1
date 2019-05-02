@@ -61,7 +61,7 @@ Param(
 
 )
 
-
+$ErrorActionPreference = "Stop"
 
 $errorLog = @()
 
