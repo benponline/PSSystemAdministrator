@@ -168,7 +168,7 @@ function GlanceADOfflineComputers {
     
     }
     
-    $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
+    $offlineComputers | Sort-Object -Property Name | Select-Object -Property Name,DNSHostName,DistinguishedName
     
     return
     
@@ -502,93 +502,5 @@ function GlanceDriveSpace{
     $discSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
     
     return
-
-}
-
-#---------------------#
-#--- GlancePingLog ---#
-#---------------------#
-function GlancePingLog{
-
-    [CmdletBinding()]
-    Param(
-        
-        [Parameter(Mandatory=$True)]
-        [string]$Target,
-        
-        [Parameter(Mandatory=$True)]
-        [int]$Minutes
-    
-    )
-    
-    $pingObject = New-Object System.Net.NetworkInformation.Ping
-    
-    $pingRecord = @()
-    
-    $startTime = Get-Date
-    
-    $minuteTicker = Get-Date
-    
-    function CreatePingObject{
-    
-        $pingResults = New-Object -TypeName psobject -Property @{`
-            "Status"=$targetPing.Status;`
-            "Target"=$Target;`
-            "Time"=(Get-Date -Format g);`
-            "ResponseTime"=$targetPing.RoundtripTime}
-    
-        $pingResults
-    
-        return
-    
-    }
-    
-    function CreateFailedPingObject{
-    
-        $pingResults = New-Object -TypeName psobject -Property @{`
-            "Status"="Failure";`
-            "Target"=$Target;`
-            "Time"=(Get-Date -Format g);`
-            "ResponseTime"= 0}
-    
-        
-        $pingResults
-    
-        return
-    
-    }
-    
-    While(((Get-Date) -le $startTime.AddMinutes($Minutes))){
-        
-        if((Get-Date) -ge $minuteTicker){
-            
-            Try{
-    
-                $targetPing = $pingObject.Send($Target)
-    
-                if(($targetPing.Status) -eq "Success"){
-                
-                    $pingRecord += CreatePingObject
-                                            
-                }else{
-                
-                    $pingRecord += CreatePingObject
-
-                }
-            }catch{
-    
-                $pingRecord += CreateFailedPingObject
-    
-            }
-    
-            $minuteTicker = $minuteTicker.AddMinutes(1)
-            
-        }
-    
-    }
-    
-    $pingRecord | Select-Object -Property status,target,time,ResponseTime
-    
-    Return
 
 }
