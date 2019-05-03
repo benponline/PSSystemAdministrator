@@ -1,4 +1,6 @@
+<#---------------------#>
 <#--- Glance Module ---#>
+<#---------------------#>
 
 #-----------------------------#
 #--- GlanceADComputerError ---#
@@ -42,7 +44,6 @@ function GlanceADComputerError {
 #----------------------------#
 #--- GlanceADComputerInfo ---#
 #----------------------------#
-
 function GlanceADComputerInfo{
 
     $ErrorActionPreference = "Stop"
@@ -51,7 +52,6 @@ function GlanceADComputerInfo{
 
     $computerLog = @()
 
-    #PS object properties for to store computer info.
     $computerObjectProperties = @{
     "ComputerName" = "";
     "Model" = "";
@@ -113,14 +113,11 @@ function GlanceADComputerInfo{
 #--------------------------------#
 #--- GlanceADComputerSoftware ---#
 #--------------------------------#
-
 function GlanceADComputerSoftware{
 
     $ErrorActionPreference = "Stop"
 
     $computerList = (Get-ADComputer -Filter *).name | Sort-Object -Property Name
-    
-    #$computerSoftwareLog = @()
     
     $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
     
@@ -215,7 +212,6 @@ function GlanceADComputerSoftware{
 #--------------------------#
 #--- GlanceADDiskHealth ---#
 #--------------------------#
-
 function GlanceADDiskHealth{
 
     $ErrorActionPreference = "Stop"
@@ -249,7 +245,6 @@ function GlanceADDiskHealth{
 #--------------------------#
 #--- GlanceADDriveSpace ---#
 #--------------------------#
-
 function GlanceADDriveSpace {
 
     $ErrorActionPreference = "Stop"
@@ -286,7 +281,6 @@ function GlanceADDriveSpace {
 #---------------------------#
 #--- GlanceADFailedLogon ---#
 #---------------------------#
-
 function GlanceADFailedLogon{
 
     [CmdletBinding()]
@@ -324,7 +318,6 @@ function GlanceADFailedLogon{
 #--------------------------------#
 #--- GlanceADOfflineComputer ---#
 #--------------------------------#
-
 function GlanceADOfflineComputers {
 
     $computers = Get-ADComputer -Filter *
@@ -486,7 +479,6 @@ function GlanceComputerInfo{
     
     )
     
-    #PS object properties for to store computer info.
     $computerObjectProperties = @{
       "ComputerName" = "";
       "Model" = "";
