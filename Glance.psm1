@@ -16,7 +16,7 @@ function GlanceADComputerError {
     
     $errorLog = @()
     
-    $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
+    $computerSearch = ((Get-ADComputer -Filter *).name) 
     
     Foreach($computer in $computerSearch){
     
@@ -33,7 +33,7 @@ function GlanceADComputerError {
         
     }
     
-    $errorLog | Select-Object -Property Computer,TimeWritten,EventID,InstanceID,Message
+    $errorLog | Select-Object -Property Computer,TimeWritten,EventID,InstanceID,Message | Sort-Object -Property Computer
     
     return
 
@@ -47,7 +47,7 @@ function GlanceADComputerInfo{
 
     $ErrorActionPreference = "Stop"
 
-    $computerList = (Get-ADComputer -Filter *).name | Sort-Object -Property Name
+    $computerList = (Get-ADComputer -Filter *).name
 
     $computerLog = @()
 
@@ -104,7 +104,7 @@ function GlanceADComputerInfo{
 
     }
 
-    $computerLog | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress
+    $computerLog | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress | Sort-Object -Property ComputerName
 
     return
 
@@ -222,7 +222,7 @@ function GlanceADDiskHealth{
 
     $physicalDiskHealthLog = @()
     
-    $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property name
+    $computerSearch = ((Get-ADComputer -Filter *).name)
     
     foreach($computerName in $computerSearch){
     
@@ -240,8 +240,8 @@ function GlanceADDiskHealth{
     
     }
     
-    $physicalDiskHealthLog | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
-    
+    $physicalDiskHealthLog | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB | Sort-Object -Property ComputerName
+
     Return
 
 }
@@ -256,8 +256,8 @@ function GlanceADDriveSpace {
 
     $driveSpaceLog = @()
     
-    $computerSearch = ((Get-ADComputer -Filter *).name) | Sort-Object -Property Name
-    
+    $computerSearch = ((Get-ADComputer -Filter *).name) 
+
     foreach($computerName in $computerSearch){
     
         try{
@@ -277,7 +277,7 @@ function GlanceADDriveSpace {
     
     $driveSpaceLog = $driveSpaceLog | Where-Object -Property StorageGB -NE 0
     
-    $driveSpaceLog | Select-Object -Property ComputerName,DeviceID,StorageGB,FreeSpaceGB,Under20Percent
+    $driveSpaceLog | Select-Object -Property ComputerName,DeviceID,StorageGB,FreeSpaceGB,Under20Percent | Sort-Object -Property ComputerName
     
     return
 
@@ -341,7 +341,7 @@ function GlanceADOfflineComputers {
     
     }
     
-    $offlineComputers | Sort-Object -Property Name | Select-Object -Property Name,DNSHostName,DistinguishedName
+    $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
     
     return
     
@@ -361,8 +361,7 @@ function GlanceADOldComputer{
     
     $lastLogonList = @()
     
-    $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon | 
-        Sort-Object -Property name
+    $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
     
     foreach($computer in $computers){
     
@@ -381,7 +380,7 @@ function GlanceADOldComputer{
     
     }
     
-    $lastLogonList
+    $lastLogonList | Sort-Object -Property Computer
     
     return
 
@@ -402,7 +401,7 @@ function GlanceADOldUser{
     $lastLogonList = @()
     
     $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | 
-        Select-Object -Property lastlogon,name | Sort-Object -Property name
+        Select-Object -Property lastlogon,name 
     
     foreach($user in $users){
     
@@ -421,7 +420,7 @@ function GlanceADOldUser{
     
     }
     
-    $lastLogonList | Select-Object -Property User,LastLogon
+    $lastLogonList | Select-Object -Property User,LastLogon | Sort-Object -Property User
     
     return
 
