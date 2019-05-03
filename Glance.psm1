@@ -39,6 +39,179 @@ function GlanceADComputerError {
 
 }
 
+#----------------------------#
+#--- GlanceADComputerInfo ---#
+#----------------------------#
+
+function GlanceADComputerInfo{
+
+    $ErrorActionPreference = "Stop"
+
+    $computerList = (Get-ADComputer -Filter *).name | Sort-Object -Property Name
+
+    $computerLog = @()
+
+    #PS object properties for to store computer info.
+    $computerObjectProperties = @{
+    "ComputerName" = "";
+    "Model" = "";
+    "CPU" = "";
+    "MemoryGB" = "";
+    "StorageGB" = "";
+    "FreeSpaceGB" = "";
+    "Under20Percent" = "";
+    "CurrentUser" = "";
+    "IPAddress" = ""
+    }
+
+    foreach($ComputerName in $computerList){
+
+        try{
+
+            $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
+
+            $computerInfo.computername = $ComputerName
+
+            $computerInfo.model = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property Model).model
+
+            $computerInfo.CPU = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_Processor -Property Name).name
+
+            $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
+
+            $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Size) | 
+                Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
+
+            $computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property Freespace) | 
+                Where-Object -Property DeviceID -eq "C:").freespace / 1GB),1)
+
+            if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
+                
+                $computerInfo.under20percent = "TRUE"
+
+            }else{
+
+                $computerInfo.under20percent = "FALSE"
+
+            }
+
+            $computerInfo.currentuser = (Get-CimInstance -ComputerName $ComputerName -ClassName Win32_ComputerSystem -Property UserName).UserName
+
+            $computerInfo.IPAddress = (Test-Connection -ComputerName $ComputerName -Count 1).IPV4Address
+
+            $computerLog += $computerInfo
+
+        }catch{}
+
+    }
+
+    $computerLog | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress
+
+    return
+
+}
+
+#--------------------------------#
+#--- GlanceADComputerSoftware ---#
+#--------------------------------#
+
+function GlanceADComputerSoftware{
+
+    $ErrorActionPreference = "Stop"
+
+    $computerList = (Get-ADComputer -Filter *).name | Sort-Object -Property Name
+    
+    #$computerSoftwareLog = @()
+    
+    $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+    
+    $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
+    
+    $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+    
+    $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
+    
+    $masterKeys = @()
+    
+    foreach($ComputerName in $computerList){
+    
+        try{
+    
+            if((Test-Connection -ComputerName $ComputerName -Count 1 -ErrorAction Stop)){
+    
+                $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$ComputerName)
+                
+                $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$ComputerName)
+    
+                foreach($key in $lmKeys){
+                    $regKey = $remoteLMRegKey.OpenSubkey($key)
+                        
+                    foreach ($subName in $regKey.GetSubkeyNames()) {
+                        
+                        foreach($sub in $regKey.OpenSubkey($subName)) {
+                        
+                            $masterKeys += (New-Object PSObject -Property @{
+                                "ComputerName" = $ComputerName;
+                                "Name" = $sub.getvalue("displayname");
+                                "SystemComponent" = $sub.getvalue("systemcomponent");
+                                "ParentKeyName" = $sub.getvalue("parentkeyname");
+                                "Version" = $sub.getvalue("DisplayVersion");
+                                "UninstallCommand" = $sub.getvalue("UninstallString");
+                                "InstallDate" = $sub.getvalue("InstallDate");
+                                "RegPath" = $sub.ToString()})
+                        }
+                                
+                    }
+                            
+                }
+    
+                foreach ($key in $cuKeys) {
+    
+                    $regKey = $remoteCURegKey.OpenSubkey($key)
+    
+                    if($regKey -ne $null){
+    
+                        foreach($subName in $regKey.getsubkeynames()){
+    
+                            foreach ($sub in $regKey.opensubkey($subName)) {
+    
+                                $masterKeys += (New-Object PSObject -Property @{
+                                    "ComputerName" = $ComputerName;
+                                    "Name" = $sub.getvalue("displayname");
+                                    "SystemComponent" = $sub.getvalue("systemcomponent");
+                                    "ParentKeyName" = $sub.getvalue("parentkeyname");
+                                    "Version" = $sub.getvalue("DisplayVersion");
+                                    "UninstallCommand" = $sub.getvalue("UninstallString");
+                                    "InstallDate" = $sub.getvalue("InstallDate");
+                                    "RegPath" = $sub.ToString()})
+                                
+                            }
+                            
+                        }
+                            
+                    }
+                        
+                }
+                        
+            }else{
+    
+                break
+    
+            }
+    
+        }catch{}
+    
+    }
+    
+    $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
+    
+    $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
+    
+    $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
+    
+    $masterKeys
+
+}
+
 #--------------------------#
 #--- GlanceADDiskHealth ---#
 #--------------------------#
@@ -101,7 +274,7 @@ function GlanceADDriveSpace {
         }catch{}
     
     }
-
+    
     $driveSpaceLog = $driveSpaceLog | Where-Object -Property StorageGB -NE 0
     
     $driveSpaceLog | Select-Object -Property ComputerName,DeviceID,StorageGB,FreeSpaceGB,Under20Percent
@@ -144,7 +317,7 @@ function GlanceADFailedLogon{
     
     $failedLoginLog | Select-Object -Property ComputerName,TimeWritten,EventID
     
-    return  
+    return
 
 }
 
@@ -273,7 +446,7 @@ function GlanceADOlineComputer{
     
     }
     
-    $onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
+    $onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
     
     return
 
@@ -296,7 +469,7 @@ function GlanceComputerError{
     $errors = Get-EventLog -ComputerName $ComputerName -LogName System -EntryType Error -Newest $Newest |
         Select-Object -Property @{n="ComputerName";e={$ComputerName}},TimeWritten,EventID,InstanceID,Message
     
-    $errors
+    $errors | Select-Object -Property ComputerName,TimeWritten,EventID,Instance,Message
     
     return
 
@@ -314,6 +487,7 @@ function GlanceComputerInfo{
     
     )
     
+    #PS object properties for to store computer info.
     $computerObjectProperties = @{
       "ComputerName" = "";
       "Model" = "";
@@ -375,9 +549,13 @@ function GlanceComputerSoftware{
     )
     
     $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+    
     $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
+    
     $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+    
     $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
+    
     $masterKeys = @()
     
     try{
@@ -385,6 +563,7 @@ function GlanceComputerSoftware{
         if((Test-Connection -ComputerName $ComputerName -Count 1 -ErrorAction Stop)){
     
             $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$ComputerName)
+            
             $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$ComputerName)
     
             foreach($key in $lmKeys){
@@ -446,8 +625,11 @@ function GlanceComputerSoftware{
     }catch{}
     
     $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
+    
     $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
+    
     $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
+    
     $masterKeys
 
 }
@@ -488,9 +670,9 @@ function GlanceDriveSpace{
     
     )
     
-    $discSpaceLog = @()
+    $driveSpaceLog = @()
     
-    $discSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
+    $driveSpaceLog += Get-CimInstance -ComputerName $ComputerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
         Where-Object -Property DeviceID -NE $null | 
         Select-Object -Property @{n="Computer";e={$ComputerName}},`
         @{n="Drive";e={$_.deviceid}},`
@@ -499,8 +681,33 @@ function GlanceDriveSpace{
         @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
         @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
     
-    $discSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
+    $driveSpaceLog = $driveSpaceLog | Where-Object -Property SizeGB -NE 0
+    
+    $driveSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
     
     return
+
+}
+
+#-------------------------#
+#--- GlanceFailedLogon ---#
+#-------------------------#
+function GlanceFailedLogon{
+
+    [CmdletBinding()]
+    Param(
+    
+        [string]$ComputerName = $env:COMPUTERNAME,
+    
+        [int]$daysBack = 1
+    
+    )
+    
+    $failedLogon = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($daysBack * -1)) |
+        Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID
+    
+    $failedLogon | Select-Object -Property ComputerName,TimeWritten,EventID
+    
+    return 
 
 }

@@ -39,6 +39,6 @@ foreach($computer in $computers){
 
 }
 
-$onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
+$onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
 
 return
