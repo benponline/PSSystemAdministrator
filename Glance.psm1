@@ -79,6 +79,40 @@ function GlanceADComputerError {
 
 function GlanceADComputerInfo{
 
+    <#
+
+    .SYNOPSIS
+    This cmdlet gathers infomation about a computer.
+
+    .DESCRIPTION
+    This cmdlet gathers infomation about a computer. By default it gathers info from the local host.
+    The information includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, 
+    if less than 20 percent of storage is left, the current user, and IP address.
+
+    .PARAMETER ComputerName
+    Specifies the computer.
+
+    .INPUTS
+    None. You cannot pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if
+    less than 20 percent of storage is left, and the current user.
+
+    .NOTES
+
+    .EXAMPLE
+    GlanceComputerInfo -ComputerName Server1
+
+    This returns computer into on Server1.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
     $ErrorActionPreference = "Stop"
 
     $computerList = (Get-ADComputer -Filter *).name
@@ -144,6 +178,54 @@ function GlanceADComputerInfo{
 }
 
 function GlanceADComputerSoftware{
+
+    <#
+
+    .SYNOPSIS
+    This cmdlet gathers all of the installed software on a computer.
+
+    .DESCRIPTION
+    This cmdlet gathers all of the installed software on a computer.  or group of computers.  
+
+    .PARAMETER ComputerName
+    A list of installed software will be pulled from this computer 
+
+    .INPUTS
+    You can pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns PS objects containing computer name, software name, version, installdate, uninstall 
+    command, registry path.
+
+    .NOTES
+    Requires remote registry service running on remote machines.
+
+    .EXAMPLE
+    GlanceComputerSoftware
+
+    This cmdlet returns all installed software on the local host.
+
+    .EXAMPLE
+    GlanceComputerSoftware -ComputerName “Computer”
+
+    This cmdlet returns all the software installed on "Computer".
+
+    .EXAMPLE
+    GLanceComputerSoftware -Filter * | GlanceComputerSoftware
+
+    This cmdlet returns the installed software on all computers on the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+
+    .LINK
+    Based on code from:
+    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
+
+    #>
 
     $ErrorActionPreference = "Stop"
 
@@ -241,6 +323,46 @@ function GlanceADComputerSoftware{
 
 function GlanceADDiskHealth{
 
+    <#
+
+    .SYNOPSIS
+    This cmdlet returns the health status of the physical disks in AD computers.
+
+    .DESCRIPTION
+    This cmdlet returns physical disk health information from all AD computers, specific 
+    organizational units, or the "computers" container. By default, it returns disk info from all AD
+    computers.
+
+    .PARAMETER SearchOU
+    Specifies the top level OU the cmdlet will search.
+
+    .INPUTS
+    None. You cannot pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns array of objects with physical disk info including computer name, friendly name, media 
+    type, operational status, health status, and size in GB.
+
+    .NOTES
+    Only returns information from computers running Windows Server 2012, Windows 7 or higher.
+
+    .EXAMPLE
+    GlanceADDiskHealth
+
+    Returns disk health information for all computers in the domain.
+
+    .EXAMPLE
+    GlanceADDiskHealth -searchOU "Servers"
+
+    Returns disk health information for all computers in the "Servers" OU.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
     $ErrorActionPreference = "Stop"
 
     $physicalDiskHealthLog = @()
@@ -304,6 +426,43 @@ function GlanceADDriveSpace {
 
 function GlanceADFailedLogon{
 
+    <#
+
+    .SYNOPSIS
+    This cmdlet returns a list of failed logon events from AD computers.
+
+    .DESCRIPTION
+    This cmdlet can return failed logon events from all AD computers, computers in a specific 
+    organizational unit, or computers in the "computers" container.
+
+    .PARAMETER SearchOU
+    Specifies the top level OU the cmdlet will search.
+
+    .INPUTS
+    None. You cannot pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns PS objects with computer names, time written, and event IDs for failed logon events.
+
+    .NOTES
+
+    .EXAMPLE
+    GlanceADFailedLogon
+
+    Returns failed logon events from all computers in the domain.
+
+    .EXAMPLE
+    GlanceADFailedLogon -searchOU "Servers"
+
+    Returns failed logon events from all computers in the "Servers" OU.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
     [CmdletBinding()]
     Param(
     
@@ -336,7 +495,26 @@ function GlanceADFailedLogon{
 
 }
 
-function GlanceADOfflineComputers {
+function GlanceADOfflineComputer {
+
+    <#
+
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
 
     $computers = Get-ADComputer -Filter *
 
@@ -359,6 +537,46 @@ function GlanceADOfflineComputers {
 }
 
 function GlanceADOldComputer{
+
+    <#
+
+    .SYNOPSIS
+    This cmdlet returns a list of all the computers in AD that have not been online for a specific 
+    amount of time.
+
+    .DESCRIPTION
+    Returns a list of all the computers in AD that have not been online a number of months. The default
+    amount of months is 6. Can be set by the user by passing a value to MonthsOld.
+
+    .PARAMETER MonthsOld
+    Determines how long the computer account has to be inactive for it to be returned.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Array of PS objects with information including computer names and the date it last connected to the
+    domain.
+
+    .NOTES
+    None.
+
+    .EXAMPLE
+    GlanceADOldComputer
+
+    Lists all computers in the domain that have not checked in for more than 6 months.
+
+    .EXAMPLE
+    GlanceADOldComputer -MonthsOld 2
+
+    Lists all computers in the domain that have not checked in for more than 2 months.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
 
     [CmdletBinding()]
     Param(
@@ -395,6 +613,44 @@ function GlanceADOldComputer{
 }
 
 function GlanceADOldUser{
+
+    <#
+
+    .SYNOPSIS
+    This cmdlet returns a list of all the users in AD that have not logged on for an amount of months.
+
+    .DESCRIPTION
+    Returns a list of all the users in AD that have not been online a number of months. The default
+    amount of months is 6. Can be set by the user by passing a value to MonthsOld.
+
+    .PARAMETER MonthsOld
+    Determines how long the computer account has to be inactive for it to be returned.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Array of PS objects with user names and last logon date.
+
+    .NOTES
+    None.
+
+    .EXAMPLE
+    GlanceADOldUser
+
+    Lists all users in the domain that have not checked in for more than 6 months.
+
+    .EXAMPLE
+    GlanceADOldUser -MonthsOld 2
+
+    Lists all users in the domain that have not checked in for more than 2 months.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
 
     [CmdletBinding()]
     Param(
@@ -433,6 +689,27 @@ function GlanceADOldUser{
 
 function GlanceADOlineComputer{
 
+    <#
+
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
     $computers = Get-ADComputer -Filter *
 
     $onlineComputers = @()
@@ -455,6 +732,49 @@ function GlanceADOlineComputer{
 
 function GlanceComputerError{
 
+    <#
+
+    .SYNOPSIS
+    This cmdlet gathers system errors from a computer.
+
+    .DESCRIPTION
+    This cmdlet gathers system errors from a computer. By default it gathers them from the local 
+    computer. Computer and number of errors returned can be set by user.
+
+    .PARAMETER ComputerName
+    Specifies the computer where the errors are returned from.
+
+    .PARAMETER Newest
+    Specifies the numbers of errors returned.
+
+    .INPUTS
+    None. You cannot pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, 
+    and Message.
+
+    .NOTES
+    Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers 
+    that are searched.
+
+    .EXAMPLE
+    GlanceComputerError
+
+    This cmdlet returns the last 5 system errors from localhost.
+
+    .EXAMPLE
+    GetComputerError -ComputerName Server -Newest 2
+
+    This cmdlet returns the last 2 system errors from server.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
     [CmdletBinding()]
     Param(
     
@@ -474,6 +794,39 @@ function GlanceComputerError{
 }
 
 function GlanceComputerInfo{
+
+    <#
+
+    .SYNOPSIS
+    This cmdlet gathers infomation about a computer.
+
+    .DESCRIPTION
+    This cmdlet gathers infomation about a computer. By default it gathers info from the local host.
+    The information includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, 
+    if less than 20 percent of storage is left, the current user, and IP address.
+
+    .PARAMETER ComputerName
+    
+    .INPUTS
+    None. You cannot pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if
+    less than 20 percent of storage is left, and the current user.
+
+    .NOTES
+
+    .EXAMPLE
+    GlanceComputerInfo -ComputerName Server1
+
+    This returns computer into on Server1.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
 
     [CmdletBinding()]
     Param(
@@ -531,6 +884,53 @@ function GlanceComputerInfo{
 }
 
 function GlanceComputerSoftware{
+
+    <#
+
+    .SYNOPSIS
+    This cmdlet gathers all of the installed software on a computer.
+
+    .DESCRIPTION
+    This cmdlet gathers all of the installed software on a computer.  or group of computers.  
+
+    .PARAMETERS ComputerName
+    A list of installed software will be pulled from this computer 
+
+    .INPUTS
+    You can pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns PS objects containing computer name, software name, version, installdate, uninstall 
+    command, registry path.
+
+    .NOTES
+    Requires remote registry service running on remote machines.
+
+    .EXAMPLE
+    GlanceComputerSoftware
+
+    This cmdlet returns all installed software on the local host.
+
+    .EXAMPLE
+    GlanceComputerSoftware -ComputerName “Computer”
+
+    This cmdlet returns all the software installed on "Computer".
+
+    .EXAMPLE
+    GLanceComputerSoftware -Filter * | GlanceComputerSoftware
+
+    This cmdlet returns the installed software on all computers on the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    .LINK
+    Based on code from:
+    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
+
+    #>
 
     [cmdletbinding()]
     param(
@@ -627,6 +1027,44 @@ function GlanceComputerSoftware{
 
 function GlanceDiskHealth{
 
+    <#
+
+    .SYNOPSIS
+    This script returns the health status of the physical disks on a computer.
+
+    .DESCRIPTION
+    This script returns the health status of the physical disks on the local or remote computer.
+
+    .PARAMETER ComputerName
+    Specifies the top level OU the cmdlet will search.
+
+    .INPUTS
+    None. You cannot pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns array of objects with disk info including computer name, friendly name, media type, 
+    operational status, health status, and size in GB.
+
+    .NOTES
+    Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
+
+    .EXAMPLE
+    GlanceDiskHealth
+
+    Returns disk health information for the local computer.
+
+    .EXAMPLE
+    GlanceADDiskHealth -ComputerName Computer1
+
+    Returns disk health information for the computer named Computer1.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
     [CmdletBinding()]
     Param(
     
@@ -647,6 +1085,46 @@ function GlanceDiskHealth{
 }
 
 function GlanceDriveSpace{
+
+    <#
+
+    .SYNOPSIS
+    Gathers information for the drives on a computer including computer name, drive, volume, name, 
+    size, free space, and indicates those under 20% desc space remaining.
+
+    .DESCRIPTION
+    Gathers information for the drives on a computer including computer name, drive, volume, name, 
+    size, free space, and indicates those under 20% desc space remaining.
+
+    .PARAMETER ComputerName
+    Specifies the computer the cmdlet will search.
+
+    .INPUTS
+    None. You cannot pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, 
+    volume name, size, free space, and indicates those under 20% desc space remaining.  
+
+    .NOTES
+
+
+    .EXAMPLE
+    GlanceDriveSpace
+
+    Gets drive information for the local host.
+
+    .EXAMPLE
+    GlanceDriveSpace -computerName computer
+
+    Gets drive information for "computer".
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
 
     [CmdletBinding()]
     Param(
@@ -675,6 +1153,43 @@ function GlanceDriveSpace{
 }
 
 function GlanceFailedLogon{
+
+    <#
+
+    .SYNOPSIS
+    This cmdlet returns a list of failed logon events from AD computers.
+
+    .DESCRIPTION
+    This cmdlet can return failed logon events from all AD computers, computers in a specific 
+    organizational unit, or computers in the "computers" container.
+
+    .PARAMETER SearchOU
+    Specifies the top level OU the cmdlet will search.
+
+    .INPUTS
+    None. You cannot pipe input to this cmdlet.
+
+    .OUTPUTS
+    Returns PS objects with computer names, time written, and event IDs for failed logon events.
+
+    .NOTES
+
+    .EXAMPLE
+    GlanceADFailedLogon
+
+    Returns failed logon events from all computers in the domain.
+
+    .EXAMPLE
+    GlanceADFailedLogon -searchOU "Servers"
+
+    Returns failed logon events from all computers in the "Servers" OU.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
 
     [CmdletBinding()]
     Param(
