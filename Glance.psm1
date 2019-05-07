@@ -1,11 +1,3 @@
-<#---------------------#>
-<#--- Glance Module ---#>
-<#---------------------#>
-
-#-----------------------------#
-#--- GlanceADComputerError ---#
-#-----------------------------#
-
 <#
 
 .NAME
@@ -98,9 +90,6 @@ function GlanceADComputerError {
 
 }
 
-#----------------------------#
-#--- GlanceADComputerInfo ---#
-#----------------------------#
 function GlanceADComputerInfo{
 
     $ErrorActionPreference = "Stop"
@@ -167,9 +156,6 @@ function GlanceADComputerInfo{
 
 }
 
-#--------------------------------#
-#--- GlanceADComputerSoftware ---#
-#--------------------------------#
 function GlanceADComputerSoftware{
 
     $ErrorActionPreference = "Stop"
@@ -266,9 +252,6 @@ function GlanceADComputerSoftware{
 
 }
 
-#--------------------------#
-#--- GlanceADDiskHealth ---#
-#--------------------------#
 function GlanceADDiskHealth{
 
     $ErrorActionPreference = "Stop"
@@ -299,9 +282,6 @@ function GlanceADDiskHealth{
 
 }
 
-#--------------------------#
-#--- GlanceADDriveSpace ---#
-#--------------------------#
 function GlanceADDriveSpace {
 
     $ErrorActionPreference = "Stop"
@@ -335,9 +315,6 @@ function GlanceADDriveSpace {
 
 }
 
-#---------------------------#
-#--- GlanceADFailedLogon ---#
-#---------------------------#
 function GlanceADFailedLogon{
 
     [CmdletBinding()]
@@ -372,9 +349,6 @@ function GlanceADFailedLogon{
 
 }
 
-#--------------------------------#
-#--- GlanceADOfflineComputer ---#
-#--------------------------------#
 function GlanceADOfflineComputers {
 
     $computers = Get-ADComputer -Filter *
@@ -397,9 +371,6 @@ function GlanceADOfflineComputers {
     
 }
 
-#----------------------------#
-#--- GlanceADOldComputer ---#
-#----------------------------#
 function GlanceADOldComputer{
 
     [CmdletBinding()]
@@ -436,9 +407,6 @@ function GlanceADOldComputer{
 
 }
 
-#-----------------------#
-#--- GlanceADOldUser ---#
-#-----------------------#
 function GlanceADOldUser{
 
     [CmdletBinding()]
@@ -476,9 +444,6 @@ function GlanceADOldUser{
 
 }
 
-#------------------------------#
-#--- GlanceADOlineComputer ---#
-#------------------------------#
 function GlanceADOlineComputer{
 
     $computers = Get-ADComputer -Filter *
@@ -501,9 +466,6 @@ function GlanceADOlineComputer{
 
 }
 
-#---------------------------#
-#--- GlanceComputerError ---#
-#---------------------------#
 function GlanceComputerError{
 
     [CmdletBinding()]
@@ -524,9 +486,6 @@ function GlanceComputerError{
 
 }
 
-#--------------------------#
-#--- GlanceComputerInfo ---#
-#--------------------------#
 function GlanceComputerInfo{
 
     [CmdletBinding()]
@@ -584,9 +543,6 @@ function GlanceComputerInfo{
 
 }
 
-#------------------------------#
-#--- GlanceComputerSoftware ---#
-#------------------------------#
 function GlanceComputerSoftware{
 
     [cmdletbinding()]
@@ -682,9 +638,6 @@ function GlanceComputerSoftware{
 
 }
 
-#------------------------#
-#--- GlanceDiskHealth ---#
-#------------------------#
 function GlanceDiskHealth{
 
     [CmdletBinding()]
@@ -706,9 +659,6 @@ function GlanceDiskHealth{
 
 }
 
-#------------------------#
-#--- GlanceDriveSpace ---#
-#------------------------#
 function GlanceDriveSpace{
 
     [CmdletBinding()]
@@ -737,9 +687,6 @@ function GlanceDriveSpace{
 
 }
 
-#-------------------------#
-#--- GlanceFailedLogon ---#
-#-------------------------#
 function GlanceFailedLogon{
 
     [CmdletBinding()]
