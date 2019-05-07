@@ -9,12 +9,7 @@ function GlanceADComputerError {
     This cmdlet gathers system errors from all AD computers.  
 
     .PARAMETER Newest
-        Specifies the number of recent system errors to be returned.
-
-        Required?                   False
-        Default value               5
-        Accept pipeline input?      False
-        Accept wildcard characters? False
+    Specifies the number of recent system errors to be returned.
 
     .INPUTS
     None. You cannot pipe input to this cmdlet.
@@ -26,8 +21,7 @@ function GlanceADComputerError {
     .NOTES
     This cmdlet can take a long time to finish if there are a large number of computers/errors.
 
-    Requires:
-    "Printer and file sharing" and "Network Discovery" to be enabled.
+    Requires "Printer and file sharing" and "Network Discovery" to be enabled.
 
     Windows Server 2012, Windows 7, or newer. "Get-EventLog: No matched found" is returned when the 
     script contacts a computer running an OS older then is required.
