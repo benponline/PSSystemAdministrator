@@ -1,7 +1,11 @@
-<#
+[CmdletBinding()]
+Param(
 
-.NAME
-GlanceADComputerError
+    [int]$Newest = 5
+
+)
+
+<#
 
 .SYNOPSIS
 This cmdlet gathers system errors from AD computers.
@@ -53,13 +57,6 @@ linkedin.com/in/BenPetersonIT
 https://github.com/BenPetersonIT
 
 #>
-
-[CmdletBinding()]
-Param(
-
-    [int]$Newest = 5
-
-)
 
 $ErrorActionPreference = "Stop"
 
