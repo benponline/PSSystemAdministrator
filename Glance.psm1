@@ -2,20 +2,13 @@ function GlanceADComputerError {
 
     <#
 
-    .NAME
-    GlanceADComputerError
-
     .SYNOPSIS
     This cmdlet gathers system errors from AD computers.
-
-    .SYNTAX
-    GlanceADComputerError [-searchOU <string>] [-newest <int>]
 
     .DESCRIPTION
     This cmdlet gathers system errors from all AD computers.  
 
-    .PARAMETERS
-    -Newest <int>
+    .PARAMETER Newest
         Specifies the number of recent system errors to be returned.
 
         Required?                   False
@@ -39,17 +32,17 @@ function GlanceADComputerError {
     Windows Server 2012, Windows 7, or newer. "Get-EventLog: No matched found" is returned when the 
     script contacts a computer running an OS older then is required.
 
-    .EXAMPLE 1
+    .EXAMPLE
     GlanceADComputerError
 
     This cmdlet returns the 5 newest system errors from all AD computers.
 
-    .EXAMPLE 2
+    .EXAMPLE
     GlanceADComputerError -newest 2
 
     This cmdlet returns the 2 newest system errors from all AD computers.
 
-    .RELATED LINKS
+    .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
