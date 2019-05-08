@@ -1223,8 +1223,8 @@ function Get-FailedLogon{
     
     )
     
-    $failedLogon = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddHours(($HoursBack * -1))) | 
-        Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID
+    $failedLogon = Get-EventLog -ComputerName $ComputerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddHours(($HoursBack * -1))) | 
+        Select-Object -Property @{n="ComputerName";e={$ComputerName}},TimeWritten,EventID
     
     $failedLogon | Select-Object -Property ComputerName,TimeWritten,EventID
     
