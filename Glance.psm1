@@ -78,7 +78,7 @@ function Get-ADComputerError {
 
 }
 
-function Get-ADComputerInfo{
+function Get-ADComputerProperties{
 
     <#
 
@@ -100,7 +100,7 @@ function Get-ADComputerInfo{
     .NOTES
 
     .EXAMPLE
-    Get-ADComputerInfo
+    Get-ADComputerProperties
 
     This returns information about all computers in AD.
 
@@ -818,7 +818,7 @@ function Get-ComputerError{
 
 }
 
-function Get-ComputerInfo{
+function Get-ComputerProperties{
 
     <#
 
