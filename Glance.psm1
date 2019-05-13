@@ -843,7 +843,7 @@ function Get-ComputerProperties{
     .NOTES
 
     .EXAMPLE
-    Get-ComputerInfo -ComputerName Server1
+    Get-ComputerProperties -ComputerName Server1
 
     This returns computer into on Server1.
 
