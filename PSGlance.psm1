@@ -1,21 +1,28 @@
-function Get-ADOfflineComputer {
+function Get-ADOfflineComputer{
 
     <#
 
     .SYNOPSIS
-    Gets a list of computers in AD that are offline. 
+    Gets a list of all computers in AD that are currently offline. 
 
     .DESCRIPTION
-    Returns a list of computers from AD that are offline. 
+    Returns a list of computers from AD that are offline with information including name, DNSHostName, and DistinguishedName.
+
+    .PARAMETER None
 
     .INPUTS
     None.
 
     .OUTPUTS
-    Returns an array PS objects with information including name, DNSHostName, and 
-    DistinguishedName.
+    PS objects with information including name, DNSHostName, and DistinguishedName.
 
     .NOTES
+    The firewalls must be configured to allow ping requests.
+
+    .EXAMPLE
+    Get-ADOfflineComputer
+
+    Returns a list of all AD computers that are currently offline.
 
     .LINK
     By Ben Peterson
@@ -44,17 +51,19 @@ function Get-ADOfflineComputer {
     
 }
 
+#####################################################################################################################################################
+#####################################################################################################################################################
+
 function Get-ADOldComputer{
 
     <#
 
     .SYNOPSIS
-    This cmdlet returns a list of all the computers in AD that have not been online for a specific 
-    amount of time.
+    This cmdlet returns a list of all the computers in AD that have not been online for a specific amount of time.
 
     .DESCRIPTION
-    Returns a list of all the computers in AD that have not been online a number of months. The default
-    amount of months is 3. Can be set by the user by passing a value to MonthsOld.
+    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is 3. Can be set by the user
+    by passing a value to MonthsOld.
 
     .PARAMETER MonthsOld
     Determines how long the computer account has to be inactive for it to be returned.
@@ -63,8 +72,7 @@ function Get-ADOldComputer{
     None.
 
     .OUTPUTS
-    Array of PS objects with information including computer names and the date it last connected to the
-    domain.
+    Array of PS objects with information including computer names and the date it last connected to the domain.
 
     .NOTES
     None.
@@ -128,8 +136,8 @@ function Get-ADOldUser{
     This cmdlet returns a list of all the users in AD that have not logged on for an amount of months.
 
     .DESCRIPTION
-    Returns a list of all the users in AD that have not been online a number of months. The default
-    amount of months is 3. Can be set by the user by passing a value to MonthsOld.
+    Returns a list of all the users in AD that have not been online a number of months. The default amount of months is 3. Can be set by the user by 
+    passing a value to MonthsOld.
 
     .PARAMETER MonthsOld
     Determines how long the computer account has to be inactive for it to be returned.
@@ -169,8 +177,7 @@ function Get-ADOldUser{
     
     $lastLogonList = @()
     
-    $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | 
-        Select-Object -Property lastlogon,name 
+    $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name 
     
     foreach($user in $users){
     
@@ -275,12 +282,12 @@ function Get-ComputerError{
     that are searched.
 
     .EXAMPLE
-    Glance-ComputerError
+    Get-ComputerError
 
     This cmdlet returns the last 5 system errors from localhost.
 
     .EXAMPLE
-    GetComputerError -ComputerName Server -Newest 2
+    Get-ComputerError -ComputerName Server -Newest 2
 
     This cmdlet returns the last 2 system errors from server.
 
