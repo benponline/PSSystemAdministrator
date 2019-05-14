@@ -195,7 +195,7 @@ function Get-ADOldUser{
 
 }
 
-function Get-ADOlineComputer{
+function Get-ADOnlineComputer{
 
     <#
 
@@ -245,9 +245,6 @@ function Get-ADOlineComputer{
     return
 
 }
-
-#############################################################################################################################################
-#############################################################################################################################################
 
 function Get-ComputerError{
 
@@ -830,7 +827,9 @@ function Get-FailedLogon{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
+        [string]$Name = $env:COMPUTERNAME,
+
+        [int]$DaysBack = 1
 
     )
 
@@ -846,8 +845,8 @@ function Get-FailedLogon{
         
         try{
 
-            $failedLogin = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays(-1)) |
-                Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID
+            $failedLogin = Get-EventLog -ComputerName $Name -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($DaysBack * -1)) |
+                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID
 
             $failedLoginLog += $failedLogin
 
@@ -976,10 +975,8 @@ function Get-UserLastLogon{
     [cmdletbinding()]
     param(
 
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
-        [string]$Name,
-
-        [int]$MonthsOld = 6
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
+        [string]$Name
 
     )
 
@@ -991,7 +988,8 @@ function Get-UserLastLogon{
 
     process{
 
-        $user = Get-ADUser $Name
+        $user = Get-ADUser -Identity $Name | Get-ADObject -Properties lastlogon | 
+            Select-Object -Property lastlogon,name 
 
         $lastLogonProperties = @{
             "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
