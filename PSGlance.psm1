@@ -199,8 +199,6 @@ function Get-ADOldUser{
 
 }
 
-#####################################################################################################################################################
-#####################################################################################################################################################
 function Get-ADOnlineComputer{
 
     <#
@@ -209,8 +207,7 @@ function Get-ADOnlineComputer{
     Gets a list of AD computers that are currently online.
 
     .DESCRIPTION
-    Returns an array of PS objects containing the name, DNS host name, and distinguished name of 
-    AD computers that are currently online. 
+    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are currently online. 
 
     .INPUTS
     None.
@@ -257,10 +254,10 @@ function Get-ComputerError{
     <#
 
     .SYNOPSIS
-    This cmdlet gathers system errors from a computer.
+    Gets system errors from a computer.
 
     .DESCRIPTION
-    This cmdlet gathers system errors from a computer. By default it gathers them from the local 
+    Returns system errors from a computer. By default it gathers them from the local 
     computer. Computer and number of errors returned can be set by user.
 
     .PARAMETER Name
@@ -346,17 +343,17 @@ function Get-ComputerInformation{
     <#
 
     .SYNOPSIS
-    This cmdlet gathers infomation about a computer.
+    Gets infomation about a computer.
 
     .DESCRIPTION
-    This cmdlet gathers infomation about a computer. By default it gathers info from the local host.
-    The information includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, 
-    if less than 20 percent of storage is left, the current user, and IP address.
+    This cmdlet gathers infomation about a computer. By default it gathers info from the local host. The information includes computer name, model, 
+    CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is left, the current user, and IP address.
 
     .PARAMETER Name
     Specifies the computer.
 
     .INPUTS
+    Computer objects with property type "name" or "computername".
 
     .OUTPUTS
     Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if
@@ -396,7 +393,6 @@ function Get-ComputerInformation{
 
     process{
 
-        #PS object properties for to store computer info.
         $computerObjectProperties = @{
             "ComputerName" = "";
             "Model" = "";
@@ -410,7 +406,6 @@ function Get-ComputerInformation{
 
         try{
         
-            #PS object that will store computer info.
             $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
 
             $computerInfo.computername = $Name
@@ -421,15 +416,12 @@ function Get-ComputerInformation{
 
             $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
 
-            #Gathers storage size of the C: drive.
             $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Size) | 
                 Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
 
-            #Gathers free space of the C: drive.
             $computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Freespace) | 
                 Where-Object -Property DeviceID -eq "C:").freespace / 1GB),1)
 
-            #Calculates is there is less than 20% free space on the C: drive.
             if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
                 
                 $computerInfo.under20percent = "TRUE"
@@ -465,16 +457,16 @@ function Get-ComputerSoftware{
     <#
 
     .SYNOPSIS
-    This cmdlet gathers all of the installed software on a computer.
+    Gets all of the installed software on a computer.
 
     .DESCRIPTION
-    This cmdlet gathers all of the installed software on a computer.  or group of computers.  
+    This cmdlet gathers all of the installed software on a computer.  
 
     .PARAMETER Name
     A list of installed software will be pulled from this computer 
 
     .INPUTS
-    You can pipe input to this cmdlet.
+    You can pipe input to this cmdlet. PS objects containing "name" or "computername" property.
 
     .OUTPUTS
     Returns PS objects containing computer name, software name, version, installdate, uninstall 
@@ -484,17 +476,17 @@ function Get-ComputerSoftware{
     Requires remote registry service running on remote machines.
 
     .EXAMPLE
-    GlanceComputerSoftware
+    Get-ComputerSoftware
 
     This cmdlet returns all installed software on the local host.
 
     .EXAMPLE
-    GlanceComputerSoftware -ComputerName “Computer”
+    Get-ComputerSoftware -ComputerName “Computer”
 
     This cmdlet returns all the software installed on "Computer".
 
     .EXAMPLE
-    GLanceComputerSoftware -Filter * | GlanceComputerSoftware
+    Get-ComputerSoftware -Filter * | GlanceComputerSoftware
 
     This cmdlet returns the installed software on all computers on the domain.
 
@@ -609,6 +601,9 @@ function Get-ComputerSoftware{
     }
 
 }
+
+#####################################################################################################################################################
+#####################################################################################################################################################
 
 function Get-DiskHealth{
 
