@@ -125,15 +125,12 @@ function Get-ADOldComputer{
 
 }
 
-#####################################################################################################################################################
-#####################################################################################################################################################
-
 function Get-ADOldUser{
 
     <#
 
     .SYNOPSIS
-    This cmdlet returns a list of all the users in AD that have not logged on for an amount of months.
+    Gets a list of all the users in AD that have not logged on for a number amount of months.
 
     .DESCRIPTION
     Returns a list of all the users in AD that have not been online a number of months. The default amount of months is 3. Can be set by the user by 
@@ -146,18 +143,18 @@ function Get-ADOldUser{
     None.
 
     .OUTPUTS
-    Array of PS objects with user names and last logon date.
+    PS objects with user names and last logon date.
 
     .NOTES
     None.
 
     .EXAMPLE
-    GlanceADOldUser
+    Get-ADOldUser
 
     Lists all users in the domain that have not checked in for more than 6 months.
 
     .EXAMPLE
-    GlanceADOldUser -MonthsOld 2
+    Get-ADOldUser -MonthsOld 2
 
     Lists all users in the domain that have not checked in for more than 2 months.
 
@@ -202,6 +199,8 @@ function Get-ADOldUser{
 
 }
 
+#####################################################################################################################################################
+#####################################################################################################################################################
 function Get-ADOnlineComputer{
 
     <#
