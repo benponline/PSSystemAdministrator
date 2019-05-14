@@ -51,15 +51,12 @@ function Get-ADOfflineComputer{
     
 }
 
-#####################################################################################################################################################
-#####################################################################################################################################################
-
 function Get-ADOldComputer{
 
     <#
 
     .SYNOPSIS
-    This cmdlet returns a list of all the computers in AD that have not been online for a specific amount of time.
+    Gets a list of all the computers in AD that have not been online for a specific number of months.
 
     .DESCRIPTION
     Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is 3. Can be set by the user
@@ -127,6 +124,9 @@ function Get-ADOldComputer{
     return
 
 }
+
+#####################################################################################################################################################
+#####################################################################################################################################################
 
 function Get-ADOldUser{
 
