@@ -59,8 +59,8 @@ function Get-ADOldComputer{
     Gets a list of all the computers in AD that have not been online for a specific number of months.
 
     .DESCRIPTION
-    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is 3. Can be set by the user
-    by passing a value to MonthsOld.
+    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is 
+    3. Can be set by the user by passing a value to MonthsOld.
 
     .PARAMETER MonthsOld
     Determines how long the computer account has to be inactive for it to be returned.
@@ -133,8 +133,8 @@ function Get-ADOldUser{
     Gets a list of all the users in AD that have not logged on for a number amount of months.
 
     .DESCRIPTION
-    Returns a list of all the users in AD that have not been online a number of months. The default amount of months is 3. Can be set by the user by 
-    passing a value to MonthsOld.
+    Returns a list of all the users in AD that have not been online a number of months. The default amount of months is 3. 
+    Can be set by the user by passing a value to MonthsOld.
 
     .PARAMETER MonthsOld
     Determines how long the computer account has to be inactive for it to be returned.
@@ -207,7 +207,8 @@ function Get-ADOnlineComputer{
     Gets a list of AD computers that are currently online.
 
     .DESCRIPTION
-    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are currently online. 
+    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are 
+    currently online. 
 
     .INPUTS
     None.
@@ -330,7 +331,8 @@ function Get-ComputerError{
 
         #Returns array of PS objects with system error information including computer name, time written, 
         #event ID, instance ID, and message.
-        $errors | Sort-Object -Property ComputerName | Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
+        $errors | Sort-Object -Property ComputerName | 
+            Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
 
         return
 
@@ -346,18 +348,19 @@ function Get-ComputerInformation{
     Gets infomation about a computer.
 
     .DESCRIPTION
-    This cmdlet gathers infomation about a computer. By default it gathers info from the local host. The information includes computer name, model, 
-    CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is left, the current user, and IP address.
+    This cmdlet gathers infomation about a computer. By default it gathers info from the local host. The information 
+    includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is 
+    left, the current user, and IP address.
 
     .PARAMETER Name
     Specifies the computer.
 
     .INPUTS
-    Computer objects with property type "name" or "computername".
+    You can pipe computer objects to this function.
 
     .OUTPUTS
-    Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if
-    less than 20 percent of storage is left, and the current user.
+    Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent
+    of storage is left, and the current user.
 
     .NOTES
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
@@ -365,7 +368,12 @@ function Get-ComputerInformation{
     .EXAMPLE
     Get-ComputerInformation -ComputerName Server1
 
-    This returns computer into on Server1.
+    Returns computer information for Server1.
+
+    .EXAMPLE
+    Get-ADComputer | Get-ComputerInformation
+
+    Returns computer information on all AD computers. 
 
     .LINK
     By Ben Peterson
@@ -460,13 +468,13 @@ function Get-ComputerSoftware{
     Gets all of the installed software on a computer.
 
     .DESCRIPTION
-    This cmdlet gathers all of the installed software on a computer.  
+    This function gathers all of the installed software on a computer or group of computers.  
 
     .PARAMETER Name
     A list of installed software will be pulled from this computer 
 
     .INPUTS
-    You can pipe input to this cmdlet. PS objects containing "name" or "computername" property.
+    You can pipe computer objects input to this function.
 
     .OUTPUTS
     Returns PS objects containing computer name, software name, version, installdate, uninstall 
@@ -504,7 +512,7 @@ function Get-ComputerSoftware{
     [cmdletbinding()]
     param(
     
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
         
@@ -601,9 +609,6 @@ function Get-ComputerSoftware{
     }
 
 }
-
-#####################################################################################################################################################
-#####################################################################################################################################################
 
 function Get-DiskHealth{
 
@@ -1012,7 +1017,6 @@ function Get-UserLastLogon{
 
     end{
 
-        #Returns an array of PS objects with user name and last logon dates.
         $lastLogonList | Select-Object -Property User,LastLogon
 
         return
