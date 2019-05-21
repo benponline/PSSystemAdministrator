@@ -348,7 +348,7 @@ function Get-ComputerInformation{
     Gets infomation about a computer.
 
     .DESCRIPTION
-    This cmdlet gathers infomation about a computer. By default it gathers info from the local host. The information 
+    This function gathers infomation about a computer. By default it gathers info from the local host. The information 
     includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is 
     left, the current user, and IP address.
 
