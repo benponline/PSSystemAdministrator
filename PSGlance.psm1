@@ -989,8 +989,8 @@ function Get-UserLastLogon{
     This cmdlet returns the last time a user logged onto the domain.
 
     .DESCRIPTION
-    Returns a list of all the users in AD that have not been online a number of months. The default
-    amount of months is 6. Can be set by the user by passing a value to MonthsOld.
+    Returns a list of all the users in AD that have not been online a number of months. The default amount of months is 6. 
+    Can be set by the user by passing a value to MonthsOld.
 
     .PARAMETER Name
 
