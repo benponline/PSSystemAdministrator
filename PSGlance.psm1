@@ -18,7 +18,8 @@ function Get-ADOfflineComputer{
     Gets a list of all computers in AD that are currently offline. 
 
     .DESCRIPTION
-    Returns a list of computers from AD that are offline with information including name, DNSHostName, and DistinguishedName.
+    Returns a list of computers from AD that are offline with information including name, DNSHostName, and 
+    DistinguishedName.
 
     .PARAMETER None
 
@@ -29,7 +30,7 @@ function Get-ADOfflineComputer{
     PS objects with information including name, DNSHostName, and DistinguishedName.
 
     .NOTES
-    The firewalls must be configured to allow ping requests.
+    Firewalls must be configured to allow ping requests.
 
     .EXAMPLE
     Get-ADOfflineComputer
@@ -72,7 +73,7 @@ function Get-ADOldComputer{
 
     .DESCRIPTION
     Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is 
-    3. Can be set by the user by passing a value to MonthsOld.
+    3. Can be set by the user by passing a value to MonthsOld. 
 
     .PARAMETER MonthsOld
     Determines how long the computer account has to be inactive for it to be returned.
@@ -81,15 +82,15 @@ function Get-ADOldComputer{
     None.
 
     .OUTPUTS
-    Array of PS objects with information including computer names and the date it last connected to the domain.
+    PS objects with information including computer names and the date it last connected to the domain.
 
     .NOTES
-    None.
+    Function is intended to help find retired computers that have not been removed from AD.
 
     .EXAMPLE
     Get-ADOldComputer
 
-    Lists all computers in the domain that have not checked in for more than 6 months.
+    Lists all computers in the domain that have not been online for more than 6 months.
 
     .EXAMPLE
     Get-ADOldComputer -MonthsOld 2
@@ -149,7 +150,7 @@ function Get-ADOldUser{
     Can be set by the user by passing a value to MonthsOld.
 
     .PARAMETER MonthsOld
-    Determines how long the computer account has to be inactive for it to be returned.
+    Determines how long the user account has to be inactive for it to be returned.
 
     .INPUTS
     None.
@@ -158,7 +159,7 @@ function Get-ADOldUser{
     PS objects with user names and last logon date.
 
     .NOTES
-    None.
+    Function is intended to help find inactive user accounts.
 
     .EXAMPLE
     Get-ADOldUser
@@ -270,20 +271,20 @@ function Get-ComputerError{
     Gets system errors from a computer.
 
     .DESCRIPTION
-    Returns system errors from a computer. By default it gathers them from the local 
-    computer. Computer and number of errors returned can be set by user.
+    Returns system errors from a computer. By default it gathers them from the local computer. Computer and number of errors
+    returned can be set by user.
 
     .PARAMETER Name
-    Specifies the computer where the errors are returned from.
+    Specifies which computer to pull errors from.
 
     .PARAMETER Newest
     Specifies the numbers of errors returned.
 
     .INPUTS
-    None. You cannot pipe input to this cmdlet.
+    Host names or AD computer objects.
 
     .OUTPUTS
-    Returns PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, 
+    PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, 
     and Message.
 
     .NOTES
@@ -351,6 +352,9 @@ function Get-ComputerError{
     }
 
 }
+
+#################################################################################################################
+#################################################################################################################
 
 function Get-ComputerInformation{
 
