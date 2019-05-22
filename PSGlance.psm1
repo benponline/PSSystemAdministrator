@@ -986,15 +986,16 @@ function Get-UserLastLogon{
     <#
 
     .SYNOPSIS
-    This cmdlet returns the last time a user logged onto the domain.
+    Gets the last time a user logged onto the domain.
 
     .DESCRIPTION
-    Returns a list of all the users in AD that have not been online a number of months. The default amount of months is 6. 
-    Can be set by the user by passing a value to MonthsOld.
+    Returns  the last time a user or group of users logged onto the domain.
 
-    .PARAMETER Name
+    .PARAMETER SamAccountName
+    User name.
 
     .INPUTS
+    You can pipe user names and user AD objects to this function.
 
     .OUTPUTS
     PS objects with user name and last logon date.
@@ -1003,7 +1004,14 @@ function Get-UserLastLogon{
     None.
 
     .EXAMPLE
-    Get-UserLastLogon
+    Get-UserLastLogon -Name "Fred"
+
+    Returns the last time Fred logged into the domain.
+
+    .EXAMPLE
+    Get-ADUser -Filter * | Get-UserLastLogon
+
+    Gets the last time all users in AD logged onto the domain.
 
     .LINK
     By Ben Peterson
@@ -1016,7 +1024,7 @@ function Get-UserLastLogon{
     param(
 
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
-        [string]$Name
+        [string]$SamAccountName
 
     )
 
@@ -1028,7 +1036,7 @@ function Get-UserLastLogon{
 
     process{
 
-        $user = Get-ADUser -Identity $Name | Get-ADObject -Properties lastlogon | 
+        $user = Get-ADUser -Identity $SamAccountName | Get-ADObject -Properties lastlogon | 
             Select-Object -Property lastlogon,name 
 
         $lastLogonProperties = @{
