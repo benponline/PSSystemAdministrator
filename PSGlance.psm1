@@ -332,7 +332,6 @@ function Get-ComputerError{
 
         try{
         
-            #Gathers system errors. 
             $errors += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest |
                 Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
 
@@ -342,8 +341,6 @@ function Get-ComputerError{
 
     end{
 
-        #Returns array of PS objects with system error information including computer name, time written, 
-        #event ID, instance ID, and message.
         $errors | Sort-Object -Property ComputerName | 
             Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
 
@@ -353,9 +350,6 @@ function Get-ComputerError{
 
 }
 
-#################################################################################################################
-#################################################################################################################
-
 function Get-ComputerInformation{
 
     <#
@@ -364,15 +358,15 @@ function Get-ComputerInformation{
     Gets infomation about a computer.
 
     .DESCRIPTION
-    This function gathers infomation about a computer. By default it gathers info from the local host. The information 
+    This function gathers infomation about a computer or computers. By default it gathers info from the local host. The information 
     includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is 
     left, the current user, and IP address.
 
     .PARAMETER Name
-    Specifies the computer.
+    Specifies which computer's information is gathered.
 
     .INPUTS
-    You can pipe computer objects to this function.
+    You can pipe host names or AD computer objects.
 
     .OUTPUTS
     Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent
@@ -487,10 +481,10 @@ function Get-ComputerSoftware{
     This function gathers all of the installed software on a computer or group of computers.  
 
     .PARAMETER Name
-    A list of installed software will be pulled from this computer 
+    Specifies the computer this function will gather information from. 
 
     .INPUTS
-    You can pipe computer objects input to this function.
+    You can pipe host names or computer objects input to this function.
 
     .OUTPUTS
     Returns PS objects containing computer name, software name, version, installdate, uninstall 
@@ -618,8 +612,11 @@ function Get-ComputerSoftware{
     end{
     
         $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
+
         $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
+
         $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
+
         $masterKeys
 
     }
@@ -631,31 +628,31 @@ function Get-DiskHealth{
     <#
 
     .SYNOPSIS
-    This script returns the health status of the physical disks on a computer.
+    Gets the health status of the physical disks off a computer.
 
     .DESCRIPTION
-    This script returns the health status of the physical disks on the local or remote computer.
+    Returns the health status of the physical disks of the local computer, remote computer, or group of computers.
 
     .PARAMETER Name
-    Specifies the top level OU the cmdlet will search.
+    Specifies the computer the fuction will gather information from.
 
     .INPUTS
-    None. You cannot pipe input to this cmdlet.
+    You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns array of objects with disk info including computer name, friendly name, media type, 
-    operational status, health status, and size in GB.
+    Returns objects with disk info including computer name, friendly name, media type, operational status, health 
+    status, and size in GB.
 
     .NOTES
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
 
     .EXAMPLE
-    GlanceDiskHealth
+    Get-DiskHealth
 
     Returns disk health information for the local computer.
 
     .EXAMPLE
-    GlanceADDiskHealth -ComputerName Computer1
+    Get-DiskHealth -Name Computer1
 
     Returns disk health information for the computer named Computer1.
 
@@ -723,7 +720,7 @@ function Get-DriveSpace{
     <#
 
     .SYNOPSIS
-    Gathers information for the drives on a computer including computer name, drive, volume, name, 
+    Gets information for the drives on a computer including computer name, drive, volume, name, 
     size, free space, and indicates those under 20% desc space remaining.
 
     .DESCRIPTION
@@ -731,10 +728,10 @@ function Get-DriveSpace{
     size, free space, and indicates those under 20% desc space remaining.
 
     .PARAMETER Name
-    Specifies the computer the cmdlet will search.
+    Specifies the computer the function will gather information from.
 
     .INPUTS
-    None. You cannot pipe input to this cmdlet.
+    You can pipe host names or AD computer objects.
 
     .OUTPUTS
     Returns PS objects to the host the following information about the drives on a computer: computer name, drive, 
@@ -743,14 +740,19 @@ function Get-DriveSpace{
     .NOTES
 
     .EXAMPLE
-    GlanceDriveSpace
+    Get-DriveSpace
 
     Gets drive information for the local host.
 
     .EXAMPLE
-    GlanceDriveSpace -computerName computer
+    Get-DriveSpace -computerName computer
 
     Gets drive information for "computer".
+
+    .EXAMPLE
+    Get-ADComputer -Filter * | Get-DriveSpace
+
+    Gets drive information for all computers in AD.
 
     .LINK
     By Ben Peterson
@@ -821,32 +823,31 @@ function Get-FailedLogon{
     <#
 
     .SYNOPSIS
-    This cmdlet returns a list of failed logon events from AD computers.
+    Gets a list of failed logon events from AD computers.
 
     .DESCRIPTION
-    This cmdlet can return failed logon events from all AD computers, computers in a specific 
-    organizational unit, or computers in the "computers" container.
+    This function can return failed logon events from the local computer, remote computer, or group of computers.
 
-    .PARAMETER SearchOU
-    Specifies the top level OU the cmdlet will search.
+    .PARAMETER Name
+    Specifies the computer the function gathers information from.
 
     .INPUTS
-    None. You cannot pipe input to this cmdlet.
+    You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns PS objects with computer names, time written, and event IDs for failed logon events.
+    PS objects with computer names, time written, and event IDs for failed logon events.
 
     .NOTES
 
     .EXAMPLE
-    Glance-ADFailedLogon
+    Get-FailedLogon
 
-    Returns failed logon events from all computers in the domain.
+    Returns failed logon events from the local host.
 
     .EXAMPLE
-    Glance-ADFailedLogon -searchOU "Servers"
+    Get-FailedLogon -Name "Server"
 
-    Returns failed logon events from all computers in the "Servers" OU.
+    Returns failed logon events from computer "Server".
 
     .LINK
     By Ben Peterson
@@ -889,7 +890,6 @@ function Get-FailedLogon{
 
     end{
 
-        #Returns an array of PS objects with failed logon events.
         $failedLoginLog | Select-Object -Property ComputerName,TimeWritten,EventID
 
         return
@@ -898,12 +898,16 @@ function Get-FailedLogon{
 
 }
 
+###########################################################
+###########################################################
+###########################################################
+
 function Get-ComputerLastLogon{
 
     <#
 
     .SYNOPSIS
-    This cmdlet returns the last time a computer was connected to an AD network.
+    Gets the last time a computer was connected to an AD network.
 
     .DESCRIPTION
     
