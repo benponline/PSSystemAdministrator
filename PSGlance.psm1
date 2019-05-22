@@ -898,10 +898,6 @@ function Get-FailedLogon{
 
 }
 
-###########################################################
-###########################################################
-###########################################################
-
 function Get-ComputerLastLogon{
 
     <#
@@ -910,11 +906,13 @@ function Get-ComputerLastLogon{
     Gets the last time a computer was connected to an AD network.
 
     .DESCRIPTION
+    Returns the name and last time a computer connected to the domain.
     
     .PARAMETER Name
-    
+    Target computer.
+
     .INPUTS
-    None.
+    Can pipe host names or AD computer objects to function.
 
     .OUTPUTS
     PS object with computer name and the last time is was connected to the domain.
@@ -924,6 +922,8 @@ function Get-ComputerLastLogon{
 
     .EXAMPLE
     Get-ComputerLastLogon
+
+    Returns the last time the local host logged onto the domain.
 
     .LINK
     By Ben Peterson
@@ -969,7 +969,6 @@ function Get-ComputerLastLogon{
 
     end{
 
-        #Returns an array of PS objects with the computer name and last logon date.
         $lastLogonList
 
         return
@@ -977,6 +976,10 @@ function Get-ComputerLastLogon{
     }
 
 }
+
+#################################################################
+#################################################################
+#################################################################
 
 function Get-UserLastLogon{
 
