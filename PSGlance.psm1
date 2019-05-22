@@ -1,3 +1,15 @@
+function Get-ADDisabledComputer{
+
+    #Future function.
+
+}
+
+function Get-ADDisabledUser{
+    
+    #Future function.
+
+}
+
 function Get-ADOfflineComputer{
 
     <#
@@ -693,10 +705,14 @@ function Get-DiskHealth{
 
 function Get-DisabledComputer{
 
+    #Future function.
+
 }
 
 function Get-DisabledUser{
-    
+
+    #Future function.
+
 }
 function Get-DriveSpace{
 
