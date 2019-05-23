@@ -6,7 +6,7 @@ function Get-ADDisabledComputer{
 
 function Get-ADDisabledUser{
     
-    #Future function.
+    #Future function. 
 
 }
 
@@ -311,11 +311,11 @@ function Get-ComputerError{
     [CmdletBinding()]
     Param(
 
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = "$env:COMPUTERNAME",
 
-        [parameter(Position=2)]
+        [parameter()]
         [int]$Newest = 5
 
     )
@@ -395,7 +395,7 @@ function Get-ComputerInformation{
     [CmdletBinding()]
     Param(
 
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True,Position=1)]
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
 
@@ -666,7 +666,7 @@ function Get-DiskHealth{
     [CmdletBinding()]
     Param(
 
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
 
@@ -764,7 +764,7 @@ function Get-DriveSpace{
     [CmdletBinding()]
     Param(
 
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
 
@@ -859,7 +859,7 @@ function Get-FailedLogon{
     [CmdletBinding()]
     Param(
 
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME,
 
@@ -935,7 +935,7 @@ function Get-ComputerLastLogon{
     [CmdletBinding()]
     Param(
 
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
 
@@ -1019,7 +1019,7 @@ function Get-UserLastLogon{
     [cmdletbinding()]
     param(
 
-        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Position=1)]
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName
 
     )
