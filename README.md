@@ -7,7 +7,8 @@ Get-ADOfflineComputer
     Gets a list of all computers in AD that are currently offline. 
 
     .DESCRIPTION
-    Returns a list of computers from AD that are offline with information including name, DNSHostName, and DistinguishedName.
+    Returns a list of computers from AD that are offline with information including name, 
+    DNSHostName, and DistinguishedName.
 
     .PARAMETER None
 
@@ -28,11 +29,12 @@ Get-ADOfflineComputer
 Get-ADOldComputer
 
     .SYNOPSIS
-    Gets a list of all the computers in AD that have not been online for a specific number of months.
+    Gets a list of all the computers in AD that have not been online for a specific number of 
+    months.
 
     .DESCRIPTION
-    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is 
-    3. Can be set by the user by passing a value to MonthsOld. 
+    Returns a list of all the computers in AD that have not been online a number of months. The 
+    default amount of months is 3. Can be set by the user by passing a value to MonthsOld. 
 
     .PARAMETER MonthsOld
     Determines how long the computer account has to be inactive for it to be returned.
@@ -41,7 +43,8 @@ Get-ADOldComputer
     None.
 
     .OUTPUTS
-    PS objects with information including computer names and the date it last connected to the domain.
+    PS objects with information including computer names and the date it last connected to the 
+    domain.
 
     .NOTES
     Function is intended to help find retired computers that have not been removed from AD.
@@ -62,8 +65,8 @@ Get-ADOldUser
     Gets a list of all the users in AD that have not logged on for a number amount of months.
 
     .DESCRIPTION
-    Returns a list of all the users in AD that have not been online a number of months. The default amount of months is 3. 
-    Can be set by the user by passing a value to MonthsOld.
+    Returns a list of all the users in AD that have not been online a number of months. The default 
+    amount of months is 3. Can be set by the user by passing a value to MonthsOld.
 
     .PARAMETER MonthsOld
     Determines how long the user account has to be inactive for it to be returned.
@@ -93,8 +96,8 @@ Get-ADOnlineComputer
     Gets a list of AD computers that are currently online.
 
     .DESCRIPTION
-    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are 
-    currently online. 
+    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD 
+    computers that are currently online. 
 
     .INPUTS
     None.
@@ -115,8 +118,8 @@ Get-ComputerError
     Gets system errors from a computer.
 
     .DESCRIPTION
-    Returns system errors from a computer. By default it gathers them from the local computer. Computer and number of errors
-    returned can be set by user.
+    Returns system errors from a computer. By default it gathers them from the local computer. 
+    Computer and number of errors returned can be set by user.
 
     .PARAMETER Name
     Specifies which computer to pull errors from.
@@ -132,8 +135,8 @@ Get-ComputerError
     and Message.
 
     .NOTES
-    Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers 
-    that are searched.
+    Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled 
+    on computers that are searched.
 
     .EXAMPLE
     Get-ComputerError
@@ -151,9 +154,10 @@ Get-ComputerInformation
     Gets infomation about a computer.
 
     .DESCRIPTION
-    This function gathers infomation about a computer or computers. By default it gathers info from the local host. The information 
-    includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is 
-    left, the current user, and IP address.
+    This function gathers infomation about a computer or computers. By default it gathers info from 
+    the local host. The information includes computer name, model, CPU, memory in GB, storage in 
+    GB, free space in GB, if less than 20 percent of storage is left, the current user, and IP 
+    address.
 
     .PARAMETER Name
     Specifies which computer's information is gathered.
@@ -162,8 +166,8 @@ Get-ComputerInformation
     You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent
-    of storage is left, and the current user.
+    Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in 
+    GB, if less than 20 percent of storage is left, and the current user.
 
     .NOTES
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
@@ -220,7 +224,8 @@ Get-DiskHealth
     Gets the health status of the physical disks off a computer.
 
     .DESCRIPTION
-    Returns the health status of the physical disks of the local computer, remote computer, or group of computers.
+    Returns the health status of the physical disks of the local computer, remote computer, or 
+    group of computers.
 
     .PARAMETER Name
     Specifies the computer the fuction will gather information from.
@@ -229,8 +234,8 @@ Get-DiskHealth
     You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns objects with disk info including computer name, friendly name, media type, operational status, health 
-    status, and size in GB.
+    Returns objects with disk info including computer name, friendly name, media type, operational 
+    status, health status, and size in GB.
 
     .NOTES
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
@@ -252,7 +257,7 @@ Get-DriveSpace
     size, free space, and indicates those under 20% desc space remaining.
 
     .DESCRIPTION
-    Gathers information for the drives on a computer including computer name, drive, volume, name, 
+    Gathers information for the drives on a computer including computer name, drive, volume, name,
     size, free space, and indicates those under 20% desc space remaining.
 
     .PARAMETER Name
@@ -262,8 +267,9 @@ Get-DriveSpace
     You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, 
-    volume name, size, free space, and indicates those under 20% desc space remaining.  
+    Returns PS objects to the host the following information about the drives on a computer: 
+    computer name, drive, volume name, size, free space, and indicates those under 20% desc space 
+    remaining.  
 
     .NOTES
 
@@ -288,7 +294,8 @@ Get-FailedLogon
     Gets a list of failed logon events from AD computers.
 
     .DESCRIPTION
-    This function can return failed logon events from the local computer, remote computer, or group of computers.
+    This function can return failed logon events from the local computer, remote computer, or group
+    of computers.
 
     .PARAMETER Name
     Specifies the computer the function gathers information from.
