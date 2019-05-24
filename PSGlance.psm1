@@ -2,11 +2,87 @@ function Get-ADDisabledComputer{
 
     #Future function.
 
+    <#
+
+    .SYNOPSIS
+    Gets a list of all computers in AD that are currently offline. 
+
+    .DESCRIPTION
+    Returns a list of computers from AD that are offline with information including name, DNSHostName, and 
+    DistinguishedName.
+
+    .PARAMETER None
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects with information including name, DNSHostName, and DistinguishedName.
+
+    .NOTES
+    Firewalls must be configured to allow ping requests.
+
+    .EXAMPLE
+    Get-ADOfflineComputer
+
+    Returns a list of all AD computers that are currently offline.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
+    
+    $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
+    
+    return
+    
 }
 
 function Get-ADDisabledUser{
     
     #Future function. 
+
+    <#
+
+    .SYNOPSIS
+    Gets a list of all computers in AD that are currently offline. 
+
+    .DESCRIPTION
+    Returns a list of computers from AD that are offline with information including name, DNSHostName, and 
+    DistinguishedName.
+
+    .PARAMETER None
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects with information including name, DNSHostName, and DistinguishedName.
+
+    .NOTES
+    Firewalls must be configured to allow ping requests.
+
+    .EXAMPLE
+    Get-ADOfflineComputer
+
+    Returns a list of all AD computers that are currently offline.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
+    
+    $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
+    
+    return
 
 }
 
