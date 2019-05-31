@@ -1,7 +1,5 @@
 function Get-ADDisabledComputer{
 
-    #Future function.
-
     <#
 
     .SYNOPSIS
@@ -44,8 +42,6 @@ function Get-ADDisabledComputer{
 
 function Get-ADDisabledUser{
     
-    #Future function. 
-
     <#
 
     .SYNOPSIS
