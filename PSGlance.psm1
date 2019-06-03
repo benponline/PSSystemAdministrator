@@ -780,17 +780,6 @@ function Get-DiskHealth{
 
 }
 
-function Get-DisabledComputer{
-
-    #Future function.
-
-}
-
-function Get-DisabledUser{
-
-    #Future function.
-
-}
 function Get-DriveSpace{
 
     <#
