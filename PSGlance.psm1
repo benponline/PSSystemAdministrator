@@ -32,8 +32,24 @@ function Get-ADDisabledComputer{
 
     #>
 
-    $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
+    [CmdletBinding()]
+    Param(
     
+        [string]$OrganizationalUnit
+    
+    )
+    
+    if($OrganizationalUnit -eq ""){
+
+        $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
+
+    }else{
+
+        $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
+            Where-Object -Property Enabled -Match False
+
+    }
+
     $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
     
     return
@@ -74,8 +90,24 @@ function Get-ADDisabledUser{
 
     #>
 
-    $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
+    [CmdletBinding()]
+    Param(
     
+        [string]$OrganizationalUnit
+    
+    )
+    
+    if($OrganizationalUnit -eq ""){
+
+        $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
+
+    }else{
+
+        $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
+            Where-Object -Property Enabled -Match False
+
+    }
+
     $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
     
     return
@@ -116,7 +148,22 @@ function Get-ADOfflineComputer{
 
     #>
 
-    $computers = Get-ADComputer -Filter *
+    [CmdletBinding()]
+    Param(
+    
+        [string]$OrganizationalUnit
+    
+    )
+    
+    if($OrganizationalUnit -eq ""){
+
+        $computers = Get-ADComputer -Filter *
+
+    }else{
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com"
+
+    }
 
     $offlineComputers = @()
     
@@ -179,14 +226,25 @@ function Get-ADOldComputer{
     [CmdletBinding()]
     Param(
     
-        [int]$MonthsOld = 3
+        [int]$MonthsOld = 3,
+
+        [string]$OrganizationalUnit
     
     )
     
+    if($OrganizationalUnit -eq ""){
+
+        $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
+
+    }else{
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
+            Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
+
+    }
+
     $lastLogonList = @()
-    
-    $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
-    
+        
     foreach($computer in $computers){
     
         if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
@@ -252,14 +310,25 @@ function Get-ADOldUser{
 
     [CmdletBinding()]
     Param(
+
+        [int]$MonthsOld = 3,
     
-        [int]$MonthsOld = 3
+        [string]$OrganizationalUnit
     
     )
     
-    $lastLogonList = @()
+    if($OrganizationalUnit -eq ""){
+
+        $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
+
+    }else{
+
+        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
+            Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
+
+    }
     
-    $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name 
+    $lastLogonList = @()
     
     foreach($user in $users){
     
@@ -315,7 +384,22 @@ function Get-ADOnlineComputer{
 
     #>
 
-    $computers = Get-ADComputer -Filter *
+    [CmdletBinding()]
+    Param(
+
+        [string]$OrganizationalUnit
+    
+    )
+    
+    if($OrganizationalUnit -eq ""){
+
+        $computers = Get-ADComputer -Filter *
+
+    }else{
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com"
+
+    }
 
     $onlineComputers = @()
     
