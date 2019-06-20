@@ -10,6 +10,7 @@ function Get-ADDisabledComputer{
     DistinguishedName.
 
     .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
 
     .INPUTS
     None.
@@ -68,6 +69,7 @@ function Get-ADDisabledUser{
     Function can be limited in scope to a specific organizational unit.
 
     .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
 
     .INPUTS
     None.
@@ -951,17 +953,6 @@ function Get-DriveSpace{
     }
 
     end{
-
-        #add filter to pull out drives with 0 storage and freespace.
-        foreach($drive in $driveSpaceLog){
-
-            if(($drive.SizeGB) -ne 0){
-
-
-
-            }
-
-        }
 
         $driveSpaceLog = $driveSpaceLog | Where-Object -Property SizeGB -NE 0
 
