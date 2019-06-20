@@ -3,27 +3,27 @@ function Get-ADDisabledComputer{
     <#
 
     .SYNOPSIS
-    Gets a list of all computers in AD that are currently offline. 
+    Gets a list of all computers in AD that are currently disabled.
 
     .DESCRIPTION
-    Returns a list of computers from AD that are offline with information including name, DNSHostName, and 
+    Returns a list of computers from AD that are disabled with information including name, enabled status, DNSHostName, and 
     DistinguishedName.
 
-    .PARAMETER None
+    .PARAMETER OrganizationalUnit
 
     .INPUTS
     None.
 
     .OUTPUTS
-    PS objects with information including name, DNSHostName, and DistinguishedName.
+    PS objects with information including name, enabled status, DNSHostName, and DistinguishedName.
 
     .NOTES
     Firewalls must be configured to allow ping requests.
 
     .EXAMPLE
-    Get-ADOfflineComputer
+    Get-ADDisabledComputer
 
-    Returns a list of all AD computers that are currently offline.
+    Returns a list of all AD computers that are currently disabled.
 
     .LINK
     By Ben Peterson
@@ -51,7 +51,7 @@ function Get-ADDisabledComputer{
     }
 
     $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
-    
+
     return
     
 }
@@ -61,13 +61,13 @@ function Get-ADDisabledUser{
     <#
 
     .SYNOPSIS
-    Gets a list of all computers in AD that are currently offline. 
+    Gets a list of all users in AD that are currently disabled. 
 
     .DESCRIPTION
-    Returns a list of computers from AD that are offline with information including name, DNSHostName, and 
-    DistinguishedName.
+    Returns a list of users from AD that are disabled with information including name, enabled, and user principal name. 
+    Function can be limited in scope to a specific organizational unit.
 
-    .PARAMETER None
+    .PARAMETER OrganizationalUnit
 
     .INPUTS
     None.
@@ -79,9 +79,9 @@ function Get-ADDisabledUser{
     Firewalls must be configured to allow ping requests.
 
     .EXAMPLE
-    Get-ADOfflineComputer
+    Get-ADDisabledUser
 
-    Returns a list of all AD computers that are currently offline.
+    Returns a list of all AD users that are currently disabled.
 
     .LINK
     By Ben Peterson
@@ -122,16 +122,17 @@ function Get-ADOfflineComputer{
     Gets a list of all computers in AD that are currently offline. 
 
     .DESCRIPTION
-    Returns a list of computers from AD that are offline with information including name, DNSHostName, and 
-    DistinguishedName.
+    Returns a list of computers from AD that are offline with information including name, DNS host name, and distinguished 
+    name. By default searches the whole AD. Can be limited to a specific organizational unit.
 
-    .PARAMETER None
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
 
     .INPUTS
     None.
 
     .OUTPUTS
-    PS objects with information including name, DNSHostName, and DistinguishedName.
+    PS objects with information including name, DNS host name, and distinguished name.
 
     .NOTES
     Firewalls must be configured to allow ping requests.
@@ -191,11 +192,14 @@ function Get-ADOldComputer{
     Gets a list of all the computers in AD that have not been online for a specific number of months.
 
     .DESCRIPTION
-    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is 
-    3. Can be set by the user by passing a value to MonthsOld. 
+    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is
+    3. Can be set by the user by passing a value to MonthsOld. Can be limited to a specific organizational unit.
 
     .PARAMETER MonthsOld
     Determines how long the computer account has to be inactive for it to be returned.
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
 
     .INPUTS
     None.
@@ -282,6 +286,9 @@ function Get-ADOldUser{
     .PARAMETER MonthsOld
     Determines how long the user account has to be inactive for it to be returned.
 
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
     .INPUTS
     None.
 
@@ -363,6 +370,9 @@ function Get-ADOnlineComputer{
     .DESCRIPTION
     Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are 
     currently online. 
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
 
     .INPUTS
     None.
