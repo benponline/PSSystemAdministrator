@@ -40,11 +40,17 @@ function Get-ADDisabledComputer{
     
     )
     
+    
+
     if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all disabled computers."
 
         $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
 
     }else{
+
+        Write-Verbose "Gathering disabled computers in the $OrganizationalUnit OU."
 
         $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
             Where-Object -Property Enabled -Match False
@@ -101,9 +107,13 @@ function Get-ADDisabledUser{
     
     if($OrganizationalUnit -eq ""){
 
+        Write-Verbose "Gathering all disabled users."
+
         $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
 
     }else{
+
+        Write-Verbose "Gathering disabled users in the $OrganizationalUnit OU."
 
         $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
             Where-Object -Property Enabled -Match False
@@ -160,9 +170,13 @@ function Get-ADOfflineComputer{
     
     if($OrganizationalUnit -eq ""){
 
+        Write-Verbose "Gathering all computer names."
+
         $computers = Get-ADComputer -Filter *
 
     }else{
+
+        Write-Verbose "Gathering computer names from $OrganizationalUnit OU."
 
         $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com"
 
@@ -170,6 +184,8 @@ function Get-ADOfflineComputer{
 
     $offlineComputers = @()
     
+    Write-Verbose "Testing for offline computers."
+
     foreach($computer in $computers){
     
         if(!(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet)){
@@ -240,9 +256,13 @@ function Get-ADOldComputer{
     
     if($OrganizationalUnit -eq ""){
 
+        Write-Verbose "Gathering all computers."
+
         $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
 
     }else{
+
+        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
 
         $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
             Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
@@ -250,7 +270,9 @@ function Get-ADOldComputer{
     }
 
     $lastLogonList = @()
-        
+
+    Write-Verbose "Filtering for computers that have not connected to the domain in $MonthsOld months."
+
     foreach($computer in $computers){
     
         if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
@@ -303,7 +325,7 @@ function Get-ADOldUser{
     .EXAMPLE
     Get-ADOldUser
 
-    Lists all users in the domain that have not checked in for more than 6 months.
+    Lists all users in the domain that have not checked in for more than 3 months.
 
     .EXAMPLE
     Get-ADOldUser -MonthsOld 2
@@ -328,9 +350,13 @@ function Get-ADOldUser{
     
     if($OrganizationalUnit -eq ""){
 
+        Write-Verbose "Gathering all computers."
+
         $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
 
     }else{
+
+        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
 
         $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
             Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
@@ -338,6 +364,8 @@ function Get-ADOldUser{
     }
     
     $lastLogonList = @()
+
+    Write-Verbose "Filtering for users that have not logged on for $MonthsOld months."
     
     foreach($user in $users){
     
@@ -405,9 +433,13 @@ function Get-ADOnlineComputer{
     
     if($OrganizationalUnit -eq ""){
 
+        Write-Verbose "Gathering all computers."
+
         $computers = Get-ADComputer -Filter *
 
     }else{
+
+        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
 
         $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com"
 
@@ -415,6 +447,8 @@ function Get-ADOnlineComputer{
 
     $onlineComputers = @()
     
+    Write-Verbose "Testing for online computers."
+
     foreach($computer in $computers){
     
         if(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet){
@@ -503,7 +537,11 @@ function Get-ComputerError{
             $errors += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest |
                 Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
 
-        }catch{}
+        }catch{
+
+            Write-Verbose "Unable to communicate with $Name."
+
+        }
 
     }
 
@@ -624,7 +662,11 @@ function Get-ComputerInformation{
 
             $computerInfoList += $computerInfo
 
-        }catch{}
+        }catch{
+
+            Write-Verbose "Unable to communicate with $Name."
+
+        }
 
     }
 
@@ -773,7 +815,11 @@ function Get-ComputerSoftware{
 
             }
 
-        }catch{}
+        }catch{
+
+            Write-Verbose "Unable to communicate with $Name."
+
+        }
 
     }
 
@@ -858,7 +904,11 @@ function Get-DiskHealth{
                 FriendlyName,MediaType,OperationalStatus,HealthStatus,`
                 @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
 
-        }catch{}
+        }catch{
+
+            Write-Verbose "Unable to communicate with $Name."
+
+        }
 
     }
 
@@ -948,7 +998,11 @@ function Get-DriveSpace{
                 @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
                 @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
 
-        }catch{}
+        }catch{
+
+            Write-Verbose "Unable to communicate with $Name."
+
+        }
 
     }
 
@@ -1030,7 +1084,11 @@ function Get-FailedLogon{
 
             $failedLoginLog += $failedLogin
 
-        }catch{}
+        }catch{
+
+            Write-Verbose "Unable to communicate with $Name."
+
+        }
         
     }
 
