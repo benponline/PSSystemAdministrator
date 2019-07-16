@@ -40,8 +40,8 @@ function Get-ADDisabledComputer{
     
     )
     
+    $domainInfo = (Get-ADDomain).DistinguishedName
     
-
     if($OrganizationalUnit -eq ""){
 
         Write-Verbose "Gathering all disabled computers."
@@ -52,7 +52,7 @@ function Get-ADDisabledComputer{
 
         Write-Verbose "Gathering disabled computers in the $OrganizationalUnit OU."
 
-        $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
+        $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
             Where-Object -Property Enabled -Match False
 
     }
@@ -104,6 +104,8 @@ function Get-ADDisabledUser{
         [string]$OrganizationalUnit
     
     )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName 
     
     if($OrganizationalUnit -eq ""){
 
@@ -115,7 +117,7 @@ function Get-ADDisabledUser{
 
         Write-Verbose "Gathering disabled users in the $OrganizationalUnit OU."
 
-        $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
+        $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
             Where-Object -Property Enabled -Match False
 
     }
@@ -167,6 +169,8 @@ function Get-ADOfflineComputer{
         [string]$OrganizationalUnit
     
     )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName 
     
     if($OrganizationalUnit -eq ""){
 
@@ -178,7 +182,7 @@ function Get-ADOfflineComputer{
 
         Write-Verbose "Gathering computer names from $OrganizationalUnit OU."
 
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com"
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
 
     }
 
@@ -253,6 +257,8 @@ function Get-ADOldComputer{
         [string]$OrganizationalUnit
     
     )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName
     
     if($OrganizationalUnit -eq ""){
 
@@ -264,7 +270,7 @@ function Get-ADOldComputer{
 
         Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
 
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
             Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
 
     }
@@ -347,6 +353,8 @@ function Get-ADOldUser{
         [string]$OrganizationalUnit
     
     )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName 
     
     if($OrganizationalUnit -eq ""){
 
@@ -358,7 +366,7 @@ function Get-ADOldUser{
 
         Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
 
-        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com" | 
+        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
             Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
 
     }
@@ -430,6 +438,8 @@ function Get-ADOnlineComputer{
         [string]$OrganizationalUnit
     
     )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName 
     
     if($OrganizationalUnit -eq ""){
 
@@ -441,7 +451,7 @@ function Get-ADOnlineComputer{
 
         Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
 
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,dc=mlsmetro,dc=com"
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
 
     }
 
