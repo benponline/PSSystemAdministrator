@@ -1,3 +1,168 @@
+function Get-ADComputerLastLogon{
+
+    <#
+
+    .SYNOPSIS
+    Gets the last time a computer was connected to an AD network.
+
+    .DESCRIPTION
+    Returns the name and last time a computer connected to the domain.
+    
+    .PARAMETER Name
+    Target computer.
+
+    .INPUTS
+    Can pipe host names or AD computer objects to function.
+
+    .OUTPUTS
+    PS object with computer name and the last time is was connected to the domain.
+
+    .NOTES
+    None.
+
+    .EXAMPLE
+    Get-ComputerLastLogon
+
+    Returns the last time the local host logged onto the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+    
+        [string]$OrganizationalUnit
+    
+    )
+    
+    $domainInfo = (Get-ADDomain).DistinguishedName
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all computers."
+
+        $Computers = Get-ADComputer -Filter *
+
+    }else{
+
+        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
+
+        $Computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+
+    }
+
+    $lastLogonList = @()
+
+    foreach($computer in $Computers){
+
+        $computer = Get-ADComputer $Name | Get-ADObject -Properties lastlogon
+
+        $lastLogonProperties = @{
+        
+            "Last Logon" = ([datetime]::fromfiletime($computer.lastlogon));
+        
+            "Computer" = ($computer.name)
+        
+        }
+
+        $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
+        
+    }
+
+    $lastLogonList
+
+    return
+
+}
+
+function Get-ADUserLastLogon{
+
+    <#
+
+    .SYNOPSIS
+    Gets the last time a user logged onto the domain.
+
+    .DESCRIPTION
+    Returns  the last time a user or group of users logged onto the domain.
+
+    .PARAMETER SamAccountName
+    User name.
+
+    .INPUTS
+    You can pipe user names and user AD objects to this function.
+
+    .OUTPUTS
+    PS objects with user name and last logon date.
+
+    .NOTES
+    None.
+
+    .EXAMPLE
+    Get-UserLastLogon -Name "Fred"
+
+    Returns the last time Fred logged into the domain.
+
+    .EXAMPLE
+    Get-ADUser -Filter * | Get-UserLastLogon
+
+    Gets the last time all users in AD logged onto the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+    
+        [string]$OrganizationalUnit
+    
+    )
+    
+    $domainInfo = (Get-ADDomain).DistinguishedName
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all users."
+
+        $Users = Get-ADComputer -Filter * 
+
+    }else{
+
+        Write-Verbose "Gathering disabled computers in the $OrganizationalUnit OU."
+
+        $Users = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+
+    }
+
+    $lastLogonList = @()
+
+    foreach($User in $Users){
+
+        $User = Get-ADUser -Identity $SamAccountName | Get-ADObject -Properties lastlogon | 
+            Select-Object -Property lastlogon,name 
+
+    $lastLogonProperties = @{
+        "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
+        "User" = ($user.name)
+    }
+
+    $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
+        
+    $lastLogonList += $lastLogonObject
+        
+    $lastLogonList | Select-Object -Property User,LastLogon
+
+    return
+
+}
+
 function Get-ADDisabledComputer{
 
     <#
