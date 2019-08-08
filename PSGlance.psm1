@@ -3,10 +3,10 @@ function Get-ADComputerLastLogon{
     <#
 
     .SYNOPSIS
-    Gets the last time all computers were connected to an AD network.
+    Gets the last time all Active Directory computers were connected to an AD network.
 
     .DESCRIPTION
-    Returns the last time that each computer has connected to the domain.
+    Returns the name of and last time that each Active Directory computer has connected to the domain.
     
     .PARAMETER OrganizationalUnit
     Limits the function to a specific OU.
@@ -15,7 +15,7 @@ function Get-ADComputerLastLogon{
     None.
 
     .OUTPUTS
-    PS objects with computer names and the last time they were connected to the domain.
+    PS objects with names and the last time times.
 
     .NOTES
     None.
@@ -24,6 +24,11 @@ function Get-ADComputerLastLogon{
     Get-ADComputerLastLogon
 
     Returns the last time each computer in the domain was logged connected to the domain.
+
+    .EXAMPLE
+    Get-ADComputerLastLogon -OrganizationalUnit Servers
+
+    Returns the name and last log on time for each computer in the "Servers" organizational unit in AD.
 
     .LINK
     By Ben Peterson
@@ -105,6 +110,12 @@ function Get-ADDisabledComputer{
 
     Returns a list of all AD computers that are currently disabled.
 
+    .EXAMPLE
+    Get-ADDisabledComputer -OrganizationalUnit Servers
+
+    Returns a list of all AD computers in the organizational unit "Servers" that are currently disabled.
+
+
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
@@ -170,6 +181,11 @@ function Get-ADDisabledUser{
 
     Returns a list of all AD users that are currently disabled.
 
+    .EXAMPLE
+    Get-ADDisabledUser -OrganizationalUnit "Employees"
+
+    Returns a list of all AD users that are currently disabled in the "Employees" organizational unit.
+
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
@@ -234,6 +250,11 @@ function Get-ADOfflineComputer{
     Get-ADOfflineComputer
 
     Returns a list of all AD computers that are currently offline.
+
+    .EXAMPLE
+    Get-ADOfflineComputer -OrganizationalUnit "WorkStations"
+
+    Returns a list of all AD computers that are currently offline in the "Workstations" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -306,7 +327,7 @@ function Get-ADOldComputer{
     None.
 
     .OUTPUTS
-    PS objects with information including computer names and the date it last connected to the domain.
+    PS objects with information including computer names and the date they were last connected to the domain.
 
     .NOTES
     Function is intended to help find retired computers that have not been removed from AD.
@@ -386,11 +407,11 @@ function Get-ADOldUser{
     <#
 
     .SYNOPSIS
-    Gets a list of all the users in AD that have not logged on for a number amount of months.
+    Gets a list of all the users in AD that have not logged on for an exstended period of time.
 
     .DESCRIPTION
-    Returns a list of all the users in AD that have not been online a number of months. The default amount of months is 3. 
-    Can be set by the user by passing a value to MonthsOld.
+    Returns a list of all the users in AD that have not been online for a number of months. The default amount of months is 
+    3. Can be set by the user by passing a value to MonthsOld. Function can also be focused on a specific OU.
 
     .PARAMETER MonthsOld
     Determines how long the user account has to be inactive for it to be returned.
@@ -416,6 +437,11 @@ function Get-ADOldUser{
     Get-ADOldUser -MonthsOld 2
 
     Lists all users in the domain that have not checked in for more than 2 months.
+
+    .EXAMPLE
+    Get-ADOldUser -MonthsOld 3 -OrganizationalUnit "Farmers"
+
+    Lists all users in the domain that have not checked in for more than 3 months in the "Farmers" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -675,6 +701,11 @@ function Get-ComputerError{
 
     This cmdlet returns the last 2 system errors from server.
 
+    .EXAMPLE
+    "computer1","computer2" | Get-ComputerError
+
+    This cmdlet returns system errors from "computer1" and "computer2".
+
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
@@ -759,7 +790,7 @@ function Get-ComputerInformation{
     Returns computer information for Server1.
 
     .EXAMPLE
-    Get-ADComputer | Get-ComputerInformation
+    Get-ADComputer -filter * | Get-ComputerInformation
 
     Returns computer information on all AD computers. 
 
@@ -886,7 +917,7 @@ function Get-ComputerSoftware{
     This cmdlet returns all the software installed on "Computer".
 
     .EXAMPLE
-    Get-ComputerSoftware -Filter * | GlanceComputerSoftware
+    Get-ADComputer -Filter * | Get-ComputerSoftware
 
     This cmdlet returns the installed software on all computers on the domain.
 
@@ -1103,7 +1134,7 @@ function Get-DriveSpace{
     size, free space, and indicates those under 20% desc space remaining.
 
     .DESCRIPTION
-    Gathers information for the drives on a computer including computer name, drive, volume, name, 
+    Gathers information from the drives on a computer including computer name, drive, volume, name, 
     size, free space, and indicates those under 20% desc space remaining.
 
     .PARAMETER Name
@@ -1195,13 +1226,16 @@ function Get-FailedLogon{
     <#
 
     .SYNOPSIS
-    Gets a list of failed logon events from AD computers.
+    Gets a list of failed logon events from a computer.
 
     .DESCRIPTION
     This function can return failed logon events from the local computer, remote computer, or group of computers.
 
     .PARAMETER Name
     Specifies the computer the function gathers information from.
+
+    .PARAMETER DaysBack
+    Determines how many days in the past the function will search for failed log ons.
 
     .INPUTS
     You can pipe host names or AD computer objects.
@@ -1300,6 +1334,11 @@ function Get-ComputerLastLogon{
     Get-ComputerLastLogon
 
     Returns the last time the local host logged onto the domain.
+
+    .EXAMPLE
+    Get-ComputerLastLogon -Name "Borg"
+
+    Returns the last time the computer "Borg" logged onto the domain.
 
     .LINK
     By Ben Peterson
