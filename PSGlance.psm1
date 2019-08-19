@@ -829,7 +829,9 @@ function Get-ComputerInformation{
             "FreeSpaceGB" = "";
             "Under20Percent" = "";
             "CurrentUser" = "";
-            "IPAddress" = ""}
+            "IPAddress" = "";
+            "BootUpTime" = ""
+        }
 
         try{
         
@@ -862,6 +864,8 @@ function Get-ComputerInformation{
             $computerInfo.currentuser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
 
             $computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).IPV4Address
+
+            $computerInfoList.BootUpTime = ([System.Management.ManagementDateTimeconverter]::ToDateTime((Get-WmiObject -Class Win32_OperatingSystem -computername $_).LastBootUpTime))
 
             $computerInfoList += $computerInfo
 
