@@ -865,7 +865,7 @@ function Get-ComputerInformation{
 
             $computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).IPV4Address
 
-            $computerInfoList.BootUpTime = ([System.Management.ManagementDateTimeconverter]::ToDateTime((Get-WmiObject -Class Win32_OperatingSystem -computername $_).LastBootUpTime))
+            $computerInfoList.BootUpTime = ([System.Management.ManagementDateTimeconverter]::ToDateTime((Get-WmiObject -Class Win32_OperatingSystem -computername $Name).LastBootUpTime)).ToString()
 
             $computerInfoList += $computerInfo
 
