@@ -1,3 +1,7 @@
+function Find-UserLogin{
+    
+}
+
 function Get-ADComputerLastLogon{
 
     <#
