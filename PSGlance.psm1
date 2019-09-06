@@ -1,19 +1,48 @@
 function Find-UserLogin{
+
+    <#
+
+    .SYNOPSIS
+
+    .DESCRIPTION
+    
+    .PARAMETER Name
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
     [CmdletBinding()]
     Param(
     
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [string]$SamAccountName
+        [alias('SamAccountName')]
+        [string]$Name
     
     )
 
     $computerList = @()
 
-    $computers = Get-ADComputer -Filter *
+    $computers = (Get-ADComputer -Filter *).Name
 
     foreach($computer in $computers){
 
-        if((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).SamAccountName -eq $SamAccountName){
+        $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+
+        if($currentUser -eq $Name){
             $computerList += $computer
         }
 
