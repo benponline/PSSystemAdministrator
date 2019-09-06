@@ -1,5 +1,28 @@
 function Find-UserLogin{
+    [CmdletBinding()]
+    Param(
     
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [string]$SamAccountName
+    
+    )
+
+    $computerList = @()
+
+    $computers = Get-ADComputer -Filter *
+
+    foreach($computer in $computers){
+
+        if((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).SamAccountName -eq $SamAccountName){
+            $computerList += $computer
+        }
+
+    }
+
+    $computerList
+
+    return
+
 }
 
 function Get-ADComputerLastLogon{
