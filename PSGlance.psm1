@@ -34,16 +34,28 @@ function Find-UserLogin{
     
     )
 
+    $ErrorActionPreference = "SilentlyContinue"
+
     $computerList = @()
 
     $computers = (Get-ADComputer -Filter *).Name
 
     foreach($computer in $computers){
 
-        $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+        try{   
 
-        if($currentUser -eq $Name){
-            $computerList += $computer
+            $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+
+            if($currentUser -eq $Name){
+                
+                $computerList += $computer
+            
+            }
+
+        }catch{
+
+            Write-Verbose "Could not connect to [ $computer ]."
+
         }
 
     }
