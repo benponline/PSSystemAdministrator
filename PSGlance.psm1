@@ -3,8 +3,10 @@ function Find-UserLogin{
     <#
 
     .SYNOPSIS
+    Finds all computers where a specific user is logged in.
 
     .DESCRIPTION
+    Searches domain computers and returns a list of computers where a specific user is logged in. 
     
     .PARAMETER Name
 
@@ -30,39 +32,51 @@ function Find-UserLogin{
     
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [alias('SamAccountName')]
-        [string]$Name
+        [string[]]$Name
     
     )
 
-    $ErrorActionPreference = "SilentlyContinue"
+    begin{
 
-    $computerList = @()
+        $ErrorActionPreference = "SilentlyContinue"
 
-    $computers = (Get-ADComputer -Filter *).Name
+        $computerList = @()
 
-    foreach($computer in $computers){
+        $computers = (Get-ADComputer -Filter *).Name
 
-        try{   
+    }
 
-            $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+    process{
+        
+        foreach($computer in $computers){
 
-            if($currentUser -eq $Name){
+            try{   
+
+                $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+
+                if($currentUser -eq $Name){
                 
-                $computerList += $computer
+                    $computerList += @{"User"="$Name";"Computer"="$computer"}
             
+                }
+
+            }catch{
+
+                Write-Verbose "Could not connect to [ $computer ]."
+
             }
-
-        }catch{
-
-            Write-Verbose "Could not connect to [ $computer ]."
 
         }
 
     }
 
-    $computerList
+    end{
 
-    return
+        $computerList
+
+        return
+
+    }
 
 }
 
