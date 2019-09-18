@@ -56,7 +56,7 @@ function Find-UserLogin{
 
                 if($currentUser -eq $Name){
                 
-                    $computerList += @{"User"="$Name";"Computer"="$computer"}
+                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
             
                 }
 
