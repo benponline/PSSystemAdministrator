@@ -32,7 +32,7 @@ function Find-UserLogin{
     
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [alias('SamAccountName')]
-        [string[]]$Name
+        [string]$Name
     
     )
 
@@ -50,7 +50,7 @@ function Find-UserLogin{
         
         foreach($computer in $computers){
 
-            try{   
+            try{
 
                 $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
 
