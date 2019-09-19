@@ -9,16 +9,25 @@ function Find-UserLogin{
     Searches domain computers and returns a list of computers where a specific user is logged in. 
     
     .PARAMETER Name
+    Takes the SamAccountName of an AD user.
 
     .INPUTS
+    String with SamAccountName or AD user object. Can pipe input to the function.
 
     .OUTPUTS
+    List of objects with the user name and the names of the computers they are logged into.
 
     .NOTES
 
     .EXAMPLE
+    Find-UserLogin -Name Thor
+
+    Returns a list of computers where Thor is logged in. 
 
     .EXAMPLE
+    "Thor","Loki","Oden" | Find-UserLogin 
+
+    Returns a list of computer where each of these users are logged in. 
 
     .LINK
     By Ben Peterson
@@ -388,7 +397,7 @@ function Get-ADOfflineComputer{
     
 }
 
-function Get-ADOldComputer{
+function Get-ADInactiveComputer{
 
     <#
 
@@ -415,12 +424,12 @@ function Get-ADOldComputer{
     Function is intended to help find retired computers that have not been removed from AD.
 
     .EXAMPLE
-    Get-ADOldComputer
+    Get-ADInactiveComputer
 
     Lists all computers in the domain that have not been online for more than 6 months.
 
     .EXAMPLE
-    Get-ADOldComputer -MonthsOld 2
+    Get-ADInactiveComputer -MonthsOld 2
 
     Lists all computers in the domain that have not checked in for more than 2 months.
 
@@ -484,7 +493,7 @@ function Get-ADOldComputer{
 
 }
 
-function Get-ADOldUser{
+function Get-ADInactiveUser{
 
     <#
 
@@ -511,17 +520,17 @@ function Get-ADOldUser{
     Function is intended to help find inactive user accounts.
 
     .EXAMPLE
-    Get-ADOldUser
+    Get-ADInactiveUser
 
     Lists all users in the domain that have not checked in for more than 3 months.
 
     .EXAMPLE
-    Get-ADOldUser -MonthsOld 2
+    Get-ADInactiveUser -MonthsOld 2
 
     Lists all users in the domain that have not checked in for more than 2 months.
 
     .EXAMPLE
-    Get-ADOldUser -MonthsOld 3 -OrganizationalUnit "Farmers"
+    Get-ADInactiveUser -MonthsOld 3 -OrganizationalUnit "Farmers"
 
     Lists all users in the domain that have not checked in for more than 3 months in the "Farmers" organizational unit.
 
