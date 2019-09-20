@@ -8,7 +8,7 @@ function Find-UserLogin{
     .DESCRIPTION
     Searches domain computers and returns a list of computers where a specific user is logged in. 
     
-    .PARAMETER Name
+    .PARAMETER SamAccountName
     Takes the SamAccountName of an AD user.
 
     .INPUTS
@@ -40,8 +40,8 @@ function Find-UserLogin{
     Param(
     
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [alias('SamAccountName')]
-        [string]$Name
+        #[alias('SamAccountName')]
+        [string]$SamAccountName 
     
     )
 
@@ -56,6 +56,8 @@ function Find-UserLogin{
     }
 
     process{
+
+        Write-Verbose ("Checking user [ " + $SamAccountName + " ] on AD computers.")
         
         foreach($computer in $computers){
 
@@ -63,7 +65,7 @@ function Find-UserLogin{
 
                 $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
 
-                if($currentUser -eq $Name){
+                if($currentUser -eq $SamAccountName){
                 
                     $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
             
