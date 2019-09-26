@@ -1308,7 +1308,7 @@ function Get-DriveSpace{
 
     end{
 
-        $driveSpaceLog = $driveSpaceLog | Where-Object -Property SizeGB -NE 0
+        $driveSpaceLog = $driveSpaceLog | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
 
         $driveSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
 
