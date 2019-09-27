@@ -57,7 +57,7 @@ function Find-UserLogin{
 
     process{
 
-        Write-Verbose ("Checking user [ " + $SamAccountName + " ] on AD computers.")
+        Write-Verbose "Checking user [ " $SamAccountName " ] on AD computers."
         
         foreach($computer in $computers){
 
