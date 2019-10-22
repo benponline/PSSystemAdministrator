@@ -22,7 +22,7 @@ function Find-UserLogin{
     .EXAMPLE
     Find-UserLogin -Name Thor
 
-    Returns a list of computers where Thor is logged in. 
+    Returns a list of computers where Thor is logged in.  
 
     .EXAMPLE
     "Thor","Loki","Oden" | Find-UserLogin 
