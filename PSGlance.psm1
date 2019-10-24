@@ -1,50 +1,3 @@
-function Get-ComputerOS{
-
-    #$ErrorActionPreference = "Stop" #"SilentlyContinue"
-
-    $Computers = (Get-ADComputer -Filter * -SearchBase "ou=MLSMetro Computers,dc=MLSMetro,dc=Com" | Sort-Object -Property Name).Name
-
-    $ComputersOS = @()
-
-    foreach($Computer in $Computers){
-
-        try{
-        
-            $Computer
-            
-            #Get-CimInstance -ComputerName $Computer -ClassName win32_operatingsystem | Select-Object -Property pscomputername,caption
-
-            $ComputersOS += Get-CimInstance -ComputerName $Computer -ClassName win32_operatingsystem | Select-Object -Property pscomputername,caption
-            
-            #$ComputerOS += Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
-
-        }catch{
-
-            $Computer
-
-            #Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
-
-            $ComputersOS += Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
-
-        }
-
-        <#if($ComputersOS += Get-CimInstance -ComputerName $Computer -ClassName win32_operatingsystem | Select-Object -Property pscomputername,caption){
-
-        }else{
-            
-            $Computer
-
-            $ComputersOS += Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
-
-        }#>
-
-    }
-
-    $ComputersOS
-
-    return
-
-}
 
 function Find-UserLogin{
 
@@ -217,6 +170,85 @@ function Get-ADComputerLastLogon{
     }
 
     $lastLogonList
+
+    return
+
+}
+
+function Get-ADComputerOS{
+
+    <#
+
+    .SYNOPSIS
+    Gets the operating systems for a group of computers in Active Directory.
+    
+    .DESCRIPTION
+    Returns the name and Windows operating system for all computers in Active Directory or a specific organizational unit.
+    
+    .PARAMETER OrganiationalUnit
+    Specifies the organizational unit this function will return information from.
+    
+    .INPUTS
+    None.
+    
+    .OUTPUTS
+    PSObjects with computer name and Windows opstating system.
+    
+    .NOTES
+    
+    .EXAMPLE
+    Get-ADComputerOS -OrganizationalUnit "Accounting Department"
+
+    Returns the name and operating system for all the computers in "Account Department".
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    .LINK
+    Based on code from:
+    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+
+        [parameter()]
+        [string]$OrganizationalUnit
+
+    )
+
+    if($null -eq $OrganizationalUnit){
+
+        $DomainInfo = (Get-ADDomain).DistinguishedName
+
+        $Computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$DomainInfo" | Sort-Object -Property Name).Name
+
+    }else{
+
+        $Computers = (Get-ADComputer -Filter * | Sort-Object -Property Name).Name
+
+    }
+
+    $ComputersOS = @()
+
+    foreach($Computer in $Computers){
+
+        try{
+        
+            $ComputersOS += Get-CimInstance -ComputerName $Computer -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property pscomputername,caption
+            
+        }catch{
+
+            $ComputersOS += Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+
+        }
+
+    }
+
+    $ComputersOS
 
     return
 
@@ -1529,6 +1561,85 @@ function Get-ComputerLastLogon{
     end{
 
         $lastLogonList
+
+        return
+
+    }
+
+}
+
+function Get-ComputerOS{
+
+    <#
+
+    .SYNOPSIS
+    Get the operating system name of a computer.
+    
+    .DESCRIPTION
+    Get the operating system of a computer. Only includes name. Does not return build number or any other detailed info.
+    
+    .PARAMETER Name
+    Name of computer you want the operating system of.
+    
+    .INPUTS
+    Accepts pipeline input.
+    
+    .OUTPUTS
+    PSObject with computer name and operating system.
+    
+    .NOTES
+    Only works with Windows machines on a domain.
+    
+    .EXAMPLE
+    Get-ComputerOS -Name Computer1
+
+    Returns computer name and operating system.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    .LINK
+    Based on code from:
+    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+
+    )
+
+    begin{
+
+        $ComputersOS = @()
+
+    }
+
+    process{
+
+        try{
+        
+            $ComputersOS += Get-CimInstance -ComputerName $Name -ClassName Win32_OperatingSystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
+            #Command works for Windows 8 machines and newer.
+            
+        }catch{
+
+            $ComputersOS += Get-WmiObject -ComputerName $Name -Class Win32_OperatingSystem | Select-Object -Property PSComputerName,Caption
+            #Command works for Windows 7 machines and older.
+
+        }
+
+    }
+
+    end{
+
+        $ComputersOS
 
         return
 
