@@ -1,3 +1,51 @@
+function Get-ComputerOS{
+
+    #$ErrorActionPreference = "Stop" #"SilentlyContinue"
+
+    $Computers = (Get-ADComputer -Filter * -SearchBase "ou=MLSMetro Computers,dc=MLSMetro,dc=Com" | Sort-Object -Property Name).Name
+
+    $ComputersOS = @()
+
+    foreach($Computer in $Computers){
+
+        try{
+        
+            $Computer
+            
+            #Get-CimInstance -ComputerName $Computer -ClassName win32_operatingsystem | Select-Object -Property pscomputername,caption
+
+            $ComputersOS += Get-CimInstance -ComputerName $Computer -ClassName win32_operatingsystem | Select-Object -Property pscomputername,caption
+            
+            #$ComputerOS += Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+
+        }catch{
+
+            $Computer
+
+            #Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+
+            $ComputersOS += Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+
+        }
+
+        <#if($ComputersOS += Get-CimInstance -ComputerName $Computer -ClassName win32_operatingsystem | Select-Object -Property pscomputername,caption){
+
+        }else{
+            
+            $Computer
+
+            $ComputersOS += Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+
+        }#>
+
+    }
+
+    $ComputersOS
+
+    return
+
+}
+
 function Find-UserLogin{
 
     <#
@@ -40,7 +88,6 @@ function Find-UserLogin{
     Param(
     
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        #[alias('SamAccountName')]
         [string]$SamAccountName 
     
     )
