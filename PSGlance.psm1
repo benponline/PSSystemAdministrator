@@ -1,95 +1,3 @@
-function Get-ADUserLogon{
-
-    <#
-
-    .SYNOPSIS
-    Finds all computers where a specific user is logged in.
-
-    .DESCRIPTION
-    Searches domain computers and returns a list of computers where a specific user is logged in. 
-    
-    .PARAMETER SamAccountName
-    Takes the SamAccountName of an AD user.
-
-    .INPUTS
-    String with SamAccountName or AD user object. Can pipe input to the function.
-
-    .OUTPUTS
-    List of objects with the user name and the names of the computers they are logged into.
-
-    .NOTES
-
-    .EXAMPLE
-    Find-UserLogin -Name Thor
-
-    Returns a list of computers where Thor is logged in.  
-
-    .EXAMPLE
-    "Thor","Loki","Oden" | Find-UserLogin 
-
-    Returns a list of computer where each of these users are logged in. 
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-    
-        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [string]$SamAccountName 
-    
-    )
-
-    begin{
-
-        $ErrorActionPreference = "SilentlyContinue"
-
-        $computerList = @()
-
-        $computers = (Get-ADComputer -Filter *).Name
-
-    }
-
-    process{
-
-        Write-Verbose "Checking user [ " $SamAccountName " ] on AD computers."
-        
-        foreach($computer in $computers){
-
-            try{
-
-                $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
-
-                if($currentUser -eq $SamAccountName){
-                
-                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
-            
-                }
-
-            }catch{
-
-                Write-Verbose "Could not connect to [ $computer ]."
-
-            }
-
-        }
-
-    }
-
-    end{
-
-        $computerList
-
-        return
-
-    }
-
-}
-
 function Get-ComputerError{
 
     <#
@@ -148,7 +56,9 @@ function Get-ComputerError{
         [string]$Name = "$env:COMPUTERNAME",
 
         [parameter()]
-        [int]$Newest = 5
+        [int]$Newest = 5,
+
+        [string]$OrganizationalUnit = ""
 
     )
 
@@ -158,19 +68,38 @@ function Get-ComputerError{
 
         $errors = @()
 
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+
+        }
+
     }
 
     Process{
 
-        try{
+        if($OrganizationalUnit -ne ""){
+
+            foreach($computer in $computers){
+
+                $errors += Get-EventLog -ComputerName $computer.name -LogName System -EntryType Error -Newest $Newest | Select-Object -Property @{n="ComputerName";e={$computer.name}},TimeWritten,EventID,InstanceID,Message
+
+            }
+
+        }else{
+
+            try{
         
-            $errors += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest |
-                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
+                $errors += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
 
-        }catch{
+            }catch{
 
-            Write-Verbose "Unable to communicate with $Name."
+                Write-Verbose "Unable to communicate with $Name."
 
+            }
+            
         }
 
     }
@@ -1556,6 +1485,98 @@ function Get-UserLastLogon{
     end{
 
         $lastLogonList | Select-Object -Property User,LastLogon
+
+        return
+
+    }
+
+}
+
+function Get-UserLogon{
+
+    <#
+
+    .SYNOPSIS
+    Finds all computers where a specific user is logged in.
+
+    .DESCRIPTION
+    Searches domain computers and returns a list of computers where a specific user is logged in. 
+    
+    .PARAMETER SamAccountName
+    Takes the SamAccountName of an AD user.
+
+    .INPUTS
+    String with SamAccountName or AD user object. Can pipe input to the function.
+
+    .OUTPUTS
+    List of objects with the user name and the names of the computers they are logged into.
+
+    .NOTES
+
+    .EXAMPLE
+    Find-UserLogin -Name Thor
+
+    Returns a list of computers where Thor is logged in.  
+
+    .EXAMPLE
+    "Thor","Loki","Oden" | Find-UserLogin 
+
+    Returns a list of computer where each of these users are logged in. 
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+    
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [string]$SamAccountName 
+    
+    )
+
+    begin{
+
+        $ErrorActionPreference = "SilentlyContinue"
+
+        $computerList = @()
+
+        $computers = (Get-ADComputer -Filter *).Name
+
+    }
+
+    process{
+
+        Write-Verbose "Checking user [ " $SamAccountName " ] on AD computers."
+        
+        foreach($computer in $computers){
+
+            try{
+
+                $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+
+                if($currentUser -eq $SamAccountName){
+                
+                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
+            
+                }
+
+            }catch{
+
+                Write-Verbose "Could not connect to [ $computer ]."
+
+            }
+
+        }
+
+    }
+
+    end{
+
+        $computerList
 
         return
 
