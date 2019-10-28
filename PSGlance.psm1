@@ -72,7 +72,7 @@ function Get-ComputerError{
 
             $domainInfo = (Get-ADDomain).DistinguishedName
 
-            $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
 
         }
 
@@ -84,7 +84,7 @@ function Get-ComputerError{
 
             foreach($computer in $computers){
 
-                $errors += Get-EventLog -ComputerName $computer.name -LogName System -EntryType Error -Newest $Newest | Select-Object -Property @{n="ComputerName";e={$computer.name}},TimeWritten,EventID,InstanceID,Message
+                ##
 
             }
 
