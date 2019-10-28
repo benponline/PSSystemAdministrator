@@ -1,5 +1,4 @@
-
-function Find-UserLogin{
+function Get-ADUserLogon{
 
     <#
 
@@ -88,750 +87,6 @@ function Find-UserLogin{
         return
 
     }
-
-}
-
-function Get-ADComputerLastLogon{
-
-    <#
-
-    .SYNOPSIS
-    Gets the last time all Active Directory computers were connected to an AD network.
-
-    .DESCRIPTION
-    Returns the name of and last time that each Active Directory computer has connected to the domain.
-    
-    .PARAMETER OrganizationalUnit
-    Limits the function to a specific OU.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    PS objects with names and the last time times.
-
-    .NOTES
-    None.
-
-    .EXAMPLE
-    Get-ADComputerLastLogon
-
-    Returns the last time each computer in the domain was logged connected to the domain.
-
-    .EXAMPLE
-    Get-ADComputerLastLogon -OrganizationalUnit Servers
-
-    Returns the name and last log on time for each computer in the "Servers" organizational unit in AD.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-    
-        [string]$OrganizationalUnit
-    
-    )
-    
-    $domainInfo = (Get-ADDomain).DistinguishedName
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all computers."
-
-        $Computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon
-
-    }else{
-
-        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
-
-        $Computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon
-
-    }
-
-    $lastLogonList = @()
-
-    foreach($computer in $Computers){
-
-        $lastLogonProperties = @{
-        
-            "Last Logon" = ([datetime]::fromfiletime($computer.lastlogon));
-        
-            "Computer" = ($computer.name)
-        
-        }
-
-        $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
-        
-    }
-
-    $lastLogonList
-
-    return
-
-}
-
-function Get-ADComputerOS{
-
-    <#
-
-    .SYNOPSIS
-    Gets the operating systems for a group of computers in Active Directory.
-    
-    .DESCRIPTION
-    Returns the name and Windows operating system for all computers in Active Directory or a specific organizational unit.
-    
-    .PARAMETER OrganiationalUnit
-    Specifies the organizational unit this function will return information from.
-    
-    .INPUTS
-    None.
-    
-    .OUTPUTS
-    PSObjects with computer name and Windows opstating system.
-    
-    .NOTES
-    
-    .EXAMPLE
-    Get-ADComputerOS -OrganizationalUnit "Accounting Department"
-
-    Returns the name and operating system for all the computers in "Account Department".
-    
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    .LINK
-    Based on code from:
-    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-
-        [parameter()]
-        [string]$OrganizationalUnit
-
-    )
-
-    if($null -eq $OrganizationalUnit){
-
-        $DomainInfo = (Get-ADDomain).DistinguishedName
-
-        $Computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$DomainInfo" | Sort-Object -Property Name).Name
-
-    }else{
-
-        $Computers = (Get-ADComputer -Filter * | Sort-Object -Property Name).Name
-
-    }
-
-    $ComputersOS = @()
-
-    foreach($Computer in $Computers){
-
-        try{
-        
-            $ComputersOS += Get-CimInstance -ComputerName $Computer -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property pscomputername,caption
-            
-        }catch{
-
-            $ComputersOS += Get-WmiObject -ComputerName $Computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
-
-        }
-
-    }
-
-    $ComputersOS
-
-    return
-
-}
-
-function Get-ADDisabledComputer{
-
-    <#
-
-    .SYNOPSIS
-    Gets a list of all computers in AD that are currently disabled.
-
-    .DESCRIPTION
-    Returns a list of computers from AD that are disabled with information including name, enabled status, DNSHostName, and 
-    DistinguishedName.
-
-    .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    PS objects with information including name, enabled status, DNSHostName, and DistinguishedName.
-
-    .NOTES
-    Firewalls must be configured to allow ping requests.
-
-    .EXAMPLE
-    Get-ADDisabledComputer
-
-    Returns a list of all AD computers that are currently disabled.
-
-    .EXAMPLE
-    Get-ADDisabledComputer -OrganizationalUnit Servers
-
-    Returns a list of all AD computers in the organizational unit "Servers" that are currently disabled.
-
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-    
-        [string]$OrganizationalUnit
-    
-    )
-    
-    $domainInfo = (Get-ADDomain).DistinguishedName
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all disabled computers."
-
-        $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
-
-    }else{
-
-        Write-Verbose "Gathering disabled computers in the $OrganizationalUnit OU."
-
-        $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Where-Object -Property Enabled -Match False
-
-    }
-
-    $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
-
-    return
-    
-}
-
-function Get-ADDisabledUser{
-    
-    <#
-
-    .SYNOPSIS
-    Gets a list of all users in AD that are currently disabled. 
-
-    .DESCRIPTION
-    Returns a list of users from AD that are disabled with information including name, enabled, and user principal name. 
-    Function can be limited in scope to a specific organizational unit.
-
-    .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    PS objects with information including name, DNSHostName, and DistinguishedName.
-
-    .NOTES
-    Firewalls must be configured to allow ping requests.
-
-    .EXAMPLE
-    Get-ADDisabledUser
-
-    Returns a list of all AD users that are currently disabled.
-
-    .EXAMPLE
-    Get-ADDisabledUser -OrganizationalUnit "Employees"
-
-    Returns a list of all AD users that are currently disabled in the "Employees" organizational unit.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-    
-        [string]$OrganizationalUnit
-    
-    )
-
-    $domainInfo = (Get-ADDomain).DistinguishedName 
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all disabled users."
-
-        $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
-
-    }else{
-
-        Write-Verbose "Gathering disabled users in the $OrganizationalUnit OU."
-
-        $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Where-Object -Property Enabled -Match False
-
-    }
-
-    $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
-    
-    return
-
-}
-
-function Get-ADOfflineComputer{
-
-    <#
-
-    .SYNOPSIS
-    Gets a list of all computers in AD that are currently offline. 
-
-    .DESCRIPTION
-    Returns a list of computers from AD that are offline with information including name, DNS host name, and distinguished 
-    name. By default searches the whole AD. Can be limited to a specific organizational unit.
-
-    .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    PS objects with information including name, DNS host name, and distinguished name.
-
-    .NOTES
-    Firewalls must be configured to allow ping requests.
-
-    .EXAMPLE
-    Get-ADOfflineComputer
-
-    Returns a list of all AD computers that are currently offline.
-
-    .EXAMPLE
-    Get-ADOfflineComputer -OrganizationalUnit "WorkStations"
-
-    Returns a list of all AD computers that are currently offline in the "Workstations" organizational unit.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-    
-        [string]$OrganizationalUnit
-    
-    )
-
-    $domainInfo = (Get-ADDomain).DistinguishedName 
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all computer names."
-
-        $computers = Get-ADComputer -Filter *
-
-    }else{
-
-        Write-Verbose "Gathering computer names from $OrganizationalUnit OU."
-
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
-
-    }
-
-    $offlineComputers = @()
-    
-    Write-Verbose "Testing for offline computers."
-
-    foreach($computer in $computers){
-    
-        if(!(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet)){
-    
-            $offlineComputers += $computer
-    
-        }
-    
-    }
-    
-    $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
-    
-    return
-    
-}
-
-function Get-ADInactiveComputer{
-
-    <#
-
-    .SYNOPSIS
-    Gets a list of all the computers in AD that have not been online for a specific number of months.
-
-    .DESCRIPTION
-    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is
-    3. Can be set by the user by passing a value to MonthsOld. Can be limited to a specific organizational unit.
-
-    .PARAMETER MonthsOld
-    Determines how long the computer account has to be inactive for it to be returned.
-
-    .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    PS objects with information including computer names and the date they were last connected to the domain.
-
-    .NOTES
-    Function is intended to help find retired computers that have not been removed from AD.
-
-    .EXAMPLE
-    Get-ADInactiveComputer
-
-    Lists all computers in the domain that have not been online for more than 6 months.
-
-    .EXAMPLE
-    Get-ADInactiveComputer -MonthsOld 2
-
-    Lists all computers in the domain that have not checked in for more than 2 months.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-    
-        [int]$MonthsOld = 3,
-
-        [string]$OrganizationalUnit
-    
-    )
-
-    $domainInfo = (Get-ADDomain).DistinguishedName
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all computers."
-
-        $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
-
-    }else{
-
-        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
-
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
-
-    }
-
-    $lastLogonList = @()
-
-    Write-Verbose "Filtering for computers that have not connected to the domain in $MonthsOld months."
-
-    foreach($computer in $computers){
-    
-        if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
-    
-            $lastLogonProperties = @{
-                "LastLogon" = ([datetime]::fromfiletime($computer.lastlogon));
-                "Computer" = ($computer.name)
-            }
-    
-            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
-        
-            $lastLogonList += $lastLogonObject
-        
-        }
-    
-    }
-    
-    $lastLogonList | Select-Object -Property Computer,LastLogon | Sort-Object -Property Computer
-    
-    return
-
-}
-
-function Get-ADInactiveUser{
-
-    <#
-
-    .SYNOPSIS
-    Gets a list of all the users in AD that have not logged on for an exstended period of time.
-
-    .DESCRIPTION
-    Returns a list of all the users in AD that have not been online for a number of months. The default amount of months is 
-    3. Can be set by the user by passing a value to MonthsOld. Function can also be focused on a specific OU.
-
-    .PARAMETER MonthsOld
-    Determines how long the user account has to be inactive for it to be returned.
-
-    .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    PS objects with user names and last logon date.
-
-    .NOTES
-    Function is intended to help find inactive user accounts.
-
-    .EXAMPLE
-    Get-ADInactiveUser
-
-    Lists all users in the domain that have not checked in for more than 3 months.
-
-    .EXAMPLE
-    Get-ADInactiveUser -MonthsOld 2
-
-    Lists all users in the domain that have not checked in for more than 2 months.
-
-    .EXAMPLE
-    Get-ADInactiveUser -MonthsOld 3 -OrganizationalUnit "Farmers"
-
-    Lists all users in the domain that have not checked in for more than 3 months in the "Farmers" organizational unit.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-
-        [int]$MonthsOld = 3,
-    
-        [string]$OrganizationalUnit
-    
-    )
-
-    $domainInfo = (Get-ADDomain).DistinguishedName 
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all computers."
-
-        $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
-
-    }else{
-
-        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
-
-        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
-
-    }
-    
-    $lastLogonList = @()
-
-    Write-Verbose "Filtering for users that have not logged on for $MonthsOld months."
-    
-    foreach($user in $users){
-    
-        if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddMonths($monthsOld * -1))){
-    
-            $lastLogonProperties = @{
-                "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
-                "User" = ($user.name)
-            }
-    
-            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
-        
-            $lastLogonList += $lastLogonObject
-        
-        }
-    
-    }
-    
-    $lastLogonList | Select-Object -Property User,LastLogon | Sort-Object -Property User
-    
-    return
-
-}
-
-function Get-ADOnlineComputer{
-
-    <#
-
-    .SYNOPSIS
-    Gets a list of AD computers that are currently online.
-
-    .DESCRIPTION
-    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are 
-    currently online. 
-
-    .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    PS objects containing name, DNS host name, and distinguished name.
-
-    .NOTES
-
-    .EXAMPLE
-    Get-ADOnlineComputer
-
-    Returns list of all AD computers that are currently online.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-
-        [string]$OrganizationalUnit
-    
-    )
-
-    $domainInfo = (Get-ADDomain).DistinguishedName 
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all computers."
-
-        $computers = Get-ADComputer -Filter *
-
-    }else{
-
-        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
-
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
-
-    }
-
-    $onlineComputers = @()
-    
-    Write-Verbose "Testing for online computers."
-
-    foreach($computer in $computers){
-    
-        if(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet){
-    
-            $onlineComputers += $computer
-    
-        }
-    
-    }
-    
-    $onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
-    
-    return
-
-}
-
-function Get-ADUserLastLogon{
-
-    <#
-
-    .SYNOPSIS
-    Gets the last time all AD users have logged onto the domain.
-
-    .DESCRIPTION
-    Returns the last time all users or group of users logged onto the domain.
-
-    .PARAMETER OrganizationalUnit
-    Limits the function to a specific OU.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    PS objects with user name and last logon date.
-
-    .NOTES
-    None.
-
-    .EXAMPLE
-    Get-UserLastLogon
-
-    Returns the last time that all users logged into the domain.
-
-    .EXAMPLE
-    Get-UserLastLogon -OrganizationalUnit "X Department"
-
-    Gets the last time all users in the "X Department" OU logged onto the domain.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-    
-        [string]$OrganizationalUnit
-    
-    )
-    
-    $domainInfo = (Get-ADDomain).DistinguishedName
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all users."
-
-        $Users = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | 
-        Select-Object -Property lastlogon,name
-
-    }else{
-
-        Write-Verbose "Gathering disabled computers in the $OrganizationalUnit OU."
-
-        $Users = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon | 
-        Select-Object -Property lastlogon,name
-
-    }
-
-    $lastLogonList = @()
-
-    foreach($User in $Users){
-
-        $lastLogonProperties = @{
-            "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
-            "User" = ($user.name)
-        }
-    
-        $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
-        
-    }
-
-    $lastLogonList | Select-Object -Property User,LastLogon
-
-    return
 
 }
 
@@ -1216,6 +471,147 @@ function Get-ComputerSoftware{
 
 }
 
+function Get-DisabledComputers{
+
+    <#
+
+    .SYNOPSIS
+    Gets a list of all computers in AD that are currently disabled.
+
+    .DESCRIPTION
+    Returns a list of computers from AD that are disabled with information including name, enabled status, DNSHostName, and 
+    DistinguishedName.
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects with information including name, enabled status, DNSHostName, and DistinguishedName.
+
+    .NOTES
+    Firewalls must be configured to allow ping requests.
+
+    .EXAMPLE
+    Get-ADDisabledComputer
+
+    Returns a list of all AD computers that are currently disabled.
+
+    .EXAMPLE
+    Get-ADDisabledComputer -OrganizationalUnit Servers
+
+    Returns a list of all AD computers in the organizational unit "Servers" that are currently disabled.
+
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+    
+        [string]$OrganizationalUnit
+    
+    )
+    
+    $domainInfo = (Get-ADDomain).DistinguishedName
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all disabled computers."
+
+        $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
+
+    }else{
+
+        Write-Verbose "Gathering disabled computers in the $OrganizationalUnit OU."
+
+        $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+            Where-Object -Property Enabled -Match False
+
+    }
+
+    $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
+
+    return
+    
+}
+
+function Get-DisabledUsers{
+    
+    <#
+
+    .SYNOPSIS
+    Gets a list of all users in AD that are currently disabled. 
+
+    .DESCRIPTION
+    Returns a list of users from AD that are disabled with information including name, enabled, and user principal name. 
+    Function can be limited in scope to a specific organizational unit.
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects with information including name, DNSHostName, and DistinguishedName.
+
+    .NOTES
+    Firewalls must be configured to allow ping requests.
+
+    .EXAMPLE
+    Get-ADDisabledUser
+
+    Returns a list of all AD users that are currently disabled.
+
+    .EXAMPLE
+    Get-ADDisabledUser -OrganizationalUnit "Employees"
+
+    Returns a list of all AD users that are currently disabled in the "Employees" organizational unit.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+    
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName 
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all disabled users."
+
+        $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
+
+    }else{
+
+        Write-Verbose "Gathering disabled users in the $OrganizationalUnit OU."
+
+        $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+            Where-Object -Property Enabled -Match False
+
+    }
+
+    $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
+    
+    return
+
+}
+
 function Get-DiskHealth{
 
     <#
@@ -1528,7 +924,11 @@ function Get-ComputerLastLogon{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
+        [string]$Name = $env:COMPUTERNAME,
+
+        #new
+        [string]$OrganizationalUnit = ""
+        #
 
     )
 
@@ -1538,23 +938,45 @@ function Get-ComputerLastLogon{
         
         $lastLogonList = @()
 
+        $domainInfo = (Get-ADDomain).DistinguishedName
+
+        if($OrganizationalUnit -ne ""){
+
+            $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon
+
+        }
+
     }
 
     process{
 
-        $computer = Get-ADComputer $Name | Get-ADObject -Properties lastlogon
+        if($OrganizationalUnit -ne ""){
 
-        $lastLogonProperties = @{
-        
-            "Last Logon" = ([datetime]::fromfiletime($computer.lastlogon));
-        
-            "Computer" = ($computer.name)
-        
+            foreach($computer in $computers){
+
+                $lastLogonProperties = @{
+                    "Last Logon" = ([datetime]::fromfiletime($computer.lastlogon));
+                    "Computer" = ($computer.name)
+                }
+                    
+                $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
+                            
+            }
+
+        }else{
+
+            $computer = Get-ADComputer $Name | Get-ADObject -Properties lastlogon
+
+            $lastLogonProperties = @{
+                "Last Logon" = ([datetime]::fromfiletime($computer.lastlogon));
+                "Computer" = ($computer.name)
+            }
+
+            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
+            
+            $lastLogonList += $lastLogonObject
+
         }
-
-        $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
-        
-        $lastLogonList += $lastLogonObject
         
     }
 
@@ -1611,27 +1033,57 @@ function Get-ComputerOS{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
+        [string]$Name = $env:COMPUTERNAME,
+
+        [string]$OrganizationalUnit = ""
 
     )
 
     begin{
 
-        $ComputersOS = @()
+        $computersOS = @()
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+    
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$DomainInfo" | Sort-Object -Property Name).Name
+    
+        }
 
     }
 
     process{
 
-        try{
-        
-            $ComputersOS += Get-CimInstance -ComputerName $Name -ClassName Win32_OperatingSystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
-            #Command works for Windows 8 machines and newer.
-            
-        }catch{
+        if($OrganizationalUnit -ne ""){
 
-            $ComputersOS += Get-WmiObject -ComputerName $Name -Class Win32_OperatingSystem | Select-Object -Property PSComputerName,Caption
-            #Command works for Windows 7 machines and older.
+            foreach($computer in $computers){
+
+                try{
+                
+                    $computersOS += Get-CimInstance -ComputerName $computer -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property pscomputername,caption
+                    
+                }catch{
+        
+                    $computersOS += Get-WmiObject -ComputerName $computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+        
+                }
+        
+            }
+
+        }else{
+
+            try{
+                
+                $computersOS += Get-CimInstance -ComputerName $Name -ClassName Win32_OperatingSystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
+                #Command works for Windows 8 machines and newer.
+            
+            }catch{
+
+                $computersOS += Get-WmiObject -ComputerName $Name -Class Win32_OperatingSystem | Select-Object -Property PSComputerName,Caption
+                #Command works for Windows 7 machines and older.
+
+            }
 
         }
 
@@ -1639,11 +1091,368 @@ function Get-ComputerOS{
 
     end{
 
-        $ComputersOS
+        $computersOS
 
         return
 
     }
+
+}
+
+function Get-InactiveComputers{
+
+    <#
+
+    .SYNOPSIS
+    Gets a list of all the computers in AD that have not been online for a specific number of months.
+
+    .DESCRIPTION
+    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is
+    3. Can be set by the user by passing a value to MonthsOld. Can be limited to a specific organizational unit.
+
+    .PARAMETER MonthsOld
+    Determines how long the computer account has to be inactive for it to be returned.
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects with information including computer names and the date they were last connected to the domain.
+
+    .NOTES
+    Function is intended to help find retired computers that have not been removed from AD.
+
+    .EXAMPLE
+    Get-ADInactiveComputer
+
+    Lists all computers in the domain that have not been online for more than 6 months.
+
+    .EXAMPLE
+    Get-ADInactiveComputer -MonthsOld 2
+
+    Lists all computers in the domain that have not checked in for more than 2 months.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+    
+        [int]$MonthsOld = 3,
+
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all computers."
+
+        $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
+
+    }else{
+
+        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+            Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
+
+    }
+
+    $lastLogonList = @()
+
+    Write-Verbose "Filtering for computers that have not connected to the domain in $MonthsOld months."
+
+    foreach($computer in $computers){
+    
+        if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
+    
+            $lastLogonProperties = @{
+                "LastLogon" = ([datetime]::fromfiletime($computer.lastlogon));
+                "Computer" = ($computer.name)
+            }
+    
+            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
+        
+            $lastLogonList += $lastLogonObject
+        
+        }
+    
+    }
+    
+    $lastLogonList | Select-Object -Property Computer,LastLogon | Sort-Object -Property Computer
+    
+    return
+
+}
+
+function Get-InactiveUsers{
+
+    <#
+
+    .SYNOPSIS
+    Gets a list of all the users in AD that have not logged on for an exstended period of time.
+
+    .DESCRIPTION
+    Returns a list of all the users in AD that have not been online for a number of months. The default amount of months is 
+    3. Can be set by the user by passing a value to MonthsOld. Function can also be focused on a specific OU.
+
+    .PARAMETER MonthsOld
+    Determines how long the user account has to be inactive for it to be returned.
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects with user names and last logon date.
+
+    .NOTES
+    Function is intended to help find inactive user accounts.
+
+    .EXAMPLE
+    Get-ADInactiveUser
+
+    Lists all users in the domain that have not checked in for more than 3 months.
+
+    .EXAMPLE
+    Get-ADInactiveUser -MonthsOld 2
+
+    Lists all users in the domain that have not checked in for more than 2 months.
+
+    .EXAMPLE
+    Get-ADInactiveUser -MonthsOld 3 -OrganizationalUnit "Farmers"
+
+    Lists all users in the domain that have not checked in for more than 3 months in the "Farmers" organizational unit.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+
+        [int]$MonthsOld = 3,
+    
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName 
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all computers."
+
+        $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
+
+    }else{
+
+        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
+
+        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+            Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
+
+    }
+    
+    $lastLogonList = @()
+
+    Write-Verbose "Filtering for users that have not logged on for $MonthsOld months."
+    
+    foreach($user in $users){
+    
+        if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddMonths($monthsOld * -1))){
+    
+            $lastLogonProperties = @{
+                "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
+                "User" = ($user.name)
+            }
+    
+            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
+        
+            $lastLogonList += $lastLogonObject
+        
+        }
+    
+    }
+    
+    $lastLogonList | Select-Object -Property User,LastLogon | Sort-Object -Property User
+    
+    return
+
+}
+
+function Get-OfflineComputers{
+
+    <#
+
+    .SYNOPSIS
+    Gets a list of all computers in AD that are currently offline. 
+
+    .DESCRIPTION
+    Returns a list of computers from AD that are offline with information including name, DNS host name, and distinguished 
+    name. By default searches the whole AD. Can be limited to a specific organizational unit.
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects with information including name, DNS host name, and distinguished name.
+
+    .NOTES
+    Firewalls must be configured to allow ping requests.
+
+    .EXAMPLE
+    Get-ADOfflineComputer
+
+    Returns a list of all AD computers that are currently offline.
+
+    .EXAMPLE
+    Get-ADOfflineComputer -OrganizationalUnit "WorkStations"
+
+    Returns a list of all AD computers that are currently offline in the "Workstations" organizational unit.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+    
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName 
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all computer names."
+
+        $computers = Get-ADComputer -Filter *
+
+    }else{
+
+        Write-Verbose "Gathering computer names from $OrganizationalUnit OU."
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+
+    }
+
+    $offlineComputers = @()
+    
+    Write-Verbose "Testing for offline computers."
+
+    foreach($computer in $computers){
+    
+        if(!(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet)){
+    
+            $offlineComputers += $computer
+    
+        }
+    
+    }
+    
+    $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
+    
+    return
+    
+}
+
+function Get-OnlineComputers{
+
+    <#
+
+    .SYNOPSIS
+    Gets a list of AD computers that are currently online.
+
+    .DESCRIPTION
+    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are 
+    currently online. 
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects containing name, DNS host name, and distinguished name.
+
+    .NOTES
+
+    .EXAMPLE
+    Get-ADOnlineComputer
+
+    Returns list of all AD computers that are currently online.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName 
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all computers."
+
+        $computers = Get-ADComputer -Filter *
+
+    }else{
+
+        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+
+    }
+
+    $onlineComputers = @()
+    
+    Write-Verbose "Testing for online computers."
+
+    foreach($computer in $computers){
+    
+        if(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet){
+    
+            $onlineComputers += $computer
+    
+        }
+    
+    }
+    
+    $onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
+    
+    return
 
 }
 
@@ -1689,8 +1498,10 @@ function Get-UserLastLogon{
     [cmdletbinding()]
     param(
 
-        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [string]$SamAccountName
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [string]$SamAccountName = $env:UserName,
+
+        [string]$OrganizationalUnit = ""
 
     )
 
@@ -1698,21 +1509,47 @@ function Get-UserLastLogon{
 
         $lastLogonList = @()
 
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $users = Get-ADuser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon | 
+                Select-Object -Property lastlogon,name
+    
+        }
+
     }
 
     process{
 
-        $user = Get-ADUser -Identity $SamAccountName | Get-ADObject -Properties lastlogon | 
-            Select-Object -Property lastlogon,name 
+        if($OrganizationalUnit -ne ""){
 
-        $lastLogonProperties = @{
-            "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
-            "User" = ($user.name)
-        }
+            foreach($user in $users){
 
-        $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
+                $lastLogonProperties = @{
+                    "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
+                    "User" = ($user.name)
+                }
+            
+                $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
+                
+            }
+
+        }else{
+
+            $user = Get-ADUser -Identity $SamAccountName | Get-ADObject -Properties lastlogon | 
+                Select-Object -Property lastlogon,name 
+
+            $lastLogonProperties = @{
+                "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
+                "User" = ($user.name)
+            }
+
+            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
         
-        $lastLogonList += $lastLogonObject
+            $lastLogonList += $lastLogonObject
+
+        }
         
     }
 
