@@ -521,13 +521,9 @@ function Get-DisabledComputers{
     
     if($OrganizationalUnit -eq ""){
 
-        Write-Verbose "Gathering all disabled computers."
-
         $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
 
     }else{
-
-        Write-Verbose "Gathering disabled computers in the $OrganizationalUnit OU."
 
         $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
             Where-Object -Property Enabled -Match False
@@ -655,31 +651,68 @@ function Get-DiskHealth{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
+        [string]$Name = $env:COMPUTERNAME,
+
+        [string]$OrganizationalUnit = ""
 
     )
 
     begin{
 
-        $ErrorActionPreference = "Stop"
+        function getdiskhealth{
+
+            [cmdletBinding()]
+            param(
+
+                [string]$computerName
+
+            )
+
+            $disks += Get-PhysicalDisk -CimSession $computerName | 
+                Where-Object -Property HealthStatus | 
+                Select-Object -Property @{n="ComputerName";e={$computerName}},`
+                FriendlyName,MediaType,OperationalStatus,HealthStatus,`
+                @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
+
+            $disks
+
+            return
+
+        }
 
         $physicalDisk = @()
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+    
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+    
+        }
 
     }
 
     process{
 
-        try{
+        if($OrganizationalUnit -ne ""){
 
-            $physicalDisk += Get-PhysicalDisk -CimSession $Name | 
-                Where-Object -Property HealthStatus | 
-                Select-Object -Property @{n="ComputerName";e={$Name}},`
-                FriendlyName,MediaType,OperationalStatus,HealthStatus,`
-                @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
+            try{
 
-        }catch{
+                foreach($computer in $computers){
 
-            Write-Verbose "Unable to communicate with $Name."
+                    $physicalDisk += getdiskhealth -computerName $computer
+
+                }
+
+            }catch{}
+
+        }else{
+
+            try{
+
+                $physicalDisk += getdiskhealth -computerName $Name
+            
+            }catch{}
 
         }
 
