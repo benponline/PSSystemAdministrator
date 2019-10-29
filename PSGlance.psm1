@@ -1,3 +1,5 @@
+#cleanup scopes clean variables going in and out of functions
+
 function Get-ComputerError{
 
     <#
@@ -779,13 +781,45 @@ function Get-DriveSpace{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
+        [string]$Name = $env:COMPUTERNAME,
+
+        [string]$OrganizationalUnit = ""
 
     )
 
     begin{
 
-        $ErrorActionPreference = "Stop"
+        function getdrivespace{
+
+            [cmdletBinding()]
+            param(
+
+                [string]$computerName
+
+            )
+
+            $spaceLog += Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
+                Where-Object -Property DeviceID -NE $null | 
+                Select-Object -Property @{n="Computer";e={$computerName}},`
+                @{n="Drive";e={$_.deviceid}},`
+                @{n="VolumeName";e={$_.volumename}},`
+                @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
+                @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
+                @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
+
+            $spaceLog
+
+            return
+
+        }
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+
+        }
 
         $driveSpaceLog = @()
 
@@ -793,20 +827,25 @@ function Get-DriveSpace{
 
     process{
 
-        try{
+        if($OrganizationalUnit -ne ""){
 
-            $driveSpaceLog += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
-                Where-Object -Property DeviceID -NE $null | 
-                Select-Object -Property @{n="Computer";e={$Name}},`
-                @{n="Drive";e={$_.deviceid}},`
-                @{n="VolumeName";e={$_.volumename}},`
-                @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
-                @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
-                @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
+            foreach($computer in $computers){
 
-        }catch{
+                try{
 
-            Write-Verbose "Unable to communicate with $Name."
+                    $driveSpaceLog += getdrivespace -computerName $computer
+
+                }catch{}
+
+            }
+
+        }else{
+
+            try{
+
+                $driveSpaceLog += getdrivespace -computerName $Name
+
+            }catch{}
 
         }
 
@@ -872,13 +911,39 @@ function Get-FailedLogon{
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME,
 
-        [int]$DaysBack = 1
+        [int]$DaysBack = 1,
+
+        [string]$OrganizationalUnit
 
     )
 
     begin{
 
-        $ErrorActionPreference = "Stop"
+        function getfailedlogon {
+
+            [cmdletBinding()]
+            param(
+
+                [string]$computerName
+
+            )
+
+            $failedLogin = Get-EventLog -ComputerName $Name -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($DaysBack * -1)) |
+                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID
+
+            $failedLogin
+
+            return
+
+        }
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+
+        }
 
         $failedLoginLog = @()
 
@@ -886,16 +951,25 @@ function Get-FailedLogon{
 
     process{
         
-        try{
+        if($OrganizationalUnit -ne ""){
 
-            $failedLogin = Get-EventLog -ComputerName $Name -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($DaysBack * -1)) |
-                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID
+            foreach($computer in $computers){
 
-            $failedLoginLog += $failedLogin
+                try{
 
-        }catch{
+                    $failedLoginLog += getfailedlogon -computerName $computer
 
-            Write-Verbose "Unable to communicate with $Name."
+                }catch{}
+
+            }
+
+        }else{
+
+            try{
+
+                $failedLoginLog += getfailedlogon -computerName $Name
+
+            }catch{}
 
         }
         
