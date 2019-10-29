@@ -330,30 +330,34 @@ function Get-ComputerSoftware{
     
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
+        [string]$Name = $env:COMPUTERNAME,
+
+        [string]$OrganizationalUnit = ""
         
     )
 
     begin{
 
-        $ErrorActionPreference = "Stop"
+        function getcomputersoftware{
 
-        $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-        $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
-        $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
-        $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
-        $masterKeys = @()
+            [cmdletbinding()]
+            param(
 
-    }
+                [String]$computerName
 
-    process{
+            )
 
-        try{
+            $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+            $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
+            $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+            $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
 
-            if((Test-Connection -ComputerName $Name -Count 1 -ErrorAction Stop)){
+            if((Test-Connection -ComputerName $computerName -Count 1 -ErrorAction Stop)){
 
-                $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$Name)
-                $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$Name)
+                $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$computerName)
+                $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$computerName)
+
+                $softwareKeys =@()
 
                 foreach($key in $lmKeys){
                     $regKey = $remoteLMRegKey.OpenSubkey($key)
@@ -362,8 +366,8 @@ function Get-ComputerSoftware{
                     
                         foreach($sub in $regKey.OpenSubkey($subName)){
                     
-                            $masterKeys += (New-Object PSObject -Property @{
-                                "ComputerName" = $Name;
+                            $softwareKeys += (New-Object PSObject -Property @{
+                                "ComputerName" = $computerName;
                                 "Name" = $sub.getvalue("displayname");
                                 "SystemComponent" = $sub.getvalue("systemcomponent");
                                 "ParentKeyName" = $sub.getvalue("parentkeyname");
@@ -381,14 +385,14 @@ function Get-ComputerSoftware{
 
                     $regKey = $remoteCURegKey.OpenSubkey($key)
 
-                    if($regKey -ne $null){
+                    if($null -ne $regKey){
 
                         foreach($subName in $regKey.getsubkeynames()){
 
                             foreach ($sub in $regKey.opensubkey($subName)){
 
-                                $masterKeys += (New-Object PSObject -Property @{
-                                    "ComputerName" = $Name;
+                                $softwareKeys += (New-Object PSObject -Property @{
+                                    "ComputerName" = $computerName;
                                     "Name" = $sub.getvalue("displayname");
                                     "SystemComponent" = $sub.getvalue("systemcomponent");
                                     "ParentKeyName" = $sub.getvalue("parentkeyname");
@@ -405,15 +409,47 @@ function Get-ComputerSoftware{
                     
                 }
                     
-            }else{
+            }
 
-                break
+            $softwareKeys
+
+            return
+
+        }
+
+        $masterKeys = @()
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+
+        }
+
+    }
+
+    process{
+
+        if($OrganizationalUnit -ne ""){
+
+            foreach($computer in $computers){
+
+                try{
+
+                    $masterKeys += getcomputersoftware -computerName $computer
+
+                }catch{}
 
             }
 
-        }catch{
+        }else{
 
-            Write-Verbose "Unable to communicate with $Name."
+            try{
+
+                $masterKeys += getcomputersoftware -computerName $Name
+
+            }catch{}
 
         }
 
