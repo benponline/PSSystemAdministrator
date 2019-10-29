@@ -84,7 +84,7 @@ function Get-ComputerError{
 
             foreach($computer in $computers){
 
-                ##
+                $errors += Get-EventLog -ComputerName $computer -LogName System -EntryType Error -Newest $Newest | Select-Object -Property @{n="ComputerName";e={$computer}},TimeWritten,EventID,InstanceID,Message
 
             }
 
