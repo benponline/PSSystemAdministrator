@@ -84,22 +84,20 @@ function Get-ComputerError{
 
             foreach($computer in $computers){
 
-                $errors += Get-EventLog -ComputerName $computer -LogName System -EntryType Error -Newest $Newest | Select-Object -Property @{n="ComputerName";e={$computer}},TimeWritten,EventID,InstanceID,Message
+                try{
+
+                    $errors += Get-EventLog -ComputerName $computer -LogName System -EntryType Error -Newest $Newest | 
+                        Select-Object -Property @{n="ComputerName";e={$computer}},TimeWritten,EventID,InstanceID,Message
+
+                }catch{}
 
             }
 
         }else{
 
-            try{
-        
-                $errors += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
+            $errors += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | 
+                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
 
-            }catch{
-
-                Write-Verbose "Unable to communicate with $Name."
-
-            }
-            
         }
 
     }
@@ -162,49 +160,50 @@ function Get-ComputerInformation{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
+        [string]$Name = $env:COMPUTERNAME,
+
+        [string]$OrganizationalUnit = ""
 
     )
 
     begin{
 
-        $ErrorActionPreference = "Stop"
+        function getcomputerinformation{
 
-        $computerInfoList = @()
+            [CmdletBinding()]
+            Param(
+                
+                [string]$computerName
 
-    }
+            )
+            
+            $computerObjectProperties = @{
+                "ComputerName" = "";
+                "Model" = "";
+                "CPU" = "";
+                "MemoryGB" = "";
+                "StorageGB" = "";
+                "FreeSpaceGB" = "";
+                "Under20Percent" = "";
+                "CurrentUser" = "";
+                "IPAddress" = "";
+                "BootUpTime" = ""
+            }
 
-    process{
-
-        $computerObjectProperties = @{
-            "ComputerName" = "";
-            "Model" = "";
-            "CPU" = "";
-            "MemoryGB" = "";
-            "StorageGB" = "";
-            "FreeSpaceGB" = "";
-            "Under20Percent" = "";
-            "CurrentUser" = "";
-            "IPAddress" = "";
-            "BootUpTime" = ""
-        }
-
-        try{
-        
             $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
 
-            $computerInfo.computername = $Name
+            $computerInfo.computername = $computerName
 
-            $computerInfo.model = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property Model).model
+            $computerInfo.model = (Get-CimInstance -ComputerName $computerName -ClassName Win32_ComputerSystem -Property Model).model
 
-            $computerInfo.CPU = (Get-CimInstance -ComputerName $Name -ClassName Win32_Processor -Property Name).name
+            $computerInfo.CPU = (Get-CimInstance -ComputerName $computerName -ClassName Win32_Processor -Property Name).name
 
-            $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
+            $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $computerName -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
 
-            $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Size) | 
+            $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property Size) | 
                 Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
 
-            $computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Freespace) | 
+            $computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property Freespace) | 
                 Where-Object -Property DeviceID -eq "C:").freespace / 1GB),1)
 
             if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
@@ -217,17 +216,51 @@ function Get-ComputerInformation{
 
             }
 
-            $computerInfo.currentuser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
+            $computerInfo.currentuser = (Get-CimInstance -ComputerName $computerName -ClassName Win32_ComputerSystem -Property UserName).UserName
 
-            $computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).IPV4Address
+            $computerInfo.IPAddress = (Test-Connection -ComputerName $computerName -Count 1).IPV4Address
 
-            $computerInfo.BootUpTime = ([System.Management.ManagementDateTimeconverter]::ToDateTime((Get-WmiObject -Class Win32_OperatingSystem -computername $Name).LastBootUpTime)).ToString()
+            $computerInfo.BootUpTime = ([System.Management.ManagementDateTimeconverter]::ToDateTime((Get-WmiObject -Class Win32_OperatingSystem -computername $computerName).LastBootUpTime)).ToString()
 
-            $computerInfoList += $computerInfo
+            $computerInfo
 
-        }catch{
+            return
 
-            Write-Verbose "Unable to communicate with $Name."
+        }
+
+        $computerInfoList = @()
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+
+        }
+
+    }
+
+    process{
+
+        if($OrganizationalUnit -ne ""){
+
+            foreach($computer in $computers){
+
+                try{
+            
+                    $computerInfoList += getcomputerinformation -computerName $computer
+
+                }catch{}
+
+            }
+
+        }else{
+
+            try{
+            
+                $computerInfoList += getcomputerinformation -computerName $Name
+
+            }catch{}
 
         }
 
