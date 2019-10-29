@@ -1,4 +1,5 @@
 #cleanup scopes clean variables going in and out of functions
+#order functions aphabetically.
 
 function Get-ComputerError{
 
@@ -271,6 +272,223 @@ function Get-ComputerInformation{
     end{
 
         $computerInfoList | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress,BootUpTime
+
+        return
+
+    }
+
+}
+
+function Get-ComputerLastLogon{
+
+    <#
+
+    .SYNOPSIS
+    Gets the last time a computer was connected to an AD network.
+
+    .DESCRIPTION
+    Returns the name and last time a computer connected to the domain.
+    
+    .PARAMETER Name
+    Target computer.
+
+    .INPUTS
+    Can pipe host names or AD computer objects to function.
+
+    .OUTPUTS
+    PS object with computer name and the last time is was connected to the domain.
+
+    .NOTES
+    None.
+
+    .EXAMPLE
+    Get-ComputerLastLogon
+
+    Returns the last time the local host logged onto the domain.
+
+    .EXAMPLE
+    Get-ComputerLastLogon -Name "Borg"
+
+    Returns the last time the computer "Borg" logged onto the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME,
+
+        #new
+        [string]$OrganizationalUnit = ""
+        #
+
+    )
+
+    begin{
+
+        $lastLogonList = @()
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+
+        }
+
+    }
+
+    process{
+
+        if($OrganizationalUnit -ne ""){
+
+            foreach($computer in $computers){
+
+                $computerLastLogon = (Get-ADComputer $computer | Get-ADObject -Properties lastlogon).lastlogon
+
+                $lastLogonProperties = @{
+                    "Last Logon" = ([datetime]::fromfiletime($computerLastLogon));
+                    "Computer" = ($computer)
+                }
+                    
+                $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
+                            
+            }
+
+        }else{
+
+            $computerLastLogon = (Get-ADComputer $Name | Get-ADObject -Properties lastlogon).lastlogon
+
+            $lastLogonProperties = @{
+                "Last Logon" = ([datetime]::fromfiletime($computerLastLogon));
+                "Computer" = ($Name)
+            }
+
+            $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
+            
+        }
+        
+    }
+
+    end{
+
+        $lastLogonList | Select-Object -Property Computer,"Last Logon" | Sort-Object -Property Computer
+
+        return
+
+    }
+
+}
+
+function Get-ComputerOS{
+
+    <#
+
+    .SYNOPSIS
+    Get the operating system name of a computer.
+    
+    .DESCRIPTION
+    Get the operating system of a computer. Only includes name. Does not return build number or any other detailed info.
+    
+    .PARAMETER Name
+    Name of computer you want the operating system of.
+    
+    .INPUTS
+    Accepts pipeline input.
+    
+    .OUTPUTS
+    PSObject with computer name and operating system.
+    
+    .NOTES
+    Only works with Windows machines on a domain.
+    
+    .EXAMPLE
+    Get-ComputerOS -Name Computer1
+
+    Returns computer name and operating system.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    .LINK
+    Based on code from:
+    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME,
+
+        [string]$OrganizationalUnit = ""
+
+    )
+
+    begin{
+
+        $computersOS = @()
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+    
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$DomainInfo" | Sort-Object -Property Name).Name
+    
+        }
+
+    }
+
+    process{
+
+        if($OrganizationalUnit -ne ""){
+
+            foreach($computer in $computers){
+
+                try{
+                
+                    $computersOS += Get-CimInstance -ComputerName $computer -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property pscomputername,caption
+                    
+                }catch{
+        
+                    $computersOS += Get-WmiObject -ComputerName $computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+        
+                }
+        
+            }
+
+        }else{
+
+            try{
+                
+                $computersOS += Get-CimInstance -ComputerName $Name -ClassName Win32_OperatingSystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
+                #Command works for Windows 8 machines and newer.
+            
+            }catch{
+
+                $computersOS += Get-WmiObject -ComputerName $Name -Class Win32_OperatingSystem | Select-Object -Property PSComputerName,Caption
+                #Command works for Windows 7 machines and older.
+
+            }
+
+        }
+
+    }
+
+    end{
+
+        $computersOS
 
         return
 
@@ -987,222 +1205,9 @@ function Get-FailedLogon{
 
 }
 
-function Get-ComputerLastLogon{
 
-    <#
 
-    .SYNOPSIS
-    Gets the last time a computer was connected to an AD network.
 
-    .DESCRIPTION
-    Returns the name and last time a computer connected to the domain.
-    
-    .PARAMETER Name
-    Target computer.
-
-    .INPUTS
-    Can pipe host names or AD computer objects to function.
-
-    .OUTPUTS
-    PS object with computer name and the last time is was connected to the domain.
-
-    .NOTES
-    None.
-
-    .EXAMPLE
-    Get-ComputerLastLogon
-
-    Returns the last time the local host logged onto the domain.
-
-    .EXAMPLE
-    Get-ComputerLastLogon -Name "Borg"
-
-    Returns the last time the computer "Borg" logged onto the domain.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
-
-        #new
-        [string]$OrganizationalUnit = ""
-        #
-
-    )
-
-    begin{
-
-        $lastLogonList = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-
-        }
-
-    }
-
-    process{
-
-        if($OrganizationalUnit -ne ""){
-
-            foreach($computer in $computers){
-
-                $computerLastLogon = (Get-ADComputer $computer | Get-ADObject -Properties lastlogon).lastlogon
-
-                $lastLogonProperties = @{
-                    "Last Logon" = ([datetime]::fromfiletime($computerLastLogon));
-                    "Computer" = ($computer)
-                }
-                    
-                $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
-                            
-            }
-
-        }else{
-
-            $computerLastLogon = (Get-ADComputer $Name | Get-ADObject -Properties lastlogon).lastlogon
-
-            $lastLogonProperties = @{
-                "Last Logon" = ([datetime]::fromfiletime($computerLastLogon));
-                "Computer" = ($Name)
-            }
-
-            $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
-            
-        }
-        
-    }
-
-    end{
-
-        $lastLogonList | Select-Object -Property Computer,"Last Logon" | Sort-Object -Property Computer
-
-        return
-
-    }
-
-}
-
-function Get-ComputerOS{
-
-    <#
-
-    .SYNOPSIS
-    Get the operating system name of a computer.
-    
-    .DESCRIPTION
-    Get the operating system of a computer. Only includes name. Does not return build number or any other detailed info.
-    
-    .PARAMETER Name
-    Name of computer you want the operating system of.
-    
-    .INPUTS
-    Accepts pipeline input.
-    
-    .OUTPUTS
-    PSObject with computer name and operating system.
-    
-    .NOTES
-    Only works with Windows machines on a domain.
-    
-    .EXAMPLE
-    Get-ComputerOS -Name Computer1
-
-    Returns computer name and operating system.
-    
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    .LINK
-    Based on code from:
-    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
-
-        [string]$OrganizationalUnit = ""
-
-    )
-
-    begin{
-
-        $computersOS = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-    
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$DomainInfo" | Sort-Object -Property Name).Name
-    
-        }
-
-    }
-
-    process{
-
-        if($OrganizationalUnit -ne ""){
-
-            foreach($computer in $computers){
-
-                try{
-                
-                    $computersOS += Get-CimInstance -ComputerName $computer -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property pscomputername,caption
-                    
-                }catch{
-        
-                    $computersOS += Get-WmiObject -ComputerName $computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
-        
-                }
-        
-            }
-
-        }else{
-
-            try{
-                
-                $computersOS += Get-CimInstance -ComputerName $Name -ClassName Win32_OperatingSystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
-                #Command works for Windows 8 machines and newer.
-            
-            }catch{
-
-                $computersOS += Get-WmiObject -ComputerName $Name -Class Win32_OperatingSystem | Select-Object -Property PSComputerName,Caption
-                #Command works for Windows 7 machines and older.
-
-            }
-
-        }
-
-    }
-
-    end{
-
-        $computersOS
-
-        return
-
-    }
-
-}
 
 function Get-InactiveComputers{
 
@@ -1252,7 +1257,7 @@ function Get-InactiveComputers{
     
         [int]$MonthsOld = 3,
 
-        [string]$OrganizationalUnit
+        [string]$OrganizationalUnit = ""
     
     )
 
@@ -1353,7 +1358,7 @@ function Get-InactiveUsers{
 
         [int]$MonthsOld = 3,
     
-        [string]$OrganizationalUnit
+        [string]$OrganizationalUnit = ""
     
     )
 
@@ -1444,7 +1449,7 @@ function Get-OfflineComputers{
     [CmdletBinding()]
     Param(
     
-        [string]$OrganizationalUnit
+        [string]$OrganizationalUnit = ""
     
     )
 
@@ -1521,7 +1526,7 @@ function Get-OnlineComputers{
     [CmdletBinding()]
     Param(
 
-        [string]$OrganizationalUnit
+        [string]$OrganizationalUnit = ""
     
     )
 
