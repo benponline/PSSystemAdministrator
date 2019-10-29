@@ -913,7 +913,7 @@ function Get-FailedLogon{
 
         [int]$DaysBack = 1,
 
-        [string]$OrganizationalUnit
+        [string]$OrganizationalUnit = ""
 
     )
 
@@ -924,12 +924,14 @@ function Get-FailedLogon{
             [cmdletBinding()]
             param(
 
-                [string]$computerName
+                [string]$computerName,
+
+                [int]$days
 
             )
 
-            $failedLogin = Get-EventLog -ComputerName $Name -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($DaysBack * -1)) |
-                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID
+            $failedLogin = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($days * -1)) |
+                Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID
 
             $failedLogin
 
@@ -957,7 +959,7 @@ function Get-FailedLogon{
 
                 try{
 
-                    $failedLoginLog += getfailedlogon -computerName $computer
+                    $failedLoginLog += getfailedlogon -computerName $computer -days $DaysBack
 
                 }catch{}
 
@@ -967,7 +969,7 @@ function Get-FailedLogon{
 
             try{
 
-                $failedLoginLog += getfailedlogon -computerName $Name
+                $failedLoginLog += getfailedlogon -computerName $Name -days $DaysBack
 
             }catch{}
 
@@ -1039,15 +1041,13 @@ function Get-ComputerLastLogon{
 
     begin{
 
-        $ErrorActionPreference = "Stop"
-        
         $lastLogonList = @()
-
-        $domainInfo = (Get-ADDomain).DistinguishedName
 
         if($OrganizationalUnit -ne ""){
 
-            $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
 
         }
 
@@ -1059,9 +1059,11 @@ function Get-ComputerLastLogon{
 
             foreach($computer in $computers){
 
+                $computerLastLogon = (Get-ADComputer $computer | Get-ADObject -Properties lastlogon).lastlogon
+
                 $lastLogonProperties = @{
-                    "Last Logon" = ([datetime]::fromfiletime($computer.lastlogon));
-                    "Computer" = ($computer.name)
+                    "Last Logon" = ([datetime]::fromfiletime($computerLastLogon));
+                    "Computer" = ($computer)
                 }
                     
                 $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
@@ -1070,24 +1072,22 @@ function Get-ComputerLastLogon{
 
         }else{
 
-            $computer = Get-ADComputer $Name | Get-ADObject -Properties lastlogon
+            $computerLastLogon = (Get-ADComputer $Name | Get-ADObject -Properties lastlogon).lastlogon
 
             $lastLogonProperties = @{
-                "Last Logon" = ([datetime]::fromfiletime($computer.lastlogon));
-                "Computer" = ($computer.name)
+                "Last Logon" = ([datetime]::fromfiletime($computerLastLogon));
+                "Computer" = ($Name)
             }
 
-            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
+            $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
             
-            $lastLogonList += $lastLogonObject
-
         }
         
     }
 
     end{
 
-        $lastLogonList
+        $lastLogonList | Select-Object -Property Computer,"Last Logon" | Sort-Object -Property Computer
 
         return
 
