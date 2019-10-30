@@ -8,9 +8,7 @@ function Get-ComputerError{
     Gets system errors from a computer or computers.
 
     .DESCRIPTION
-    Gets system errors from a computer or computers. By default returns errors from local computer. Can return errors from 
-    remote computer(s) or computers in a specific organizational unit. Default number of errors returned is 5, but is 
-    adjustable.
+    Gets system errors from a computer or computers. By default returns errors from local computer. Can return errors from remote computer(s) or computers in a specific organizational unit. Default number of errors returned is 5, but is adjustable.
 
     .PARAMETER Name
     Specifies which computer to pull errors from.
@@ -28,8 +26,7 @@ function Get-ComputerError{
     PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, and Message.
 
     .NOTES
-    Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers 
-    that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
+    Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
 
     .EXAMPLE
     Get-ComputerError
@@ -138,35 +135,38 @@ function Get-ComputerError{
 
 }
 
-###
-
 function Get-ComputerInformation{
 
     <#
 
     .SYNOPSIS
-    Gets infomation about a computer.
+    Gets infomation about a computer or computers.
 
     .DESCRIPTION
-    This function gathers infomation about a computer or computers. By default it gathers info from the local host. The information 
-    includes computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent of storage is 
-    left, the current user, and IP address.
+    This function gathers infomation about a computer or computers. By default it gathers info from the local host. The information includes computer name, model, CPU, memory in GB, storage in GB, the current user, IP address, and last bootuptime.
 
     .PARAMETER Name
     Specifies which computer's information is gathered.
+
+    .PARAMETER OrganizationalUnit
+    Specifies the computer in an organizational unit to search.
 
     .INPUTS
     You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns an object with computer name, model, CPU, memory in GB, storage in GB, free space in GB, if less than 20 percent
-    of storage is left, and the current user.
+    Returns an object with computer name, model, CPU, memory in GB, storage in GB, the current user, IP address, and last boot time.
 
     .NOTES
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
 
     .EXAMPLE
-    Get-ComputerInformation -ComputerName Server1
+    Get-ComputerInformation
+
+    Returns computer information for the local host.
+
+    .EXAMPLE
+    Get-ComputerInformation -Name Server1
 
     Returns computer information for Server1.
 
@@ -174,6 +174,11 @@ function Get-ComputerInformation{
     Get-ADComputer -filter * | Get-ComputerInformation
 
     Returns computer information on all AD computers. 
+
+    .EXAMPLE
+    Get-ComputerInformation -OrganizationalUnit "Company Servers"
+
+    Returns computer information for all computers in the "Company Servers" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -210,8 +215,6 @@ function Get-ComputerInformation{
                 "CPU" = "";
                 "MemoryGB" = "";
                 "StorageGB" = "";
-                "FreeSpaceGB" = "";
-                "Under20Percent" = "";
                 "CurrentUser" = "";
                 "IPAddress" = "";
                 "BootUpTime" = ""
@@ -229,19 +232,6 @@ function Get-ComputerInformation{
 
             $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property Size) | 
                 Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
-
-            $computerInfo.freespaceGB = [math]::Round((((Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property Freespace) | 
-                Where-Object -Property DeviceID -eq "C:").freespace / 1GB),1)
-
-            if($computerInfo.freespacegb / $computerInfo.storagegb -le 0.2){
-                
-                $computerInfo.under20percent = "TRUE"
-
-            }else{
-
-                $computerInfo.under20percent = "FALSE"
-
-            }
 
             $computerInfo.currentuser = (Get-CimInstance -ComputerName $computerName -ClassName Win32_ComputerSystem -Property UserName).UserName
 
@@ -295,7 +285,7 @@ function Get-ComputerInformation{
 
     end{
 
-        $computerInfoList | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,FreeSpaceGB,Under20Percent,CurrentUser,IPAddress,BootUpTime
+        $computerInfoList | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime
 
         return
 
@@ -303,6 +293,7 @@ function Get-ComputerInformation{
 
 }
 
+### --- editing
 function Get-ComputerLastLogon{
 
     <#
