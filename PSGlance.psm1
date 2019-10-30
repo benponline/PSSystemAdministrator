@@ -299,13 +299,16 @@ function Get-ComputerLastLogon{
     <#
 
     .SYNOPSIS
-    Gets the last time a computer was connected to an AD network.
+    Gets the last time a computer or computers were connected to the domain.
 
     .DESCRIPTION
-    Returns the name and last time a computer connected to the domain.
+    Returns the name and last time a computer connected to the domain. By default targets localhost. Can target a remote computer, computers, or organizational unit.
     
     .PARAMETER Name
     Target computer.
+
+    .PARAMETER OrganizationalUnit
+    Targets computers in an organiational unit.
 
     .INPUTS
     Can pipe host names or AD computer objects to function.
@@ -325,6 +328,16 @@ function Get-ComputerLastLogon{
     Get-ComputerLastLogon -Name "Borg"
 
     Returns the last time the computer "Borg" logged onto the domain.
+
+    .EXAMPLE
+    Get-ComputerLastLog -OrganizationalUnit "Company Servers"
+
+    Returns last logon time for computers in "Company Servers".
+
+    .EXAMPLE
+    "Computer1","Computer2" | Get-ComputerLastLogon
+
+    Returns last logon time for "Computer1" and "Computer2".
 
     .LINK
     By Ben Peterson
@@ -348,6 +361,30 @@ function Get-ComputerLastLogon{
 
     begin{
 
+        function getcomputerlastlogon{
+
+            [cmdletBinding()]
+            Param(
+
+                [string]$computerName
+
+            )
+
+            $lastLogonTime = (Get-ADComputer $computerName | Get-ADObject -Properties lastlogon).lastlogon
+
+            $lastLogonProperties = @{
+                "Last Logon" = ([datetime]::fromfiletime($lastLogonTime));
+                "Computer" = ($computerName)
+            }
+                
+            $lastLogon = New-Object -TypeName PSObject -Property $lastLogonProperties
+
+            $lastLogon
+
+            return
+
+        }
+
         $lastLogonList = @()
 
         if($OrganizationalUnit -ne ""){
@@ -366,28 +403,14 @@ function Get-ComputerLastLogon{
 
             foreach($computer in $computers){
 
-                $computerLastLogon = (Get-ADComputer $computer | Get-ADObject -Properties lastlogon).lastlogon
+                $lastLogonList += getcomputerlastlogon -computerName $computer
 
-                $lastLogonProperties = @{
-                    "Last Logon" = ([datetime]::fromfiletime($computerLastLogon));
-                    "Computer" = ($computer)
-                }
-                    
-                $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
-                            
             }
 
         }else{
 
-            $computerLastLogon = (Get-ADComputer $Name | Get-ADObject -Properties lastlogon).lastlogon
+            $lastLogonList += getcomputerlastlogon -computerName $Name
 
-            $lastLogonProperties = @{
-                "Last Logon" = ([datetime]::fromfiletime($computerLastLogon));
-                "Computer" = ($Name)
-            }
-
-            $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
-            
         }
         
     }
