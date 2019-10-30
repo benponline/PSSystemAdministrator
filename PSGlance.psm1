@@ -293,7 +293,6 @@ function Get-ComputerInformation{
 
 }
 
-### --- editing
 function Get-ComputerLastLogon{
 
     <#
@@ -353,10 +352,8 @@ function Get-ComputerLastLogon{
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME,
 
-        #new
         [string]$OrganizationalUnit = ""
-        #
-
+    
     )
 
     begin{
@@ -425,41 +422,56 @@ function Get-ComputerLastLogon{
 
 }
 
+### --- editing
 function Get-ComputerOS{
 
     <#
 
     .SYNOPSIS
-    Get the operating system name of a computer.
-    
+    Get the operating system name of a computer or computers.
+
     .DESCRIPTION
-    Get the operating system of a computer. Only includes name. Does not return build number or any other detailed info.
+    Gets the Windows operating system of the local host. Does not return build number or any other detailed info. Can also get the operating system from a remote computer or group of computers, including those grouped into organizational units.
     
     .PARAMETER Name
     Name of computer you want the operating system of.
+
+    .PARAMETER OrganizationalUnit
+    Returns the operating system of computers in an organizational unit.
     
     .INPUTS
-    Accepts pipeline input.
+    Accepts pipeline input. Host names and AD computer objects.
     
     .OUTPUTS
     PSObject with computer name and operating system.
     
     .NOTES
     Only works with Windows machines on a domain.
-    
+
+    .EXAMPLE
+    Get-ComputerOS
+
+    Returns the local host's operating system.
+
     .EXAMPLE
     Get-ComputerOS -Name Computer1
 
     Returns computer name and operating system.
+
+    .EXAMPLE
+    Get-CommuterOS -OrganizationalUnit "Company Computers"
+
+    Returns the operating system of all computers in the "Company Computers" operating system.
+
+    .EXAMPLE
+    "Computer1","Computer2" | Get-ComputerOS
     
+    Returns the operating system of "Computer1" and "Computer2".
+
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
-    .LINK
-    Based on code from:
-    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
 
     #>
 
@@ -476,7 +488,32 @@ function Get-ComputerOS{
 
     begin{
 
-        $computersOS = @()
+        function getcomputeros{
+
+            [cmdletBinding()]
+            param(
+
+                [string]$computerName
+
+            )
+
+            try{
+
+                $computerOS = Get-CimInstance -ComputerName $computerName -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property pscomputername,caption
+                
+            }catch{
+    
+                $computerOS = Get-WmiObject -ComputerName $computerName -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+    
+            }
+
+            $computerOS
+
+            return
+
+        }
+
+        $computerOSList = @()
 
         if($OrganizationalUnit -ne ""){
 
@@ -494,31 +531,13 @@ function Get-ComputerOS{
 
             foreach($computer in $computers){
 
-                try{
+                $computerOSList += getcomputeros -computerName $computer
                 
-                    $computersOS += Get-CimInstance -ComputerName $computer -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property pscomputername,caption
-                    
-                }catch{
-        
-                    $computersOS += Get-WmiObject -ComputerName $computer -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
-        
-                }
-        
             }
 
         }else{
 
-            try{
-                
-                $computersOS += Get-CimInstance -ComputerName $Name -ClassName Win32_OperatingSystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
-                #Command works for Windows 8 machines and newer.
-            
-            }catch{
-
-                $computersOS += Get-WmiObject -ComputerName $Name -Class Win32_OperatingSystem | Select-Object -Property PSComputerName,Caption
-                #Command works for Windows 7 machines and older.
-
-            }
+            $computerOSList += getcomputeros -computerName $Name
 
         }
 
@@ -526,7 +545,7 @@ function Get-ComputerOS{
 
     end{
 
-        $computersOS
+        $computerOSList
 
         return
 
