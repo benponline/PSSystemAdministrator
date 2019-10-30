@@ -1,16 +1,16 @@
-#cleanup scopes clean variables going in and out of functions
-#order functions aphabetically.
+#cleanup scopes clean variables going in and out of subfunctions
 
 function Get-ComputerError{
 
     <#
 
     .SYNOPSIS
-    Gets system errors from a computer.
+    Gets system errors from a computer or computers.
 
     .DESCRIPTION
-    Returns system errors from a computer. By default it gathers them from the local computer. Computer and number of errors
-    returned can be set by user.
+    Gets system errors from a computer or computers. By default returns errors from local computer. Can return errors from 
+    remote computer(s) or computers in a specific organizational unit. Default number of errors returned is 5, but is 
+    adjustable.
 
     .PARAMETER Name
     Specifies which computer to pull errors from.
@@ -18,16 +18,18 @@ function Get-ComputerError{
     .PARAMETER Newest
     Specifies the numbers of errors returned.
 
+    .PARAMETER OrganizationalUnit
+    Specifies the organizational unit in active directory the function will return errors from.
+
     .INPUTS
     Host names or AD computer objects.
 
     .OUTPUTS
-    PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, 
-    and Message.
+    PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, and Message.
 
     .NOTES
     Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers 
-    that are searched.
+    that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
 
     .EXAMPLE
     Get-ComputerError
@@ -43,6 +45,11 @@ function Get-ComputerError{
     "computer1","computer2" | Get-ComputerError
 
     This cmdlet returns system errors from "computer1" and "computer2".
+
+    .EXAMPLE
+    Get-ComputerError -OrganizationalUnit "Company Servers"
+
+    Returns the last 5 errors from all computers in the "Company Servers" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -67,9 +74,27 @@ function Get-ComputerError{
 
     begin{
 
-        $ErrorActionPreference = "Stop"
+        function getcomputererror{
 
-        $errors = @()
+            [cmdletBinding()]
+            param(
+
+                [string]$computerName,
+
+                [int]$first
+
+            )
+
+            $errors += Get-EventLog -ComputerName $computerName -LogName System -EntryType Error -Newest $first | 
+                Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID,InstanceID,Message
+
+            $errors
+
+            return
+
+        }
+
+        $errorLog = @()
 
         if($OrganizationalUnit -ne ""){
 
@@ -89,8 +114,7 @@ function Get-ComputerError{
 
                 try{
 
-                    $errors += Get-EventLog -ComputerName $computer -LogName System -EntryType Error -Newest $Newest | 
-                        Select-Object -Property @{n="ComputerName";e={$computer}},TimeWritten,EventID,InstanceID,Message
+                    $errorlog += getcomputererror -computerName $computer -first $Newest
 
                 }catch{}
 
@@ -98,8 +122,7 @@ function Get-ComputerError{
 
         }else{
 
-            $errors += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | 
-                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
+            $errorLog += getcomputererror -computerName $Name -first $Newest
 
         }
 
@@ -107,14 +130,15 @@ function Get-ComputerError{
 
     end{
 
-        $errors | Sort-Object -Property ComputerName | 
-            Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
+        $errorLog | Sort-Object -Property ComputerName | Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
 
         return
 
     }
 
 }
+
+###
 
 function Get-ComputerInformation{
 
