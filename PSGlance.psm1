@@ -422,7 +422,6 @@ function Get-ComputerLastLogon{
 
 }
 
-### --- editing
 function Get-ComputerOS{
 
     <#
@@ -553,6 +552,7 @@ function Get-ComputerOS{
 
 }
 
+### --- editing
 function Get-ComputerSoftware{
 
     <#
