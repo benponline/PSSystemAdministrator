@@ -1732,13 +1732,12 @@ function Get-UserLastLogon{
 
 }
 
-### --- editing
 function Get-UserLogon{
 
     <#
 
     .SYNOPSIS
-    Finds all computers where a specific user is logged in.
+    Finds all computers where a specific user, or users, is logged in.
 
     .DESCRIPTION
     Searches domain computers and returns a list of computers where a specific user is logged in. 
