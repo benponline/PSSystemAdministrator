@@ -552,26 +552,27 @@ function Get-ComputerOS{
 
 }
 
-### --- editing
 function Get-ComputerSoftware{
 
     <#
 
     .SYNOPSIS
-    Gets all of the installed software on a computer.
+    Gets all of the installed software on a computer or computers.
 
     .DESCRIPTION
-    This function gathers all of the installed software on a computer or group of computers.  
+    This function gathers all of the installed software on a computer or group of computers. By default gathers from the local host. Can target a remote computer, computers, or organizational unit.
 
     .PARAMETER Name
     Specifies the computer this function will gather information from. 
+
+    .PARAMETER OrganizationalUnit
+    Targets computers in a specific organizational unit.
 
     .INPUTS
     You can pipe host names or computer objects input to this function.
 
     .OUTPUTS
-    Returns PS objects containing computer name, software name, version, installdate, uninstall 
-    command, registry path.
+    Returns PS objects containing computer name, software name, version, installdate, uninstall command, registry path.
 
     .NOTES
     Requires remote registry service running on remote machines.
@@ -587,9 +588,14 @@ function Get-ComputerSoftware{
     This cmdlet returns all the software installed on "Computer".
 
     .EXAMPLE
-    Get-ADComputer -Filter * | Get-ComputerSoftware
+    Get-ComputerSoftware -Filter * | Get-ComputerSoftware
 
     This cmdlet returns the installed software on all computers on the domain.
+
+    .EXAMPLE
+    Get-ComputerSoftware -OrganizationalUnit "Company Computers"
+
+    Returns the software installed on each computer in the "Company Computers" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -754,8 +760,7 @@ function Get-DisabledComputers{
     Gets a list of all computers in AD that are currently disabled.
 
     .DESCRIPTION
-    Returns a list of computers from AD that are disabled with information including name, enabled status, DNSHostName, and 
-    DistinguishedName.
+    Returns a list of computers from AD that are disabled with information including name, enabled status, DNSHostName, and DistinguishedName.
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -775,7 +780,7 @@ function Get-DisabledComputers{
     Returns a list of all AD computers that are currently disabled.
 
     .EXAMPLE
-    Get-ADDisabledComputer -OrganizationalUnit Servers
+    Get-ADDisabledComputer -OrganizationalUnit "Servers"
 
     Returns a list of all AD computers in the organizational unit "Servers" that are currently disabled.
 
@@ -790,7 +795,7 @@ function Get-DisabledComputers{
     [CmdletBinding()]
     Param(
     
-        [string]$OrganizationalUnit
+        [string]$OrganizationalUnit = ""
     
     )
     
@@ -813,6 +818,7 @@ function Get-DisabledComputers{
     
 }
 
+### --- editing
 function Get-DisabledUsers{
     
     <#
