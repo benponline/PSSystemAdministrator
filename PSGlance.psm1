@@ -1459,7 +1459,6 @@ function Get-InactiveUsers{
 
 }
 
-### --- editing
 function Get-OfflineComputers{
 
     <#
@@ -1468,8 +1467,7 @@ function Get-OfflineComputers{
     Gets a list of all computers in AD that are currently offline. 
 
     .DESCRIPTION
-    Returns a list of computers from AD that are offline with information including name, DNS host name, and distinguished 
-    name. By default searches the whole AD. Can be limited to a specific organizational unit.
+    Returns a list of computers from AD that are offline with information including name, DNS host name, and distinguished name. By default searches the whole AD. Can be limited to a specific organizational unit.
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -1484,12 +1482,12 @@ function Get-OfflineComputers{
     Firewalls must be configured to allow ping requests.
 
     .EXAMPLE
-    Get-ADOfflineComputer
+    Get-OfflineComputer
 
     Returns a list of all AD computers that are currently offline.
 
     .EXAMPLE
-    Get-ADOfflineComputer -OrganizationalUnit "WorkStations"
+    Get-OfflineComputer -OrganizationalUnit "WorkStations"
 
     Returns a list of all AD computers that are currently offline in the "Workstations" organizational unit.
 
@@ -1511,13 +1509,9 @@ function Get-OfflineComputers{
     
     if($OrganizationalUnit -eq ""){
 
-        Write-Verbose "Gathering all computer names."
-
         $computers = Get-ADComputer -Filter *
 
     }else{
-
-        Write-Verbose "Gathering computer names from $OrganizationalUnit OU."
 
         $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
 
@@ -1525,11 +1519,9 @@ function Get-OfflineComputers{
 
     $offlineComputers = @()
     
-    Write-Verbose "Testing for offline computers."
-
     foreach($computer in $computers){
     
-        if(!(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet)){
+        if(!(Test-Connection -ComputerName ($computer).name -Count 1 -Quiet)){
     
             $offlineComputers += $computer
     
@@ -1543,6 +1535,7 @@ function Get-OfflineComputers{
     
 }
 
+### --- editing
 function Get-OnlineComputers{
 
     <#
