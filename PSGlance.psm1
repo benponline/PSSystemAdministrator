@@ -1368,7 +1368,6 @@ function Get-InactiveComputers{
 
 }
 
-### --- editing
 function Get-InactiveUsers{
 
     <#
@@ -1419,7 +1418,7 @@ function Get-InactiveUsers{
     [CmdletBinding()]
     Param(
 
-        [int]$DaysInactive = 3,
+        [int]$DaysInactive = 30,
     
         [string]$OrganizationalUnit = ""
     
@@ -1433,8 +1432,7 @@ function Get-InactiveUsers{
 
     }else{
 
-        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
+        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
 
     }
     
@@ -1442,16 +1440,14 @@ function Get-InactiveUsers{
 
     foreach($user in $users){
     
-        if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddMonths($monthsOld * -1))){
+        if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddDays($DaysInactive * -1))){
     
             $lastLogonProperties = @{
                 "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
                 "User" = ($user.name)
             }
     
-            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
-        
-            $lastLogonList += $lastLogonObject
+            $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
         
         }
     
@@ -1463,6 +1459,7 @@ function Get-InactiveUsers{
 
 }
 
+### --- editing
 function Get-OfflineComputers{
 
     <#
