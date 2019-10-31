@@ -1374,11 +1374,10 @@ function Get-InactiveUsers{
     <#
 
     .SYNOPSIS
-    Gets a list of all the users in AD that have not logged on for an exstended period of time.
+    Gets a list of all the users in AD that have been inactive for a period of time.
 
     .DESCRIPTION
-    Returns a list of all the users in AD that have not been online for a number of months. The default amount of months is 
-    3. Can be set by the user by passing a value to MonthsOld. Function can also be focused on a specific OU.
+    Returns a list of users in active directory that have been inactive for a number of days. The default number of days is 30. Function can also be focused on a specific OU.
 
     .PARAMETER MonthsOld
     Determines how long the user account has to be inactive for it to be returned.
@@ -1396,19 +1395,19 @@ function Get-InactiveUsers{
     Function is intended to help find inactive user accounts.
 
     .EXAMPLE
-    Get-ADInactiveUser
+    Get-InactiveUser
 
     Lists all users in the domain that have not checked in for more than 3 months.
 
     .EXAMPLE
-    Get-ADInactiveUser -MonthsOld 2
+    Get-InactiveUser -DaysInactive 2
 
-    Lists all users in the domain that have not checked in for more than 2 months.
+    Lists all users in the domain that have not checked in for more than 2 days.
 
     .EXAMPLE
-    Get-ADInactiveUser -MonthsOld 3 -OrganizationalUnit "Farmers"
+    Get-InactiveUser -DaysInactive 45 -OrganizationalUnit "Company Servers"
 
-    Lists all users in the domain that have not checked in for more than 3 months in the "Farmers" organizational unit.
+    Lists all users in the domain that have not checked in for more than 45 days in the "Company Servers" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -1420,7 +1419,7 @@ function Get-InactiveUsers{
     [CmdletBinding()]
     Param(
 
-        [int]$MonthsOld = 3,
+        [int]$DaysInactive = 3,
     
         [string]$OrganizationalUnit = ""
     
@@ -1430,13 +1429,9 @@ function Get-InactiveUsers{
     
     if($OrganizationalUnit -eq ""){
 
-        Write-Verbose "Gathering all computers."
-
         $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
 
     }else{
-
-        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
 
         $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
             Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
@@ -1445,8 +1440,6 @@ function Get-InactiveUsers{
     
     $lastLogonList = @()
 
-    Write-Verbose "Filtering for users that have not logged on for $MonthsOld months."
-    
     foreach($user in $users){
     
         if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddMonths($monthsOld * -1))){
