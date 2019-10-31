@@ -1535,7 +1535,6 @@ function Get-OfflineComputers{
     
 }
 
-### --- editing
 function Get-OnlineComputers{
 
     <#
@@ -1544,8 +1543,7 @@ function Get-OnlineComputers{
     Gets a list of AD computers that are currently online.
 
     .DESCRIPTION
-    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are 
-    currently online. 
+    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are currently online. 
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -1559,9 +1557,14 @@ function Get-OnlineComputers{
     .NOTES
 
     .EXAMPLE
-    Get-ADOnlineComputer
+    Get-OnlineComputers
 
     Returns list of all AD computers that are currently online.
+
+    .EXAMPLE
+    Get-OnlineComputers
+
+    Returns the online computers from an organizational unit.
 
     .LINK
     By Ben Peterson
@@ -1581,13 +1584,9 @@ function Get-OnlineComputers{
     
     if($OrganizationalUnit -eq ""){
 
-        Write-Verbose "Gathering all computers."
-
         $computers = Get-ADComputer -Filter *
 
     }else{
-
-        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
 
         $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
 
@@ -1595,8 +1594,6 @@ function Get-OnlineComputers{
 
     $onlineComputers = @()
     
-    Write-Verbose "Testing for online computers."
-
     foreach($computer in $computers){
     
         if(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet){
@@ -1618,13 +1615,16 @@ function Get-UserLastLogon{
     <#
 
     .SYNOPSIS
-    Gets the last time a user logged onto the domain.
+    Gets the last time a user, or group of users, logged onto the domain.
 
     .DESCRIPTION
-    Returns  the last time a user or group of users logged onto the domain.
+    Returns the last time a user or group of users logged onto the domain. Scope can be limited to an organizational unit.
 
     .PARAMETER SamAccountName
     User name.
+
+    .PARAMETER OrganizationalUnit
+    Returns information on users in a specific organizational unit.
 
     .INPUTS
     You can pipe user names and user AD objects to this function.
@@ -1645,6 +1645,11 @@ function Get-UserLastLogon{
 
     Gets the last time all users in AD logged onto the domain.
 
+    .EXAMPLE
+    Get-UserLastLogon -OrganizationalUnit "Company Users"
+
+    Returns the last logon time for all users in the organizational unit "Company Users".
+
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
@@ -1664,14 +1669,30 @@ function Get-UserLastLogon{
 
     begin{
 
+        function getuserlastlogon{
+
+            [cmdletBinding()]
+            param(
+
+                [string]$Name
+
+            )
+
+                $userlastLogon = (Get-ADuser $Name | Get-ADObject -Properties lastlogon | Select-Object -Property @{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}).LastLogon
+
+                $userLastLogon
+
+                return
+
+        }
+
         $lastLogonList = @()
 
         if($OrganizationalUnit -ne ""){
 
             $domainInfo = (Get-ADDomain).DistinguishedName
 
-            $users = Get-ADuser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon | 
-                Select-Object -Property lastlogon,name
+            $users = (Get-ADuser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").SamAccountName
     
         }
 
@@ -1683,28 +1704,19 @@ function Get-UserLastLogon{
 
             foreach($user in $users){
 
-                $lastLogonProperties = @{
-                    "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
-                    "User" = ($user.name)
+                $lastLogonList += [PSCustomObject]@{`
+                    "LastLogon" = (getuserlastlogon -Name $user);`
+                    "SamAccountName" = $user
                 }
-            
-                $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
                 
             }
 
         }else{
 
-            $user = Get-ADUser -Identity $SamAccountName | Get-ADObject -Properties lastlogon | 
-                Select-Object -Property lastlogon,name 
-
-            $lastLogonProperties = @{
-                "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
-                "User" = ($user.name)
+            $lastLogonList += [PSCustomObject]@{`
+                "LastLogon" = (getuserlastlogon -Name $SamAccountName);`
+                "SamAccountName" = $SamAccountName
             }
-
-            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
-        
-            $lastLogonList += $lastLogonObject
 
         }
         
@@ -1712,7 +1724,7 @@ function Get-UserLastLogon{
 
     end{
 
-        $lastLogonList | Select-Object -Property User,LastLogon
+        $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
 
         return
 
@@ -1720,6 +1732,7 @@ function Get-UserLastLogon{
 
 }
 
+### --- editing
 function Get-UserLogon{
 
     <#
