@@ -818,7 +818,6 @@ function Get-DisabledComputers{
     
 }
 
-### --- editing
 function Get-DisabledUsers{
     
     <#
@@ -827,8 +826,7 @@ function Get-DisabledUsers{
     Gets a list of all users in AD that are currently disabled. 
 
     .DESCRIPTION
-    Returns a list of users from AD that are disabled with information including name, enabled, and user principal name. 
-    Function can be limited in scope to a specific organizational unit.
+    Returns a list of users from AD that are disabled with information including name, enabled, and user principal name. Function can be limited in scope to a specific organizational unit.
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -843,12 +841,12 @@ function Get-DisabledUsers{
     Firewalls must be configured to allow ping requests.
 
     .EXAMPLE
-    Get-ADDisabledUser
+    Get-DisabledUsers
 
     Returns a list of all AD users that are currently disabled.
 
     .EXAMPLE
-    Get-ADDisabledUser -OrganizationalUnit "Employees"
+    Get-DisabledUsers -OrganizationalUnit "Employees"
 
     Returns a list of all AD users that are currently disabled in the "Employees" organizational unit.
 
@@ -862,7 +860,7 @@ function Get-DisabledUsers{
     [CmdletBinding()]
     Param(
     
-        [string]$OrganizationalUnit
+        [string]$OrganizationalUnit = ""
     
     )
 
@@ -878,8 +876,7 @@ function Get-DisabledUsers{
 
         Write-Verbose "Gathering disabled users in the $OrganizationalUnit OU."
 
-        $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Where-Object -Property Enabled -Match False
+        $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Where-Object -Property Enabled -Match False
 
     }
 
@@ -889,7 +886,8 @@ function Get-DisabledUsers{
 
 }
 
-function Get-DiskHealth{
+### --- editing
+function Get-PhysicalDiskInformation{
 
     <#
 
@@ -942,7 +940,7 @@ function Get-DiskHealth{
 
     begin{
 
-        function getdiskhealth{
+        function getphysicaldiskinformation{
 
             [cmdletBinding()]
             param(
@@ -951,10 +949,12 @@ function Get-DiskHealth{
 
             )
 
-            $disks += Get-PhysicalDisk -CimSession $computerName | 
-                Where-Object -Property HealthStatus | 
+            $disks = Get-PhysicalDisk -CimSession $computerName | 
                 Select-Object -Property @{n="ComputerName";e={$computerName}},`
-                FriendlyName,MediaType,OperationalStatus,HealthStatus,`
+                FriendlyName,`
+                MediaType,`
+                OperationalStatus,`
+                HealthStatus,`
                 @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
 
             $disks
@@ -963,7 +963,7 @@ function Get-DiskHealth{
 
         }
 
-        $physicalDisk = @()
+        $physicalDiskList = @()
 
         if($OrganizationalUnit -ne ""){
 
@@ -979,31 +979,23 @@ function Get-DiskHealth{
 
         if($OrganizationalUnit -ne ""){
 
-            try{
+            foreach($computer in $computers){
 
-                foreach($computer in $computers){
+                    $physicalDiskList += getphysicaldiskinformation -computerName $computer
 
-                    $physicalDisk += getdiskhealth -computerName $computer
-
-                }
-
-            }catch{}
+            }
 
         }else{
 
-            try{
-
-                $physicalDisk += getdiskhealth -computerName $Name
+            $physicalDiskList += getphysicaldiskinformation -computerName $Name
             
-            }catch{}
-
         }
 
     }
 
     end{
 
-        $physicalDisk | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
+        $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
 
         Return
 
@@ -1011,7 +1003,7 @@ function Get-DiskHealth{
 
 }
 
-function Get-DriveSpace{
+function Get-DiskInformation{
 
     <#
 
