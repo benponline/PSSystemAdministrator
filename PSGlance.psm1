@@ -886,39 +886,50 @@ function Get-DisabledUsers{
 
 }
 
-### --- editing
 function Get-PhysicalDiskInformation{
 
     <#
 
     .SYNOPSIS
-    Gets the health status of the physical disks off a computer.
+    Gets the health status of the physical disks of a computer or computers.
 
     .DESCRIPTION
-    Returns the health status of the physical disks of the local computer, remote computer, or group of computers.
+    Returns the health status of the physical disks of the local computer, remote computer, group of computers, or computers in an organizational unit.
 
     .PARAMETER Name
     Specifies the computer the fuction will gather information from.
+
+    .PARAMETER OrganizationalUnit
+    Pulls information from computers in an organizational unit.
 
     .INPUTS
     You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns objects with disk info including computer name, friendly name, media type, operational status, health 
-    status, and size in GB.
+    Returns objects with disk info including computer name, friendly name, media type, operational status, health status, and size in GB.
 
     .NOTES
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
 
     .EXAMPLE
-    Get-DiskHealth
+    Get-PhysicalDiskInformation
 
     Returns disk health information for the local computer.
 
     .EXAMPLE
-    Get-DiskHealth -Name Computer1
+    Get-PhysicalDiskInformation -Name Computer1
 
     Returns disk health information for the computer named Computer1.
+
+    .EXAMPLE
+    "computer1","computer2" | Get-PhysicalDiskInformation
+
+    Returns physical disk information from "computer1" and "computer2".
+
+    .EXAMPLE
+    Get-PhysicalDiskInformation -OrganizationalUnit "Company Servers"
+
+    Returns physical disk information from all computers in the "Company Servers" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -1003,6 +1014,7 @@ function Get-PhysicalDiskInformation{
 
 }
 
+### --- editing
 function Get-DiskInformation{
 
     <#
