@@ -1014,7 +1014,6 @@ function Get-PhysicalDiskInformation{
 
 }
 
-### --- editing
 function Get-DriveInformation{
 
     <#
@@ -1155,16 +1154,19 @@ function Get-FailedLogon{
     <#
 
     .SYNOPSIS
-    Gets a list of failed logon events from a computer.
+    Gets a list of failed logon events from a computer or computers.
 
     .DESCRIPTION
-    This function can return failed logon events from the local computer, remote computer, or group of computers.
+    This function returns failed logon events from the local computer, remote computer, or group of computers.
 
     .PARAMETER Name
     Specifies the computer the function gathers information from.
 
     .PARAMETER DaysBack
     Determines how many days in the past the function will search for failed log ons.
+
+    .PARAMETER OrganizationalUnit
+    Function will return information from computers in the passed organizatonal unit.
 
     .INPUTS
     You can pipe host names or AD computer objects.
@@ -1183,6 +1185,11 @@ function Get-FailedLogon{
     Get-FailedLogon -Name "Server"
 
     Returns failed logon events from computer "Server".
+
+    .EXAMPLE
+    Get-FailedLogon -OrganizationalUnit "Company Servers"
+
+    Returns failed logon attempts from computers in the "Company Servers" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -1234,7 +1241,7 @@ function Get-FailedLogon{
 
         }
 
-        $failedLoginLog = @()
+        $failedLoginList = @()
 
     }
 
@@ -1246,7 +1253,7 @@ function Get-FailedLogon{
 
                 try{
 
-                    $failedLoginLog += getfailedlogon -computerName $computer -days $DaysBack
+                    $failedLoginList += getfailedlogon -computerName $computer -days $DaysBack
 
                 }catch{}
 
@@ -1256,7 +1263,7 @@ function Get-FailedLogon{
 
             try{
 
-                $failedLoginLog += getfailedlogon -computerName $Name -days $DaysBack
+                $failedLoginList += getfailedlogon -computerName $Name -days $DaysBack
 
             }catch{}
 
@@ -1266,7 +1273,7 @@ function Get-FailedLogon{
 
     end{
 
-        $failedLoginLog | Select-Object -Property ComputerName,TimeWritten,EventID
+        $failedLoginList | Select-Object -Property ComputerName,TimeWritten,EventID
 
         return
 
@@ -1274,26 +1281,21 @@ function Get-FailedLogon{
 
 }
 
-
-
-
-
 function Get-InactiveComputers{
 
     <#
 
     .SYNOPSIS
-    Gets a list of all the computers in AD that have not been online for a specific number of months.
+    Gets a list of computers that have been offline for a specific number of days.
 
     .DESCRIPTION
-    Returns a list of all the computers in AD that have not been online a number of months. The default amount of months is
-    3. Can be set by the user by passing a value to MonthsOld. Can be limited to a specific organizational unit.
+    Returns a list of computers in AD that have not been online a number of days. The default amount of days is 30. By default all computers are checked. Can be limited to a specific organizational unit.
 
-    .PARAMETER MonthsOld
+    .PARAMETER DaysInactive
     Determines how long the computer account has to be inactive for it to be returned.
 
     .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
+    Focuses the function on a specific organizational unit.
 
     .INPUTS
     None.
@@ -1302,17 +1304,16 @@ function Get-InactiveComputers{
     PS objects with information including computer names and the date they were last connected to the domain.
 
     .NOTES
-    Function is intended to help find retired computers that have not been removed from AD.
 
     .EXAMPLE
-    Get-ADInactiveComputer
+    Get-InactiveComputer
 
     Lists all computers in the domain that have not been online for more than 6 months.
 
     .EXAMPLE
-    Get-ADInactiveComputer -MonthsOld 2
+    Get-InactiveComputer -DaysInactive 35
 
-    Lists all computers in the domain that have not checked in for more than 2 months.
+    Lists all computers in the domain that have not been on the network for 35 days.
 
     .LINK
     By Ben Peterson
@@ -1324,7 +1325,7 @@ function Get-InactiveComputers{
     [CmdletBinding()]
     Param(
     
-        [int]$MonthsOld = 3,
+        [int]$DaysInactive = 30,
 
         [string]$OrganizationalUnit = ""
     
@@ -1334,26 +1335,19 @@ function Get-InactiveComputers{
     
     if($OrganizationalUnit -eq ""){
 
-        Write-Verbose "Gathering all computers."
-
         $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
 
     }else{
 
-        Write-Verbose "Gathering computers in the $OrganizationalUnit OU."
-
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
 
     }
 
     $lastLogonList = @()
 
-    Write-Verbose "Filtering for computers that have not connected to the domain in $MonthsOld months."
-
     foreach($computer in $computers){
     
-        if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddMonths(($monthsOld * -1)))){
+        if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddDays(($DaysInactive * -1)))){
     
             $lastLogonProperties = @{
                 "LastLogon" = ([datetime]::fromfiletime($computer.lastlogon));
@@ -1374,6 +1368,7 @@ function Get-InactiveComputers{
 
 }
 
+### --- editing
 function Get-InactiveUsers{
 
     <#
