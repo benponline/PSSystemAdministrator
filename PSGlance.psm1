@@ -1015,18 +1015,16 @@ function Get-PhysicalDiskInformation{
 }
 
 ### --- editing
-function Get-DiskInformation{
+function Get-DriveInformation{
 
     <#
 
     .SYNOPSIS
-    Gets information for the drives on a computer including computer name, drive, volume, name, 
-    size, free space, and indicates those under 20% desc space remaining.
+    Gets information about the drives on a computer or computers.
 
     .DESCRIPTION
-    Gathers information from the drives on a computer including computer name, drive, volume, name, 
-    size, free space, and indicates those under 20% desc space remaining.
-
+    Returns information from the drives on a computer, remote computer, or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
+    
     .PARAMETER Name
     Specifies the computer the function will gather information from.
 
@@ -1034,25 +1032,29 @@ function Get-DiskInformation{
     You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, 
-    volume name, size, free space, and indicates those under 20% desc space remaining.  
+    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
 
     .NOTES
 
     .EXAMPLE
-    Get-DriveSpace
+    Get-DriveInformation
 
     Gets drive information for the local host.
 
     .EXAMPLE
-    Get-DriveSpace -computerName computer
+    Get-DriveInformation -computerName computer
 
     Gets drive information for "computer".
 
     .EXAMPLE
-    Get-ADComputer -Filter * | Get-DriveSpace
+    Get-DriveInformation -Filter * | Get-DriveSpace
 
     Gets drive information for all computers in AD.
+
+    .EXAMPLE
+    Get-DriveInformation -OrganizationUnit "Company Computers"
+
+    Gets drive information on all computers in the "Company Computers" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -1074,7 +1076,7 @@ function Get-DiskInformation{
 
     begin{
 
-        function getdrivespace{
+        function getdriveinformation{
 
             [cmdletBinding()]
             param(
@@ -1083,7 +1085,7 @@ function Get-DiskInformation{
 
             )
 
-            $spaceLog += Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
+            $driveInformation = Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
                 Where-Object -Property DeviceID -NE $null | 
                 Select-Object -Property @{n="Computer";e={$computerName}},`
                 @{n="Drive";e={$_.deviceid}},`
@@ -1092,7 +1094,7 @@ function Get-DiskInformation{
                 @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
                 @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
 
-            $spaceLog
+            $driveInformation
 
             return
 
@@ -1106,7 +1108,7 @@ function Get-DiskInformation{
 
         }
 
-        $driveSpaceLog = @()
+        $driveInformationList = @()
 
     }
 
@@ -1118,7 +1120,7 @@ function Get-DiskInformation{
 
                 try{
 
-                    $driveSpaceLog += getdrivespace -computerName $computer
+                    $driveInformationList += getdriveinformation -computerName $computer
 
                 }catch{}
 
@@ -1128,7 +1130,7 @@ function Get-DiskInformation{
 
             try{
 
-                $driveSpaceLog += getdrivespace -computerName $Name
+                $driveInformationList += getdriveinformation -computerName $Name
 
             }catch{}
 
@@ -1138,9 +1140,9 @@ function Get-DiskInformation{
 
     end{
 
-        $driveSpaceLog = $driveSpaceLog | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
+        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
 
-        $driveSpaceLog | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
+        $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
 
         return
 
