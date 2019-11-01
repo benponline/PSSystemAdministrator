@@ -1,5 +1,3 @@
-#cleanup scopes clean variables going in and out of subfunctions
-
 function Get-ComputerError{
 
     <#
