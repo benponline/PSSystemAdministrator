@@ -886,134 +886,6 @@ function Get-DisabledUsers{
 
 }
 
-function Get-PhysicalDiskInformation{
-
-    <#
-
-    .SYNOPSIS
-    Gets the health status of the physical disks of a computer or computers.
-
-    .DESCRIPTION
-    Returns the health status of the physical disks of the local computer, remote computer, group of computers, or computers in an organizational unit.
-
-    .PARAMETER Name
-    Specifies the computer the fuction will gather information from.
-
-    .PARAMETER OrganizationalUnit
-    Pulls information from computers in an organizational unit.
-
-    .INPUTS
-    You can pipe host names or AD computer objects.
-
-    .OUTPUTS
-    Returns objects with disk info including computer name, friendly name, media type, operational status, health status, and size in GB.
-
-    .NOTES
-    Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
-
-    .EXAMPLE
-    Get-PhysicalDiskInformation
-
-    Returns disk health information for the local computer.
-
-    .EXAMPLE
-    Get-PhysicalDiskInformation -Name Computer1
-
-    Returns disk health information for the computer named Computer1.
-
-    .EXAMPLE
-    "computer1","computer2" | Get-PhysicalDiskInformation
-
-    Returns physical disk information from "computer1" and "computer2".
-
-    .EXAMPLE
-    Get-PhysicalDiskInformation -OrganizationalUnit "Company Servers"
-
-    Returns physical disk information from all computers in the "Company Servers" organizational unit.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
-
-        [string]$OrganizationalUnit = ""
-
-    )
-
-    begin{
-
-        function getphysicaldiskinformation{
-
-            [cmdletBinding()]
-            param(
-
-                [string]$computerName
-
-            )
-
-            $disks = Get-PhysicalDisk -CimSession $computerName | 
-                Select-Object -Property @{n="ComputerName";e={$computerName}},`
-                FriendlyName,`
-                MediaType,`
-                OperationalStatus,`
-                HealthStatus,`
-                @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
-
-            $disks
-
-            return
-
-        }
-
-        $physicalDiskList = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-    
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-    
-        }
-
-    }
-
-    process{
-
-        if($OrganizationalUnit -ne ""){
-
-            foreach($computer in $computers){
-
-                    $physicalDiskList += getphysicaldiskinformation -computerName $computer
-
-            }
-
-        }else{
-
-            $physicalDiskList += getphysicaldiskinformation -computerName $Name
-            
-        }
-
-    }
-
-    end{
-
-        $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
-
-        Return
-
-    }
-
-}
-
 function Get-DriveInformation{
 
     <#
@@ -1607,6 +1479,134 @@ function Get-OnlineComputers{
     $onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
     
     return
+
+}
+
+function Get-PhysicalDiskInformation{
+
+    <#
+
+    .SYNOPSIS
+    Gets the health status of the physical disks of a computer or computers.
+
+    .DESCRIPTION
+    Returns the health status of the physical disks of the local computer, remote computer, group of computers, or computers in an organizational unit.
+
+    .PARAMETER Name
+    Specifies the computer the fuction will gather information from.
+
+    .PARAMETER OrganizationalUnit
+    Pulls information from computers in an organizational unit.
+
+    .INPUTS
+    You can pipe host names or AD computer objects.
+
+    .OUTPUTS
+    Returns objects with disk info including computer name, friendly name, media type, operational status, health status, and size in GB.
+
+    .NOTES
+    Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
+
+    .EXAMPLE
+    Get-PhysicalDiskInformation
+
+    Returns disk health information for the local computer.
+
+    .EXAMPLE
+    Get-PhysicalDiskInformation -Name Computer1
+
+    Returns disk health information for the computer named Computer1.
+
+    .EXAMPLE
+    "computer1","computer2" | Get-PhysicalDiskInformation
+
+    Returns physical disk information from "computer1" and "computer2".
+
+    .EXAMPLE
+    Get-PhysicalDiskInformation -OrganizationalUnit "Company Servers"
+
+    Returns physical disk information from all computers in the "Company Servers" organizational unit.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME,
+
+        [string]$OrganizationalUnit = ""
+
+    )
+
+    begin{
+
+        function getphysicaldiskinformation{
+
+            [cmdletBinding()]
+            param(
+
+                [string]$computerName
+
+            )
+
+            $disks = Get-PhysicalDisk -CimSession $computerName | 
+                Select-Object -Property @{n="ComputerName";e={$computerName}},`
+                FriendlyName,`
+                MediaType,`
+                OperationalStatus,`
+                HealthStatus,`
+                @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
+
+            $disks
+
+            return
+
+        }
+
+        $physicalDiskList = @()
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+    
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+    
+        }
+
+    }
+
+    process{
+
+        if($OrganizationalUnit -ne ""){
+
+            foreach($computer in $computers){
+
+                    $physicalDiskList += getphysicaldiskinformation -computerName $computer
+
+            }
+
+        }else{
+
+            $physicalDiskList += getphysicaldiskinformation -computerName $Name
+            
+        }
+
+    }
+
+    end{
+
+        $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
+
+        Return
+
+    }
 
 }
 
