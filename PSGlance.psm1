@@ -3,7 +3,7 @@ function Get-ComputerError{
     <#
 
     .SYNOPSIS
-    Gets system errors from a computer or computers.
+    Gets system errors from a computer or computers. 
 
     .DESCRIPTION
     Gets system errors from a computer or computers. By default returns errors from local computer. Can return errors from remote computer(s) or computers in a specific organizational unit. Default number of errors returned is 5, but is adjustable.
