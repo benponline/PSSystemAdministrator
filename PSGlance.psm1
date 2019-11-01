@@ -12,7 +12,7 @@ function Get-ComputerError{
     Specifies which computer to pull errors from.
 
     .PARAMETER Newest
-    Specifies the numbers of errors returned.
+    Specifies the number of most recent errors to be returned.
 
     .PARAMETER OrganizationalUnit
     Specifies the organizational unit in active directory the function will return errors from.
