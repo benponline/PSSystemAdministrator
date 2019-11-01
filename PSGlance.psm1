@@ -449,8 +449,6 @@ function Get-ComputerOS{
     .NOTES
     Compatible with Windows 7 and newer.
 
-    Only works with Windows machines on a domain.
-
     .EXAMPLE
     Get-ComputerOS
 
@@ -778,7 +776,8 @@ function Get-DisabledComputers{
     PS objects with information including name, enabled status, DNSHostName, and DistinguishedName.
 
     .NOTES
-    
+    Firewalls must be configured to allow ping requests.
+
     .EXAMPLE
     Get-ADDisabledComputer
 
