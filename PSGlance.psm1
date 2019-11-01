@@ -12,7 +12,7 @@ function Get-ComputerError{
     Specifies which computer to pull errors from.
 
     .PARAMETER Newest
-    Specifies the numbers of errors returned.
+    Specifies the number of most recent errors to be returned.
 
     .PARAMETER OrganizationalUnit
     Specifies the organizational unit in active directory the function will return errors from.
@@ -24,6 +24,8 @@ function Get-ComputerError{
     PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, and Message.
 
     .NOTES
+    Compatible with Windows 7 and newer.
+
     Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
 
     .EXAMPLE
@@ -156,6 +158,8 @@ function Get-ComputerInformation{
     Returns an object with computer name, model, CPU, memory in GB, storage in GB, the current user, IP address, and last boot time.
 
     .NOTES
+    Compatible for Windows 7 and newer.
+
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
 
     .EXAMPLE
@@ -314,7 +318,7 @@ function Get-ComputerLastLogon{
     PS object with computer name and the last time is was connected to the domain.
 
     .NOTES
-    None.
+    Compatible with Windows 7 and newer.
 
     .EXAMPLE
     Get-ComputerLastLogon
@@ -443,7 +447,7 @@ function Get-ComputerOS{
     PSObject with computer name and operating system.
     
     .NOTES
-    Only works with Windows machines on a domain.
+    Compatible with Windows 7 and newer.
 
     .EXAMPLE
     Get-ComputerOS
@@ -573,6 +577,8 @@ function Get-ComputerSoftware{
     Returns PS objects containing computer name, software name, version, installdate, uninstall command, registry path.
 
     .NOTES
+    Compatible with Windows 7 and newer.
+
     Requires remote registry service running on remote machines.
 
     .EXAMPLE
@@ -836,8 +842,7 @@ function Get-DisabledUsers{
     PS objects with information including name, DNSHostName, and DistinguishedName.
 
     .NOTES
-    Firewalls must be configured to allow ping requests.
-
+    
     .EXAMPLE
     Get-DisabledUsers
 
@@ -904,6 +909,7 @@ function Get-DriveInformation{
     Returns PS objects to the host the following information about the drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
 
     .NOTES
+    Compatible with Window 7 and newer.
 
     .EXAMPLE
     Get-DriveInformation
@@ -1045,6 +1051,7 @@ function Get-FailedLogon{
     PS objects with computer names, time written, and event IDs for failed logon events.
 
     .NOTES
+    Compatible with Windows 10.
 
     .EXAMPLE
     Get-FailedLogon
@@ -1425,6 +1432,7 @@ function Get-OnlineComputers{
     PS objects containing name, DNS host name, and distinguished name.
 
     .NOTES
+    Firewalls must be configured to allow ping requests.
 
     .EXAMPLE
     Get-OnlineComputers
@@ -1750,6 +1758,7 @@ function Get-UserLogon{
     List of objects with the user name and the names of the computers they are logged into.
 
     .NOTES
+    Compatible with Windows 7 and newer.
 
     .EXAMPLE
     Find-UserLogin -Name Thor
@@ -1777,8 +1786,6 @@ function Get-UserLogon{
     )
 
     begin{
-
-        $ErrorActionPreference = "SilentlyContinue"
 
         $computerList = @()
 
