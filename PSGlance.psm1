@@ -1,3 +1,31 @@
+function Get-SubDirectorySize{
+
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string] $Path
+    )
+
+    $foldersInfo = @()
+
+    $folders = Get-ChildItem -Path $Path -Directory
+
+    foreach($folder in $folders){
+
+        $folderSize = (Get-ChildItem -Path $folder.fullname -File -Recurse | 
+            Measure-Object -Sum Length).sum
+
+        $foldersInfo += [PSCustomObject]@{
+            Directory = $folder.fullname;
+            SizeGB = [math]::round(($folderSize / 1GB),2)
+        }
+
+    }
+
+}
+
+$foldersInfo
+
 function Get-ComputerError{
 
     <#
