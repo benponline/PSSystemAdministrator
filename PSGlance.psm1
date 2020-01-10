@@ -787,6 +787,9 @@ function Get-DirectorySize{
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
 
+    .Link
+    Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
+
     #>
 
     [CmdletBinding()]
@@ -1692,6 +1695,9 @@ function Get-SubDirectorySize{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
+
+    .Link
+    Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
 
     #>
 
