@@ -756,6 +756,56 @@ function Get-ComputerSoftware{
 
 }
 
+function Get-DirectorySize{
+
+    <#
+
+    .SYNOPSIS
+    Gets the size of a directory.
+
+    .DESCRIPTION
+    Returns the size of a directors in GB.
+
+    .PARAMETER Path
+    Path to the directory to be measured.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Returns object with directory path and size in GB.
+
+    .NOTES
+
+    .EXAMPLE
+    Get-DirectorySize -Path C:\Users
+
+    Returns the size of the Users folder.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string] $Path
+    )
+
+    $folderSize = (Get-ChildItem -Path $Path -File -Recurse | Measure-Object -Sum Length).sum
+
+    $folderInfo += [PSCustomObject]@{
+        Directory = $Path;
+        SizeGB = [math]::round(($folderSize / 1GB),2)
+    }
+
+    $folderInfo
+
+}
+
 function Get-DisabledComputers{
 
     <#
@@ -1613,6 +1663,65 @@ function Get-PhysicalDiskInformation{
         Return
 
     }
+
+}
+
+function Get-SubDirectorySize{
+
+    <#
+
+    .SYNOPSIS
+    Gets sub directory names and sizes at a particular path.
+
+    .DESCRIPTION
+    Returns a list of directories and their sizes from the submitted path.
+
+    .PARAMETER Path
+    Path to the directory to be searched.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PS objects with directory name and size in GB.
+
+    .NOTES
+
+    .EXAMPLE
+    Get-SubDirectorySize -Path C:\Users
+
+    Gets the name and size of all folders contained in the Users directory.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string] $Path
+    )
+
+    $foldersInfo = @()
+
+    $folders = Get-ChildItem -Path $Path -Directory
+
+    foreach($folder in $folders){
+
+        $folderSize = (Get-ChildItem -Path $folder.fullname -File -Recurse | 
+            Measure-Object -Sum Length).sum
+
+        $foldersInfo += [PSCustomObject]@{
+            Directory = $folder.fullname;
+            SizeGB = [math]::round(($folderSize / 1GB),2)
+        }
+
+    }
+
+    $foldersInfo
 
 }
 
