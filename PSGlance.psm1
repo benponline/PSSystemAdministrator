@@ -921,13 +921,9 @@ function Get-DisabledUsers{
     
     if($OrganizationalUnit -eq ""){
 
-        Write-Verbose "Gathering all disabled users."
-
         $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
 
     }else{
-
-        Write-Verbose "Gathering disabled users in the $OrganizationalUnit OU."
 
         $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Where-Object -Property Enabled -Match False
 
@@ -1904,8 +1900,6 @@ function Get-UserLogon{
 
     process{
 
-        Write-Verbose "Checking user [ " $SamAccountName " ] on AD computers."
-        
         foreach($computer in $computers){
 
             try{
@@ -1918,11 +1912,7 @@ function Get-UserLogon{
             
                 }
 
-            }catch{
-
-                Write-Verbose "Could not connect to [ $computer ]."
-
-            }
+            }catch{}
 
         }
 
