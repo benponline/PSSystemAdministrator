@@ -761,20 +761,26 @@ function Get-DirectorySize{
     <#
 
     .SYNOPSIS
+    Gets the size of a directory.
 
     .DESCRIPTION
+    Returns the size of a directors in GB.
 
-    .PARAMETER SamAccountName
-
-    .PARAMETER OrganizationalUnit
+    .PARAMETER Path
+    Path to the directory to be measured.
 
     .INPUTS
+    None.
 
     .OUTPUTS
+    Returns object with directory path and size in GB.
 
     .NOTES
 
     .EXAMPLE
+    Get-DirectorySize -Path C:\Users
+
+    Returns the size of the Users folder.
 
     .LINK
     By Ben Peterson
@@ -1665,20 +1671,26 @@ function Get-SubDirectorySize{
     <#
 
     .SYNOPSIS
+    Gets sub directory names and sizes at a particular path.
 
     .DESCRIPTION
+    Returns a list of directories and their sizes from the submitted path.
 
-    .PARAMETER SamAccountName
-
-    .PARAMETER OrganizationalUnit
+    .PARAMETER Path
+    Path to the directory to be searched.
 
     .INPUTS
+    None.
 
     .OUTPUTS
+    PS objects with directory name and size in GB.
 
     .NOTES
 
     .EXAMPLE
+    Get-SubDirectorySize -Path C:\Users
+
+    Gets the name and size of all folders contained in the Users directory.
 
     .LINK
     By Ben Peterson
