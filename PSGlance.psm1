@@ -1277,7 +1277,7 @@ function Get-InactiveComputers{
     
             $lastLogonProperties = @{
                 "LastLogon" = ([datetime]::fromfiletime($computer.lastlogon));
-                "Computer" = ($computer.name)
+                "Name" = ($computer.name)
             }
     
             $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
@@ -1288,7 +1288,7 @@ function Get-InactiveComputers{
     
     }
     
-    $lastLogonList | Select-Object -Property Computer,LastLogon | Sort-Object -Property Computer
+    $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
     
     return
 
