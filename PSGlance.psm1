@@ -1385,6 +1385,115 @@ function Get-InactiveUsers{
 
 }
 
+function Get-MappedDrive{
+
+    <#
+
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER OrganizationalUnit
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>    
+
+    [CmdletBinding()]
+    Param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = "$env:COMPUTERNAME",
+
+        [string]$OrganizationalUnit = ""
+
+    )
+
+    begin{
+
+        function getmappeddrive{
+
+            [cmdletBinding()]
+            param(
+
+                [string]$computerName
+
+            )
+
+            try{
+
+                $drives += Get-CimInstance -ComputerName $computerName -ClassName win32_mappedlogicaldisk | Select-Object -Property SystemName,Name,ProviderName
+
+            }catch{
+
+                $drives += Get-WmiObject -ComputerName $computerName -Class Win32_MappedLogicalDisk | Select-Object -Property SystemName,Name,ProviderName
+
+            }
+
+            $drives
+
+            return
+
+        }
+
+        $mappedDrives = @()
+
+        if($OrganizationalUnit -ne ""){
+
+            $domainInfo = (Get-ADDomain).DistinguishedName
+
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+
+        }
+
+    }
+
+    Process{
+
+        if($OrganizationalUnit -ne ""){
+
+            foreach($computer in $computers){
+
+                try{
+
+                    $mappedDrives += getmappeddrive -computerName $computer
+
+                }catch{}
+
+            }
+
+        }else{
+
+            $mappedDrives += getmappeddrive -computerName $Name
+
+        }
+
+    }
+
+    end{
+
+        $mappedDrives | Sort-Object -Property SystemName
+
+        return
+
+    }
+
+}
+
 function Get-OfflineComputers{
 
     <#
