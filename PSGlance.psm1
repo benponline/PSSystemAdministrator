@@ -48,6 +48,11 @@ function Get-ComputerError{
 
     Returns the last 5 errors from all computers in the "Company Servers" organizational unit.
 
+    .EXAMPLE
+    Get-ADComputer Computer1 | Get-ComputerError
+
+    This cmdlet returns the last 5 system errors from Computer1.
+
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
@@ -109,11 +114,7 @@ function Get-ComputerError{
 
             foreach($computer in $computers){
 
-                try{
-
-                    $errorlog += getcomputererror -computerName $computer -first $Newest
-
-                }catch{}
+                $errorlog += getcomputererror -computerName $computer -first $Newest
 
             }
 
@@ -265,21 +266,13 @@ function Get-ComputerInformation{
 
             foreach($computer in $computers){
 
-                try{
-            
-                    $computerInfoList += getcomputerinformation -computerName $computer
-
-                }catch{}
+                $computerInfoList += getcomputerinformation -computerName $computer
 
             }
 
         }else{
 
-            try{
-            
-                $computerInfoList += getcomputerinformation -computerName $Name
-
-            }catch{}
+            $computerInfoList += getcomputerinformation -computerName $Name
 
         }
 
