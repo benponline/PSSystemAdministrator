@@ -493,11 +493,11 @@ function Get-ComputerOS{
 
             try{
 
-                $computerOS = Get-CimInstance -ComputerName $computerName -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property pscomputername,caption
+                $computerOS = Get-CimInstance -ComputerName $computerName -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
                 
             }catch{
     
-                $computerOS = Get-WmiObject -ComputerName $computerName -Class win32_operatingsystem | Select-Object -Property pscomputername,caption
+                $computerOS = Get-WmiObject -ComputerName $computerName -Class win32_operatingsystem | Select-Object -Property PSComputerName,Caption
     
             }
 
@@ -715,21 +715,13 @@ function Get-ComputerSoftware{
 
             foreach($computer in $computers){
 
-                try{
-
-                    $masterKeys += getcomputersoftware -computerName $computer
-
-                }catch{}
+                $masterKeys += getcomputersoftware -computerName $computer
 
             }
 
         }else{
 
-            try{
-
-                $masterKeys += getcomputersoftware -computerName $Name
-
-            }catch{}
+            $masterKeys += getcomputersoftware -computerName $Name
 
         }
 
@@ -787,15 +779,19 @@ function Get-DirectorySize{
 
     [CmdletBinding()]
     Param(
+
         [Parameter(Mandatory=$true)]
         [string] $Path
+    
     )
 
     $folderSize = (Get-ChildItem -Path $Path -File -Recurse | Measure-Object -Sum Length).sum
 
     $folderInfo += [PSCustomObject]@{
+
         Directory = $Path;
         SizeGB = [math]::round(($folderSize / 1GB),2)
+
     }
 
     $folderInfo
@@ -1035,21 +1031,13 @@ function Get-DriveInformation{
 
             foreach($computer in $computers){
 
-                try{
-
-                    $driveInformationList += getdriveinformation -computerName $computer
-
-                }catch{}
+                $driveInformationList += getdriveinformation -computerName $computer
 
             }
 
         }else{
 
-            try{
-
-                $driveInformationList += getdriveinformation -computerName $Name
-
-            }catch{}
+            $driveInformationList += getdriveinformation -computerName $Name
 
         }
 
@@ -1132,7 +1120,7 @@ function Get-FailedLogon{
 
     begin{
 
-        function getfailedlogon {
+        function getfailedlogon{
 
             [cmdletBinding()]
             param(
