@@ -129,6 +129,8 @@ function Disable-User{
 
     end{
 
+        $disabledUsers =  $disabledUsers | Get-ADUser
+
         $disabledUsers | Sort-Object -Property Name
 
         return
