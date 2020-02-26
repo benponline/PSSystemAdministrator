@@ -76,24 +76,41 @@ function Disable-Computer{
 
 }
 
-#################################
 function Disable-User{
 
     <#
 
     .SYNOPSIS
-    
+    This function disables users that are passed to it.
+
     .DESCRIPTION
-    
-    .PARAMETER User
-    
+    Users can pass sam account names  or user AD objects to this function. It will disable these users in Active Directory and return an array of user objects to the host. 
+
+    .PARAMETER Name
+    This is the user name, sam account name, of the user that will be disabled.
+
     .INPUTS
+    User AD objects can be passed to this function.
 
     .OUTPUTS
+    An array of user AD objects. One for each user that this function disables.
 
     .NOTES
 
+    .EXAMPLE 
+    Disable-User -Name User1
+
+    Disables the user named User1 in Active Directory.
+
     .EXAMPLE
+    "User1","User2" | Disable-User
+
+    Disables users User1 and User2 in Active Directory.
+
+    .EXAMPLE
+    Get-ADUser User1 | Disable-User
+
+    Disables User1 in Active Directory.
 
     .LINK
     By Ben Peterson
@@ -139,63 +156,16 @@ function Disable-User{
 
 }
 
-function Export-CredentialToXML{
-
-    <#
-    
-    .SYNOPSIS
-    Ask for creds from user and path to create clixml file.
-
-    .DESCRIPTION
-    Disables Active Directory computers that have not connected to the domain in a set amount of months. The number of 
-    months can be set by passing it to the MonthsOld parameter. The function by default searches the whole Active Directory,
-    but can be pointed at a specific organizational unit.
-
-    .PARAMETER UserName
-
-    .PARAMETER Password
-
-    .PARAMETER Path
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-
-    .NOTES
-
-    .EXAMPLE
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [cmdletbinding()]
-    param(
-
-        [Parameter(Mandatory=$true)]
-        [string]$Path
-    
-    )
-
-    $credential = Get-Credential
-
-    Export-Clixml -Path $Path -InputObject $credential
-
-}
-
+###################################
 function Get-ComputerError{
 
     <#
 
     .SYNOPSIS
-    Gets system errors from a computer or computers.
+    Gets system errors from a computer, computers, or computers in an Active Directory Organzational Unit.
 
     .DESCRIPTION
-    Gets system errors from a computer or computers. By default returns errors from local computer. Can return errors from remote computer(s) or computers in a specific organizational unit. Default number of errors returned is 5, but is adjustable.
+    Gets system errors from a computers. By default returns errors from local computer. Can return errors from remote computer(s) or computers in a specific organizational unit. Default number of errors returned is 5, but is adjustable.
 
     .PARAMETER Name
     Specifies which computer to pull errors from.
@@ -927,6 +897,48 @@ function Get-ComputerSoftware{
         $masterKeys
 
     }
+
+}
+
+function Get-CredentialExportToXML{
+
+    <#
+    
+    .SYNOPSIS
+    This function gets credentials from the user and exports them to location provided by the user.
+
+    .DESCRIPTION
+    This function promps the 
+    
+    .PARAMETER Path
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [Parameter(Mandatory=$true)]
+        [string]$Path
+    
+    )
+
+    $credential = Get-Credential
+
+    Export-Clixml -Path $Path -InputObject $credential
 
 }
 
