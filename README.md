@@ -1,1 +1,1 @@
-This module is designed to quickly pull information about users and computers in a Windows domain environment.
+This is a work in progress. I am currently cleaning up the code and ensuring all the functions work properly. This module contains tools ment to help system administrators manage AD and gather information on the users and computers on their network.
