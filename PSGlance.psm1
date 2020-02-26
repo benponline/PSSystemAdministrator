@@ -1,3 +1,190 @@
+function Disable-Computer{
+
+    <#
+
+    .SYNOPSIS
+    This function disables computers that are passed to it.
+
+    .DESCRIPTION
+    Users can pass host names or computer AD objects to this function. It will disable these computers in Active Directory and return an array of computer objects to the host. 
+
+    .PARAMETER Name
+    This is the host name of the computer that the user wants to disable.
+
+    .INPUTS
+    Computer AD objects can be passed to this function.
+
+    .OUTPUTS
+    An array of computer AD objects. One for each computer that this function disables.
+
+    .NOTES
+
+    .EXAMPLE 
+    Disable-Computer -Name Computer1
+
+    Disables the computer named Computer1 in Active Directory.
+
+    .EXAMPLE
+    "Computer1","Computer2" | Disable-Computer
+
+    Disables computers Computer1 and Computer2 in Active Directory.
+
+    .EXAMPLE
+    Get-ADComputer Computer1 | Disable-Computer
+
+    Disables Computer1 in Active Directory.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('ComputerName')]
+        [string]$Name
+
+    )
+
+    begin{
+
+        $disabledComputers = @()
+
+    }
+
+    process{
+
+        $computer = Get-ADComputer $Name
+
+        $computer | Disable-ADAccount
+
+        $disabledComputers += $computer
+            
+    }
+
+    end{
+        
+        $disabledComputers
+
+        return
+
+    }
+
+}
+
+#################################
+function Disable-User{
+
+    <#
+
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER User
+    
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('SamAccountName')]
+        [string]$Name
+
+    )
+
+    begin{
+
+        $disabledUsers = @()
+
+    }
+
+    process{
+
+        $user = Get-ADUser $Name
+
+        $user | Disable-ADAccount
+
+        $disabledUsers += $user
+        
+    }
+
+    end{
+
+        $disabledUsers | Sort-Object -Property Name
+
+        return
+
+    }
+
+}
+
+function Export-CredentialToXML{
+
+    <#
+    
+    .SYNOPSIS
+    Ask for creds from user and path to create clixml file.
+
+    .DESCRIPTION
+    Disables Active Directory computers that have not connected to the domain in a set amount of months. The number of 
+    months can be set by passing it to the MonthsOld parameter. The function by default searches the whole Active Directory,
+    but can be pointed at a specific organizational unit.
+
+    .PARAMETER UserName
+
+    .PARAMETER Password
+
+    .PARAMETER Path
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [Parameter(Mandatory=$true)]
+        [string]$Path
+    
+    )
+
+    $credential = Get-Credential
+
+    Export-Clixml -Path $Path -InputObject $credential
+
+}
+
 function Get-ComputerError{
 
     <#
@@ -2021,5 +2208,793 @@ function Get-UserLogon{
         return
 
     }
+
+}
+
+function Import-OutlookContactsFromCSV{
+#https://blogs.msdn.microsoft.com/jmanning/2007/01/25/using-powershell-for-outlook-automation/
+    
+    [cmdletBinding()]	
+    
+    param(
+    
+        [Parameter(Mandatory = $True)]
+        [string]$ComputerName,
+    
+        [Parameter(Mandatory = $True)]
+        [string]$CSVPath
+            
+    )
+    
+    $ImportContacts = Import-Csv -Path $CSVPath
+    
+    Invoke-Command -ComputerName $ComputerName -ScriptBlock{
+    
+        $Outlook = New-Object -com Outlook.Application
+    
+        #Adding a contact
+    
+        $Contacts = $Outlook.Session.GetDefaultFolder(10) # == olFolderContacts
+    
+        $ExistingContacts = $Contacts.items | Select-Object -Property FullName,FirstName,LastName,Email1Address
+    
+        foreach($NewContact in $using:ImportContacts){
+    
+            $AddContact = $true
+    
+            $InputFirstName = $NewContact."First Name"
+            $InputLastName = $NewContact."Last Name"
+            $InputEmail = $NewContact."E-mail Address"
+            $InputEmailDisplayName = $NewContact."E-mail Display Name"
+    
+            foreach($Contact in $ExistingContacts){
+    
+                if(($InputFirstName -eq $Contact.FirstName) -and ($InputLastName -eq $Contact.LastName)){
+    
+                    $AddContact = $false
+    
+                }
+    
+            }
+    
+            if($AddContact -eq $true){
+    
+                $NewContact = $Contacts.Items.Add()
+                $NewContact.FirstName = $InputFirstName
+                $NewContact.LastName = $InputLastName
+                $NewContact.Email1Address =$InputEmail
+                $NewContact.Email1DisplayName = $InputEmailDisplayName
+                $NewContact.Save()
+    
+            }
+    
+        }
+    
+    }
+    
+}
+
+function Move-Computer{
+
+    <#
+
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER ComputerName
+
+    .PARAMETER OrganizationalUnit
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [string]$Name,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$DestinationOU
+    
+    )
+    
+    begin{
+
+        $domainInfo = (Get-ADDomain).DistinguishedName
+
+        $computers = @()
+
+    }
+
+    process{
+
+        $computers += Get-ADComputer -Identity $Name
+
+    }
+
+    end{
+
+        $computers | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+        $computers
+
+        return
+
+    }
+
+}
+
+function Move-DisabledComputers{
+
+    <#
+
+    .SYNOPSIS
+    Disables Active Directory computers that have not recently connected to the domain.
+
+    .DESCRIPTION
+    Disables Active Directory computers that have not connected to the domain in a set amount of months. The number of 
+    months can be set by passing it to the MonthsOld parameter. The function by default searches the whole Active Directory,
+    but can be pointed at a specific organizational unit.
+
+    .PARAMETER MonthsOld
+    Sets the number of months that a computer has to have been offline for it to be disabled.
+
+    .PARAMETER OrganizationalUnit
+    Sets the organizational unit the function will search.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Returns an AD PSObject for each computer that was disabled.
+
+    .NOTES
+
+    .EXAMPLE
+    Disable-ADOldComputer
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [Parameter()]
+        [string]$OriginOU,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$DestinationOU
+    
+    )
+    
+    $domainInfo = (Get-ADDomain).DistinguishedName
+
+    if($OriginOU -eq ""){
+
+        $computers = Get-ADComputer -Filter * | Where-Object -Property Enabled -EQ $False
+
+    }else{
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OriginOU,$domainInfo" | Where-Object -Property Enabled -EQ $False
+    
+    }
+
+    $computers | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+    $computers
+
+    return 
+
+}
+
+function Move-DisabledUsers{
+
+    <#
+
+    .SYNOPSIS
+    Disables Active Directory computers that have not recently connected to the domain.
+
+    .DESCRIPTION
+    Disables Active Directory computers that have not connected to the domain in a set amount of months. The number of 
+    months can be set by passing it to the MonthsOld parameter. The function by default searches the whole Active Directory,
+    but can be pointed at a specific organizational unit.
+
+    .PARAMETER MonthsOld
+    Sets the number of months that a computer has to have been offline for it to be disabled.
+
+    .PARAMETER OrganizationalUnit
+    Sets the organizational unit the function will search.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Returns an AD PSObject for each computer that was disabled.
+
+    .NOTES
+
+    .EXAMPLE
+    Disable-ADOldComputer
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [Parameter()]
+        [string]$OriginOU,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$DestinationOU
+
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName
+
+    if($OriginOU -eq ""){
+
+        $users = Get-ADUser -Filter * | Where-Object -Property Enabled -EQ $False
+
+    }else{
+
+        $users = Get-ADUser -Filter * -SearchBase "ou=$OriginOU,$domainInfo" | Where-Object -Property Enabled -EQ $False
+
+    }
+
+    $users | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+    $users | Sort-Object -Property Name
+
+    return 
+
+}
+
+function Move-User{
+
+    <#
+
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER Name
+
+    .PARAMETER DestinationOU
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias("SamAccountName")]
+        [string]$Name,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$DestinationOU
+    
+    )
+    
+    begin{
+
+        $domainInfo = (Get-ADDomain).DistinguishedName
+
+        $users = @()
+
+    }
+
+    process{
+
+        $users += Get-ADUser -Identity $Name
+
+    }
+
+    end{
+
+        $users | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+        $users
+
+        return
+
+    }
+
+}
+
+function Remove-Computer{
+
+    <#
+
+    .SYNOPSIS
+    Removes disabled computers from AD.
+
+    .DESCRIPTION
+    Removes disabled computers from AD. Also returns a list of computers that have been removed.
+
+    .PARAMETER OrganizationalUnit
+    Limits the script to a specific organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Returns an AD computer object for each computer removed from AD.
+
+    .NOTES
+
+    .EXAMPLE
+    Remove-ADDisabledComputer
+
+    Removes all disabled computers from AD.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName
+
+    if($OrganizationalUnit -eq ""){
+
+        $computers = Get-ADComputer -Filter * | Where-Object -Property Enabled -EQ $False
+
+    }else{
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+            Where-Object -Property Enabled -EQ $False
+    }
+
+    $computers | Remove-ADComputer
+
+    $computers
+
+    return
+
+}
+
+function Remove-DisabledComputers{
+
+    <#
+
+    .SYNOPSIS
+    Removes disabled computers from AD.
+
+    .DESCRIPTION
+    Removes disabled computers from AD. Also returns a list of computers that have been removed.
+
+    .PARAMETER OrganizationalUnit
+    Limits the script to a specific organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Returns an AD computer object for each computer removed from AD.
+
+    .NOTES
+
+    .EXAMPLE
+    Remove-ADDisabledComputer
+
+    Removes all disabled computers from AD.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName
+
+    if($OrganizationalUnit -eq ""){
+
+        $computers = Get-ADComputer -Filter * | Where-Object -Property Enabled -EQ $False
+
+    }else{
+
+        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+            Where-Object -Property Enabled -EQ $False
+    }
+
+    $computers | Remove-ADComputer
+
+    $computers
+
+    return
+
+}
+
+function Remove-DisabledUsers{
+
+    <#
+
+    .SYNOPSIS
+    Removes disabled users from AD.
+
+    .DESCRIPTION
+    Removes all disabled users from AD and returns a list of users that were removed.
+
+    .PARAMETER None
+
+    .INPUTS
+    None. You cannot pipe paramters to this function.
+
+    .OUTPUTS
+    Returns an AD user object for each user removed from AD.
+
+    .NOTES
+
+    .EXAMPLE
+    Remove-ADDisabledUser
+
+    Removes all disabled users in AD. Returns list of removed users.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName
+
+    Write-Verbose "Domain info [$domainInfo]."
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all disabled users in AD."
+
+        $users = Get-ADUser -Filter * | Where-Object -Property Enabled -EQ $False
+
+    }else{
+
+        Write-Verbose "Gathering all disabled users in the $OrganizationalUnit organizational unit."
+
+        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+            Where-Object -Property Enabled -EQ $False
+    }
+
+    $users | Remove-ADUser
+
+    $users
+
+    return
+
+}
+
+function Remove-User{
+
+    <#
+
+    .SYNOPSIS
+    Removes disabled users from AD.
+
+    .DESCRIPTION
+    Removes all disabled users from AD and returns a list of users that were removed.
+
+    .PARAMETER None
+
+    .INPUTS
+    None. You cannot pipe paramters to this function.
+
+    .OUTPUTS
+    Returns an AD user object for each user removed from AD.
+
+    .NOTES
+
+    .EXAMPLE
+    Remove-ADDisabledUser
+
+    Removes all disabled users in AD. Returns list of removed users.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [string]$OrganizationalUnit
+    
+    )
+
+    $domainInfo = (Get-ADDomain).DistinguishedName
+
+    Write-Verbose "Domain info [$domainInfo]."
+    
+    if($OrganizationalUnit -eq ""){
+
+        Write-Verbose "Gathering all disabled users in AD."
+
+        $users = Get-ADUser -Filter * | Where-Object -Property Enabled -EQ $False
+
+    }else{
+
+        Write-Verbose "Gathering all disabled users in the $OrganizationalUnit organizational unit."
+
+        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+            Where-Object -Property Enabled -EQ $False
+    }
+
+    $users | Remove-ADUser
+
+    $users
+
+    return
+
+}
+
+function Set-ComputerIP{
+
+    <#
+
+    .SYNOPSIS
+    Sets the IP address of a domain computer.
+
+    .DESCRIPTION
+    This function will set the IP address, subnet, DNS, and default gateway of a domain computer. The IP addresss is user provided and all the other information is
+    gathered from the computer executing the command.
+
+    .PARAMETER ComputerName
+    The name of the remote computer that will be assigned the submitted IP address.
+
+    .PARAMETER IPAddress
+    IP address that will be applied to the remote computer.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+    This function attempts to change the IP settings on the remote computer using PowerShell commands. If that fails it will use netsh.
+
+    .EXAMPLE
+    Set-ComputerIP -ComputerName "Computer2" -IPAddress 10.10.10.10
+
+    Sets Computer2's IP address to 10.10.10.10 and copies over DNS, subnet, and default gateway information from the host computer.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [Parameter(Mandatory=$true)]
+        [string]$ComputerName,
+
+        [Parameter(Mandatory=$true)]
+        [string]$IPAddress
+
+    )
+            
+    #Self adapter
+    $SelfIPAddress = (Test-Connection -ComputerName $env:COMPUTERNAME -Count 1).IPv4Address
+
+    $SelfIPInterfaceIndex = (Get-NetIPAddress | Where-Object -Property IPAddress -eq $SelfIPAddress).InterfaceIndex
+
+    #Subnetmask / Prefixlength
+    $SelfPrefixlength = (Get-NetIPAddress | Where-Object -Property IPAddress -eq $SelfIPAddress).PrefixLength
+
+    #Default Gateway
+    $SelfDefaultGateway = (Get-NetRoute | Where-Object -Property DestinationPrefix -eq '0.0.0.0/0').NextHop
+
+    #DNS
+    $SelfDNS = (Get-DnsClientServerAddress -InterfaceIndex $SelfIPInterfaceIndex -AddressFamily IPv4).ServerAddresses
+
+    $TargetIPAddress = (Test-Connection -ComputerName $ComputerName -Count 1 ).IPv4Address
+
+    try{
+
+        #Target interface index
+        $TargetIPInterfaceIndex = (Get-NetIPAddress -CimSession $ComputerName | Where-Object -Property IPAddress -eq $TargetIPAddress).InterfaceIndex
+
+        Set-DnsClientServerAddress -CimSession $ComputerName -InterfaceIndex $TargetIPInterfaceIndex -ServerAddresses $SelfDNS
+
+        New-NetIPAddress -CimSession $ComputerName -InterfaceIndex $TargetIPInterfaceIndex -IPAddress $IPAddress -AddressFamily IPv4 -PrefixLength $SelfPrefixlength -DefaultGateway $SelfDefaultGateway
+    
+    }catch{
+
+        switch($SelfPrefixlength){
+
+            30 {$SubnetMask = "255.255.255.252"}
+            29 {$SubnetMask = "255.255.255.248"}
+            28 {$SubnetMask = "255.255.255.240"}
+            27 {$SubnetMask = "255.255.255.224"}
+            26 {$SubnetMask = "255.255.255.192"}
+            25 {$SubnetMask = "255.255.255.128"}
+            24 {$SubnetMask = "255.255.255.0"}
+            23 {$SubnetMask = "255.255.254.0"}
+            22 {$SubnetMask = "255.255.252.0"}
+            21 {$SubnetMask = "255.255.248.0"}
+            20 {$SubnetMask = "255.255.240.0"}
+            19 {$SubnetMask = "255.255.224.0"}
+            18 {$SubnetMask = "255.255.192.0"}
+            17 {$SubnetMask = "255.255.128.0"}
+            16 {$SubnetMask = "255.255.0.0"}
+
+        }
+
+        $TargetIPInterfaceAlias = "Local Area Connection"
+
+        if($SelfDNS.count -gt 1){
+
+            $SelfDNS1 = $SelfDNS[0]
+
+            $SelfDNS2 = $SelfDNS[1]
+
+        }
+        
+        Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS1" static primary}
+        
+        if($SelfDNS.count -gt 1){
+
+            Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip add dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS2"}
+
+        }
+
+        Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set address $using:TargetIPInterfaceAlias static $using:IPAddress $using:SubnetMask $using:SelfDefaultGateway}
+        
+    }
+
+}
+
+function Start-Computer{
+
+    <#
+
+    .SYNOPSIS
+    Starts a remote computer by sending a magic packet.
+    
+    .DESCRIPTION
+    Can start a single or multiple computers on a Windows domian.
+    
+    .PARAMETER Name
+    Name of the computer this function will start.
+
+    .INPUTS
+    You can pipe AD computer PS objects to this function.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+
+    .EXAMPLE
+    Start-Computer -Name SERVER1
+
+    Starts SERVER1 if it is powered down.
+
+    .EXAMPLE
+    Get-ADComputer -Filter * | Start-Computer
+
+    Attempts to start all computers that are part of the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT    
+
+    .LINK
+    Based on: https://gallery.technet.microsoft.com/scriptcenter/Send-WOL-packet-using-0638be7b/view/Discussions#content 
+
+    #>
+
+    [CmdletBinding()]
+    param(
+        
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias("ComputerName")]
+        [string]$Name
+
+    )
+
+    begin{
+        
+        [string]$BroadcastIP=([System.Net.IPAddress]::Broadcast)
+
+        [int]$port=9
+
+        $broadcast = [Net.IPAddress]::Parse($BroadcastIP)
+
+    }
+
+    process{
+
+        $ComputerMACs = (Get-DhcpServerv4Lease -ComputerName gamls-dc1 -ScopeId "10.10.10.0" | Where-Object -Property hostname -match $Name).clientid
+
+        ForEach($ComputerMAC in $ComputerMACs){
+
+            try{
+
+                $ComputerMAC = (($ComputerMAC.replace(":","")).replace("-","")).replace(".","")
+
+                $target = 0,2,4,6,8,10 | ForEach-Object {[convert]::ToByte($ComputerMAC.substring($_,2),16)}
+
+                $packet = (,[byte]255 * 6) + ($target * 16)
+        
+                $UDPclient = new-Object System.Net.Sockets.UdpClient
+
+                $UDPclient.Connect($broadcast,$port)
+
+                [void]$UDPclient.Send($packet, 102)
+
+            }catch{}
+
+        }
+
+        Write-Host "Magic packet sent to $Name."
+
+    }
+
+    end{}
 
 }
