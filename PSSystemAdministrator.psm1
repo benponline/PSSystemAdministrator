@@ -2169,9 +2169,19 @@ function Remove-Computer{
     .NOTES
 
     .EXAMPLE
-    Remove-ADDisabledComputer
+    Remove-Computer -Name "Computer1"
 
-    Removes all disabled computers from AD.
+    Removes "Computer1" from AD.
+
+    .EXAMPLE
+    "Computer1","Computer2" | Remove-Computer
+
+    Removes "Computer1" and "Computer2" from AD.
+
+    .EXAMPLE
+    Get-ADComputer -Filter * | Remove-Computer
+
+    Removes all computers from AD.
 
     .LINK
     By Ben Peterson
@@ -2235,9 +2245,19 @@ function Remove-User{
     .NOTES
 
     .EXAMPLE
-    Remove-ADDisabledUser
+    Remove-User -Name "User1"
 
-    Removes all disabled users in AD. Returns list of removed users.
+    Removes "User1" from AD.
+
+    .EXAMPLE
+    "User1","User2" | Remove-User
+
+    Removes "User1" and "User2" from AD.
+
+    .EXAMPLE
+    Get-ADUser -Filter * | Remove-User
+
+    Removes all Users from AD.
 
     .LINK
     By Ben Peterson
@@ -2423,6 +2443,9 @@ function Start-Computer{
     Start-Computer -Name SERVER1
 
     Starts SERVER1 if it is powered down.
+
+    .EXAMPLE
+    "Computer1","Computer2" | Start-Computer
 
     .EXAMPLE
     Get-ADComputer -Filter * | Start-Computer
