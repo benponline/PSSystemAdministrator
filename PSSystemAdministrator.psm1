@@ -1977,90 +1977,44 @@ function Get-UserLastLogon{
 
 }
 
-##############################
-
-function Import-OutlookContactsFromCSV{
-#https://blogs.msdn.microsoft.com/jmanning/2007/01/25/using-powershell-for-outlook-automation/
-    
-    [cmdletBinding()]
-    
-    param(
-    
-        [Parameter(Mandatory = $True)]
-        [string]$ComputerName,
-    
-        [Parameter(Mandatory = $True)]
-        [string]$CSVPath
-            
-    )
-    
-    $ImportContacts = Import-Csv -Path $CSVPath
-    
-    Invoke-Command -ComputerName $ComputerName -ScriptBlock{
-    
-        $Outlook = New-Object -com Outlook.Application
-    
-        #Adding a contact
-    
-        $Contacts = $Outlook.Session.GetDefaultFolder(10) # == olFolderContacts
-    
-        $ExistingContacts = $Contacts.items | Select-Object -Property FullName,FirstName,LastName,Email1Address
-    
-        foreach($NewContact in $using:ImportContacts){
-    
-            $AddContact = $true
-    
-            $InputFirstName = $NewContact."First Name"
-            $InputLastName = $NewContact."Last Name"
-            $InputEmail = $NewContact."E-mail Address"
-            $InputEmailDisplayName = $NewContact."E-mail Display Name"
-    
-            foreach($Contact in $ExistingContacts){
-    
-                if(($InputFirstName -eq $Contact.FirstName) -and ($InputLastName -eq $Contact.LastName)){
-    
-                    $AddContact = $false
-    
-                }
-    
-            }
-    
-            if($AddContact -eq $true){
-    
-                $NewContact = $Contacts.Items.Add()
-                $NewContact.FirstName = $InputFirstName
-                $NewContact.LastName = $InputLastName
-                $NewContact.Email1Address =$InputEmail
-                $NewContact.Email1DisplayName = $InputEmailDisplayName
-                $NewContact.Save()
-    
-            }
-    
-        }
-    
-    }
-    
-}
-
 function Move-Computer{
 
     <#
 
     .SYNOPSIS
+    Moves a computer to an organizational unit.
     
     .DESCRIPTION
+    Moves a computer or computers to an AD organizational unit. 
     
-    .PARAMETER ComputerName
+    .PARAMETER Name
+    This is the computer the function will move.
 
     .PARAMETER OrganizationalUnit
+    Destination organizational unit.
 
     .INPUTS
+    Host names or AD computer objects.
 
     .OUTPUTS
+    An array of AD computer objects. One for each computer moved by the function.
 
     .NOTES
 
     .EXAMPLE
+    Move-Computer -Name "Computer1" -OrganizationalUnit "Work Computers"
+
+    Moves "Computer1" to the "Work Computers" OU.
+
+    .EXAMPLE
+    "Computer1","Computer2" | Move-Computer -OrganizationalUnit "Work Computers"
+
+    Moves "Computer1" and "Computer2" to the "Work Computers" OU.
+
+    .EXAMPLE
+    Get-ADComputer -Filter * | Move-Computer -OrganizationalUnit "Work Computers"
+
+    Moves all computers in AD to the "Work Computers" OU.
 
     .LINK
     By Ben Peterson
@@ -2073,6 +2027,7 @@ function Move-Computer{
     param(
 
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
         [string]$Name,
         
         [Parameter(Mandatory=$true)]
@@ -2106,159 +2061,44 @@ function Move-Computer{
 
 }
 
-function Move-DisabledComputers{
-
-    <#
-
-    .SYNOPSIS
-    Disables Active Directory computers that have not recently connected to the domain.
-
-    .DESCRIPTION
-    Disables Active Directory computers that have not connected to the domain in a set amount of months. The number of 
-    months can be set by passing it to the MonthsOld parameter. The function by default searches the whole Active Directory,
-    but can be pointed at a specific organizational unit.
-
-    .PARAMETER MonthsOld
-    Sets the number of months that a computer has to have been offline for it to be disabled.
-
-    .PARAMETER OrganizationalUnit
-    Sets the organizational unit the function will search.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    Returns an AD PSObject for each computer that was disabled.
-
-    .NOTES
-
-    .EXAMPLE
-    Disable-ADOldComputer
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [cmdletbinding()]
-    param(
-
-        [Parameter()]
-        [string]$OriginOU,
-        
-        [Parameter(Mandatory=$true)]
-        [string]$DestinationOU
-    
-    )
-    
-    $domainInfo = (Get-ADDomain).DistinguishedName
-
-    if($OriginOU -eq ""){
-
-        $computers = Get-ADComputer -Filter * | Where-Object -Property Enabled -EQ $False
-
-    }else{
-
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OriginOU,$domainInfo" | Where-Object -Property Enabled -EQ $False
-    
-    }
-
-    $computers | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
-    $computers
-
-    return 
-
-}
-
-function Move-DisabledUsers{
-
-    <#
-
-    .SYNOPSIS
-    Disables Active Directory computers that have not recently connected to the domain.
-
-    .DESCRIPTION
-    Disables Active Directory computers that have not connected to the domain in a set amount of months. The number of 
-    months can be set by passing it to the MonthsOld parameter. The function by default searches the whole Active Directory,
-    but can be pointed at a specific organizational unit.
-
-    .PARAMETER MonthsOld
-    Sets the number of months that a computer has to have been offline for it to be disabled.
-
-    .PARAMETER OrganizationalUnit
-    Sets the organizational unit the function will search.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    Returns an AD PSObject for each computer that was disabled.
-
-    .NOTES
-
-    .EXAMPLE
-    Disable-ADOldComputer
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [cmdletbinding()]
-    param(
-
-        [Parameter()]
-        [string]$OriginOU,
-        
-        [Parameter(Mandatory=$true)]
-        [string]$DestinationOU
-
-    )
-
-    $domainInfo = (Get-ADDomain).DistinguishedName
-
-    if($OriginOU -eq ""){
-
-        $users = Get-ADUser -Filter * | Where-Object -Property Enabled -EQ $False
-
-    }else{
-
-        $users = Get-ADUser -Filter * -SearchBase "ou=$OriginOU,$domainInfo" | Where-Object -Property Enabled -EQ $False
-
-    }
-
-    $users | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
-    $users | Sort-Object -Property Name
-
-    return 
-
-}
-
 function Move-User{
 
     <#
 
     .SYNOPSIS
-
+    Moves a user to an organizational unit.
+    
     .DESCRIPTION
+    Moves a user or users to an AD organizational unit. 
+    
+    .PARAMETER SamAccountName
+    This is the user the function will move.
 
-    .PARAMETER Name
-
-    .PARAMETER DestinationOU
+    .PARAMETER OrganizationalUnit
+    Destination organizational unit.
 
     .INPUTS
+    Sam account names or AD user objects.
 
     .OUTPUTS
+    An array of AD user objects. One for each user moved by the function.
 
     .NOTES
 
     .EXAMPLE
+    Move-User -SamAccountName "User1" -OrganizationalUnit "Work Users"
+
+    Moves "User1" to the "Work Users" OU.
+
+    .EXAMPLE
+    "User1","User2" | Move-User -OrganizationalUnit "Work Users"
+
+    Moves "User1" and "User2" to the "Work Users" OU.
+
+    .EXAMPLE
+    Get-ADUser -Filter * | Move-User -OrganizationalUnit "Work Users"
+
+    Moves all users in AD to the "Work Users" OU.
 
     .LINK
     By Ben Peterson
@@ -2305,21 +2145,23 @@ function Move-User{
 
 }
 
+########################################
+
 function Remove-Computer{
 
     <#
 
     .SYNOPSIS
-    Removes disabled computers from AD.
+    Removes a computer from AD.
 
     .DESCRIPTION
-    Removes disabled computers from AD. Also returns a list of computers that have been removed.
+    Remove a computer or computers from AD. Also returns a list of computers that have been removed.
 
-    .PARAMETER OrganizationalUnit
-    Limits the script to a specific organizational unit.
+    .PARAMETER Name
+    Name of the computer being removed.
 
     .INPUTS
-    None.
+    Host names or AD computer objects.
 
     .OUTPUTS
     Returns an AD computer object for each computer removed from AD.
@@ -2338,155 +2180,36 @@ function Remove-Computer{
 
     #>
 
-    [cmdletbinding()]
-    param(
+    [CmdletBinding()]
+    Param(
 
-        [string]$OrganizationalUnit
-    
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+
     )
 
-    $domainInfo = (Get-ADDomain).DistinguishedName
+    begin{
 
-    if($OrganizationalUnit -eq ""){
+        $computers = @()
 
-        $computers = Get-ADComputer -Filter * | Where-Object -Property Enabled -EQ $False
-
-    }else{
-
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Where-Object -Property Enabled -EQ $False
     }
 
-    $computers | Remove-ADComputer
+    process{
 
-    $computers
+        $computers += Get-ADComputer $Name
 
-    return
-
-}
-
-function Remove-DisabledComputers{
-
-    <#
-
-    .SYNOPSIS
-    Removes disabled computers from AD.
-
-    .DESCRIPTION
-    Removes disabled computers from AD. Also returns a list of computers that have been removed.
-
-    .PARAMETER OrganizationalUnit
-    Limits the script to a specific organizational unit.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    Returns an AD computer object for each computer removed from AD.
-
-    .NOTES
-
-    .EXAMPLE
-    Remove-ADDisabledComputer
-
-    Removes all disabled computers from AD.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [cmdletbinding()]
-    param(
-
-        [string]$OrganizationalUnit
-    
-    )
-
-    $domainInfo = (Get-ADDomain).DistinguishedName
-
-    if($OrganizationalUnit -eq ""){
-
-        $computers = Get-ADComputer -Filter * | Where-Object -Property Enabled -EQ $False
-
-    }else{
-
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Where-Object -Property Enabled -EQ $False
     }
 
-    $computers | Remove-ADComputer
+    end{
 
-    $computers
+        $computers | Remove-ADComputer
 
-    return
+        $computers
 
-}
+        return
 
-function Remove-DisabledUsers{
-
-    <#
-
-    .SYNOPSIS
-    Removes disabled users from AD.
-
-    .DESCRIPTION
-    Removes all disabled users from AD and returns a list of users that were removed.
-
-    .PARAMETER None
-
-    .INPUTS
-    None. You cannot pipe paramters to this function.
-
-    .OUTPUTS
-    Returns an AD user object for each user removed from AD.
-
-    .NOTES
-
-    .EXAMPLE
-    Remove-ADDisabledUser
-
-    Removes all disabled users in AD. Returns list of removed users.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [cmdletbinding()]
-    param(
-
-        [string]$OrganizationalUnit
-    
-    )
-
-    $domainInfo = (Get-ADDomain).DistinguishedName
-
-    Write-Verbose "Domain info [$domainInfo]."
-    
-    if($OrganizationalUnit -eq ""){
-
-        Write-Verbose "Gathering all disabled users in AD."
-
-        $users = Get-ADUser -Filter * | Where-Object -Property Enabled -EQ $False
-
-    }else{
-
-        Write-Verbose "Gathering all disabled users in the $OrganizationalUnit organizational unit."
-
-        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Where-Object -Property Enabled -EQ $False
     }
-
-    $users | Remove-ADUser
-
-    $users
-
-    return
 
 }
 
@@ -2495,12 +2218,13 @@ function Remove-User{
     <#
 
     .SYNOPSIS
-    Removes disabled users from AD.
+    Removes a user from AD.
 
     .DESCRIPTION
-    Removes all disabled users from AD and returns a list of users that were removed.
+    Removes a user or users from AD and returns a list of users that were removed.
 
-    .PARAMETER None
+    .PARAMETER SamAccountName
+    User that will be removed.
 
     .INPUTS
     None. You cannot pipe paramters to this function.
@@ -2522,36 +2246,35 @@ function Remove-User{
 
     #>
 
-    [cmdletbinding()]
-    param(
+    [CmdletBinding()]
+    Param(
 
-        [string]$OrganizationalUnit
-    
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [string]$SamAccountName = $env:USERNAME
+
     )
 
-    $domainInfo = (Get-ADDomain).DistinguishedName
+    begin{
 
-    Write-Verbose "Domain info [$domainInfo]."
-    
-    if($OrganizationalUnit -eq ""){
+        $users = @()
 
-        Write-Verbose "Gathering all disabled users in AD."
-
-        $users = Get-ADUser -Filter * | Where-Object -Property Enabled -EQ $False
-
-    }else{
-
-        Write-Verbose "Gathering all disabled users in the $OrganizationalUnit organizational unit."
-
-        $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
-            Where-Object -Property Enabled -EQ $False
     }
 
-    $users | Remove-ADUser
+    process{
 
-    $users
+        $users += Get-ADUser $Name
 
-    return
+    }
+
+    end{
+
+        $users | Remove-ADUser
+
+        $users
+
+        return
+
+    }
 
 }
 
