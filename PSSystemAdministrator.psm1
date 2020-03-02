@@ -747,7 +747,7 @@ function Get-CredentialExportToXML{
 
     $credential = Get-Credential
 
-    Export-Clixml -Path "$Path\$FileName.clixml" -InputObject $credential
+    Export-Clixml -Path "$Path\$FileName.xml" -InputObject $credential
 
 }
 
