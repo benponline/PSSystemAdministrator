@@ -156,25 +156,21 @@ function Disable-User{
 
 }
 
-###################################
 function Get-ComputerError{
 
     <#
 
     .SYNOPSIS
-    Gets system errors from a computer, computers, or computers in an Active Directory Organzational Unit.
+    Gets system errors from a computer or computers.
 
     .DESCRIPTION
-    Gets system errors from a computers. By default returns errors from local computer. Can return errors from remote computer(s) or computers in a specific organizational unit. Default number of errors returned is 5, but is adjustable.
+    Gets system errors from computers. By default returns errors from local computer. Can return errors from remote computer(s). Default number of errors returned is 5, but is adjustable.
 
     .PARAMETER Name
     Specifies which computer to pull errors from.
 
     .PARAMETER Newest
     Specifies the number of most recent errors to be returned.
-
-    .PARAMETER OrganizationalUnit
-    Specifies the organizational unit in active directory the function will return errors from.
 
     .INPUTS
     Host names or AD computer objects.
@@ -203,11 +199,6 @@ function Get-ComputerError{
     This cmdlet returns system errors from "computer1" and "computer2".
 
     .EXAMPLE
-    Get-ComputerError -OrganizationalUnit "Company Servers"
-
-    Returns the last 5 errors from all computers in the "Company Servers" organizational unit.
-
-    .EXAMPLE
     Get-ADComputer Computer1 | Get-ComputerError
 
     This cmdlet returns the last 5 system errors from Computer1.
@@ -227,61 +218,20 @@ function Get-ComputerError{
         [string]$Name = "$env:COMPUTERNAME",
 
         [parameter()]
-        [int]$Newest = 5,
-
-        [string]$OrganizationalUnit = ""
-
+        [int]$Newest = 5
+        
     )
 
     begin{
 
-        function getcomputererror{
-
-            [cmdletBinding()]
-            param(
-
-                [string]$computerName,
-
-                [int]$first
-
-            )
-
-            $errors += Get-EventLog -ComputerName $computerName -LogName System -EntryType Error -Newest $first | 
-                Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID,InstanceID,Message
-
-            $errors
-
-            return
-
-        }
-
         $errorLog = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-
-        }
 
     }
 
-    Process{
+    process{
 
-        if($OrganizationalUnit -ne ""){
-
-            foreach($computer in $computers){
-
-                $errorlog += getcomputererror -computerName $computer -first $Newest
-
-            }
-
-        }else{
-
-            $errorLog += getcomputererror -computerName $Name -first $Newest
-
-        }
+        $errorLog += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | 
+            Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
 
     }
 
@@ -308,9 +258,6 @@ function Get-ComputerInformation{
     .PARAMETER Name
     Specifies which computer's information is gathered.
 
-    .PARAMETER OrganizationalUnit
-    Specifies the computer in an organizational unit to search.
-
     .INPUTS
     You can pipe host names or AD computer objects.
 
@@ -321,6 +268,8 @@ function Get-ComputerInformation{
     Compatible for Windows 7 and newer.
 
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
+
+    Will not return information on computers that are offline.
 
     .EXAMPLE
     Get-ComputerInformation
@@ -337,11 +286,6 @@ function Get-ComputerInformation{
 
     Returns computer information on all AD computers. 
 
-    .EXAMPLE
-    Get-ComputerInformation -OrganizationalUnit "Company Servers"
-
-    Returns computer information for all computers in the "Company Servers" organizational unit.
-
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
@@ -354,84 +298,55 @@ function Get-ComputerInformation{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
-
-        [string]$OrganizationalUnit = ""
+        [string]$Name = $env:COMPUTERNAME
 
     )
 
     begin{
 
-        function getcomputerinformation{
-
-            [CmdletBinding()]
-            Param(
-                
-                [string]$computerName
-
-            )
-            
-            $computerObjectProperties = @{
-                "ComputerName" = "";
-                "Model" = "";
-                "CPU" = "";
-                "MemoryGB" = "";
-                "StorageGB" = "";
-                "CurrentUser" = "";
-                "IPAddress" = "";
-                "BootUpTime" = ""
-            }
-
-            $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
-
-            $computerInfo.computername = $computerName
-
-            $computerInfo.model = (Get-CimInstance -ComputerName $computerName -ClassName Win32_ComputerSystem -Property Model).model
-
-            $computerInfo.CPU = (Get-CimInstance -ComputerName $computerName -ClassName Win32_Processor -Property Name).name
-
-            $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $computerName -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
-
-            $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property Size) | 
-                Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
-
-            $computerInfo.currentuser = (Get-CimInstance -ComputerName $computerName -ClassName Win32_ComputerSystem -Property UserName).UserName
-
-            $computerInfo.IPAddress = (Test-Connection -ComputerName $computerName -Count 1).IPV4Address
-
-            $computerInfo.BootUpTime = ([System.Management.ManagementDateTimeconverter]::ToDateTime((Get-WmiObject -Class Win32_OperatingSystem -computername $computerName).LastBootUpTime)).ToString()
-
-            $computerInfo
-
-            return
-
-        }
-
         $computerInfoList = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-
-        }
 
     }
 
     process{
 
-        if($OrganizationalUnit -ne ""){
+        $computerObjectProperties = @{
+            "ComputerName" = "";
+            "Model" = "";
+            "CPU" = "";
+            "MemoryGB" = "";
+            "StorageGB" = "";
+            "CurrentUser" = "";
+            "IPAddress" = "";
+            "BootUpTime" = ""
+        }
 
-            foreach($computer in $computers){
+        if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
 
-                $computerInfoList += getcomputerinformation -computerName $computer
+            $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
 
-            }
+            $computerInfo.computername = $Name
 
-        }else{
+            $computerInfo.model = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property Model).model
 
-            $computerInfoList += getcomputerinformation -computerName $Name
+            $computerInfo.CPU = (Get-CimInstance -ComputerName $Name -ClassName Win32_Processor -Property Name).name
+
+            $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
+
+            $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Size) | 
+                Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
+
+            $computerInfo.currentuser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
+
+            #This command works in Powershell 5.
+            $computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).IPV4Address
+
+            #This command works in Powershell Core.
+            #$computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).replies.address.ipaddresstostring
+
+            $computerInfo.BootUpTime = (Get-CimInstance -ClassName Win32_OperatingSystem -ComputerName $Name).LastBootUpTime
+
+            $computerInfoList += $computerInfo
 
         }
 
@@ -439,7 +354,7 @@ function Get-ComputerInformation{
 
     end{
 
-        $computerInfoList | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime
+        $computerInfoList | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property ComputerName
 
         return
 
@@ -504,71 +419,40 @@ function Get-ComputerLastLogon{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
+        [string]$Name = $env:COMPUTERNAME
 
-        [string]$OrganizationalUnit = ""
-    
     )
 
     begin{
 
-        function getcomputerlastlogon{
-
-            [cmdletBinding()]
-            Param(
-
-                [string]$computerName
-
-            )
-
-            $lastLogonTime = (Get-ADComputer $computerName | Get-ADObject -Properties lastlogon).lastlogon
-
-            $lastLogonProperties = @{
-                "Last Logon" = ([datetime]::fromfiletime($lastLogonTime));
-                "Computer" = ($computerName)
-            }
-                
-            $lastLogon = New-Object -TypeName PSObject -Property $lastLogonProperties
-
-            $lastLogon
-
-            return
-
-        }
-
         $lastLogonList = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-
-        }
 
     }
 
     process{
 
-        if($OrganizationalUnit -ne ""){
+        $lastLogonProperties = @{
 
-            foreach($computer in $computers){
-
-                $lastLogonList += getcomputerlastlogon -computerName $computer
-
-            }
-
-        }else{
-
-            $lastLogonList += getcomputerlastlogon -computerName $Name
+            "LastLogon" = "";
+            "Computer" = ""
 
         }
-        
+
+        $lastLogon = New-Object -TypeName PSObject -Property $lastLogonProperties
+
+        $lastLogonTime = [datetime]::fromfiletime((Get-ADComputer $Name | Get-ADObject -Properties lastlogon).lastlogon)
+
+        $lastLogon.LastLogon = $lastLogonTime
+
+        $lastLogon.Computer = $Name
+
+        $lastLogonList += $lastLogon
+
     }
 
     end{
 
-        $lastLogonList | Select-Object -Property Computer,"Last Logon" | Sort-Object -Property Computer
+        $lastLogonList | Select-Object -Property Computer,LastLogon | Sort-Object -Property Computer
 
         return
 
@@ -584,14 +468,11 @@ function Get-ComputerOS{
     Get the operating system name of a computer or computers.
 
     .DESCRIPTION
-    Gets the Windows operating system of the local host. Does not return build number or any other detailed info. Can also get the operating system from a remote computer or group of computers, including those grouped into organizational units.
+    Gets the Windows operating system of the local host or remote computer. Does not return build number or any other detailed info.
     
     .PARAMETER Name
-    Name of computer you want the operating system of.
+    Name of computer the user wants the operating system of.
 
-    .PARAMETER OrganizationalUnit
-    Returns the operating system of computers in an organizational unit.
-    
     .INPUTS
     Accepts pipeline input. Host names and AD computer objects.
     
@@ -599,7 +480,6 @@ function Get-ComputerOS{
     PSObject with computer name and operating system.
     
     .NOTES
-    Compatible with Windows 7 and newer.
 
     .EXAMPLE
     Get-ComputerOS
@@ -610,11 +490,6 @@ function Get-ComputerOS{
     Get-ComputerOS -Name Computer1
 
     Returns computer name and operating system.
-
-    .EXAMPLE
-    Get-CommuterOS -OrganizationalUnit "Company Computers"
-
-    Returns the operating system of all computers in the "Company Computers" operating system.
 
     .EXAMPLE
     "Computer1","Computer2" | Get-ComputerOS
@@ -633,64 +508,29 @@ function Get-ComputerOS{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
-
-        [string]$OrganizationalUnit = ""
+        [string]$Name = $env:COMPUTERNAME
 
     )
 
     begin{
 
-        function getcomputeros{
-
-            [cmdletBinding()]
-            param(
-
-                [string]$computerName
-
-            )
-
-            try{
-
-                $computerOS = Get-CimInstance -ComputerName $computerName -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
-                
-            }catch{
-    
-                $computerOS = Get-WmiObject -ComputerName $computerName -Class win32_operatingsystem | Select-Object -Property PSComputerName,Caption
-    
-            }
-
-            $computerOS
-
-            return
-
-        }
-
         $computerOSList = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-    
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$DomainInfo" | Sort-Object -Property Name).Name
-    
-        }
 
     }
 
     process{
 
-        if($OrganizationalUnit -ne ""){
+        if(Test-Connection $Name -Quiet -Count 1){
 
-            foreach($computer in $computers){
+            try{
 
-                $computerOSList += getcomputeros -computerName $computer
-                
+                $computerOSList += Get-CimInstance -ComputerName $Name -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
+                    
+            }catch{
+        
+                $computerOSList += Get-WmiObject -ComputerName $Name -Class win32_operatingsystem | Select-Object -Property PSComputerName,Caption
+        
             }
-
-        }else{
-
-            $computerOSList += getcomputeros -computerName $Name
 
         }
 
@@ -714,7 +554,7 @@ function Get-ComputerSoftware{
     Gets all of the installed software on a computer or computers.
 
     .DESCRIPTION
-    This function gathers all of the installed software on a computer or group of computers. By default gathers from the local host. Can target a remote computer, computers, or organizational unit.
+    This function gathers all of the installed software on a computer or group of computers. By default gathers from the local host.
 
     .PARAMETER Name
     Specifies the computer this function will gather information from. 
@@ -723,7 +563,7 @@ function Get-ComputerSoftware{
     Targets computers in a specific organizational unit.
 
     .INPUTS
-    You can pipe host names or computer objects input to this function.
+    You can pipe host names or computer AD objects input to this function.
 
     .OUTPUTS
     Returns PS objects containing computer name, software name, version, installdate, uninstall command, registry path.
@@ -748,11 +588,6 @@ function Get-ComputerSoftware{
 
     This cmdlet returns the installed software on all computers on the domain.
 
-    .EXAMPLE
-    Get-ComputerSoftware -OrganizationalUnit "Company Computers"
-
-    Returns the software installed on each computer in the "Company Computers" organizational unit.
-
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
@@ -769,44 +604,64 @@ function Get-ComputerSoftware{
     
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
+        [string]$Name = $env:COMPUTERNAME
 
-        [string]$OrganizationalUnit = ""
-        
     )
 
     begin{
 
-        function getcomputersoftware{
+        $masterKeys = @()
 
-            [cmdletbinding()]
-            param(
+    }
 
-                [String]$computerName
+    process{
 
-            )
+        $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+        $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
+        $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+        $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
 
-            $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-            $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
-            $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
-            $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
+        if((Test-Connection -ComputerName $Name -Count 1)){
 
-            if((Test-Connection -ComputerName $computerName -Count 1 -ErrorAction Stop)){
+            $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$Name)
 
-                $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$computerName)
-                $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$computerName)
+            $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$Name)
 
-                $softwareKeys =@()
+            foreach($key in $lmKeys){
 
-                foreach($key in $lmKeys){
-                    $regKey = $remoteLMRegKey.OpenSubkey($key)
+                $regKey = $remoteLMRegKey.OpenSubkey($key)
+                
+                foreach ($subName in $regKey.GetSubkeyNames()){
+                
+                    foreach($sub in $regKey.OpenSubkey($subName)){
+                
+                        $masterKeys += (New-Object PSObject -Property @{
+                            "ComputerName" = $Name;
+                            "Name" = $sub.getvalue("displayname");
+                            "SystemComponent" = $sub.getvalue("systemcomponent");
+                            "ParentKeyName" = $sub.getvalue("parentkeyname");
+                            "Version" = $sub.getvalue("DisplayVersion");
+                            "UninstallCommand" = $sub.getvalue("UninstallString");
+                            "InstallDate" = $sub.getvalue("InstallDate");
+                            "RegPath" = $sub.ToString()})
+                    }
+                        
+                }
                     
-                    foreach ($subName in $regKey.GetSubkeyNames()){
-                    
-                        foreach($sub in $regKey.OpenSubkey($subName)){
-                    
-                            $softwareKeys += (New-Object PSObject -Property @{
-                                "ComputerName" = $computerName;
+            }
+
+            foreach ($key in $cuKeys){
+
+                $regKey = $remoteCURegKey.OpenSubkey($key)
+
+                if($null -ne $regKey){
+
+                    foreach($subName in $regKey.getsubkeynames()){
+
+                        foreach ($sub in $regKey.opensubkey($subName)){
+
+                            $masterKeys += (New-Object PSObject -Property @{
+                                "ComputerName" = $Name;
                                 "Name" = $sub.getvalue("displayname");
                                 "SystemComponent" = $sub.getvalue("systemcomponent");
                                 "ParentKeyName" = $sub.getvalue("parentkeyname");
@@ -814,74 +669,15 @@ function Get-ComputerSoftware{
                                 "UninstallCommand" = $sub.getvalue("UninstallString");
                                 "InstallDate" = $sub.getvalue("InstallDate");
                                 "RegPath" = $sub.ToString()})
-                        }
-                            
-                    }
                         
-                }
-
-                foreach ($key in $cuKeys){
-
-                    $regKey = $remoteCURegKey.OpenSubkey($key)
-
-                    if($null -ne $regKey){
-
-                        foreach($subName in $regKey.getsubkeynames()){
-
-                            foreach ($sub in $regKey.opensubkey($subName)){
-
-                                $softwareKeys += (New-Object PSObject -Property @{
-                                    "ComputerName" = $computerName;
-                                    "Name" = $sub.getvalue("displayname");
-                                    "SystemComponent" = $sub.getvalue("systemcomponent");
-                                    "ParentKeyName" = $sub.getvalue("parentkeyname");
-                                    "Version" = $sub.getvalue("DisplayVersion");
-                                    "UninstallCommand" = $sub.getvalue("UninstallString");
-                                    "InstallDate" = $sub.getvalue("InstallDate");
-                                    "RegPath" = $sub.ToString()})
-                            
-                            }
-                            
                         }
                         
                     }
                     
                 }
-                    
+                
             }
-
-            $softwareKeys
-
-            return
-
-        }
-
-        $masterKeys = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-
-        }
-
-    }
-
-    process{
-
-        if($OrganizationalUnit -ne ""){
-
-            foreach($computer in $computers){
-
-                $masterKeys += getcomputersoftware -computerName $computer
-
-            }
-
-        }else{
-
-            $masterKeys += getcomputersoftware -computerName $Name
-
+                
         }
 
     }
@@ -896,6 +692,8 @@ function Get-ComputerSoftware{
 
         $masterKeys
 
+        return
+
     }
 
 }
@@ -908,18 +706,26 @@ function Get-CredentialExportToXML{
     This function gets credentials from the user and exports them to location provided by the user.
 
     .DESCRIPTION
-    This function promps the 
+    This function promps the user for a user name and password. It encryps the password and saves it all to a CLIXML file at the path provided to the function. You can then import these credentials in other functions and scripts that require credentials without having to hard code them in.
     
+    .PARAMETER FileName
+    The name that will be given to the file containing the credentials. Do not include file extention.
+
     .PARAMETER Path
+    The location the credentials will be saved. Do not include trailing "\".
 
     .INPUTS
     None.
 
     .OUTPUTS
+    CLIXML file with credentials.
 
     .NOTES
 
     .EXAMPLE
+    Get-CredentialExportToXML -FileName Creds -Path C:\ScriptCreds
+
+    Promps user for user name and password. Encryps the password and saves the credentials at C:\ScriptCreds\Creds.clixml
 
     .LINK
     By Ben Peterson
@@ -932,13 +738,16 @@ function Get-CredentialExportToXML{
     param(
 
         [Parameter(Mandatory=$true)]
+        [string]$FileName,
+
+        [Parameter(Mandatory=$true)]
         [string]$Path
     
     )
 
     $credential = Get-Credential
 
-    Export-Clixml -Path $Path -InputObject $credential
+    Export-Clixml -Path "$Path\$FileName.clixml" -InputObject $credential
 
 }
 
@@ -996,6 +805,8 @@ function Get-DirectorySize{
     }
 
     $folderInfo
+
+    return
 
 }
 
@@ -1128,134 +939,6 @@ function Get-DisabledUsers{
 
 }
 
-function Get-DriveInformation{
-
-    <#
-
-    .SYNOPSIS
-    Gets information about the drives on a computer or computers.
-
-    .DESCRIPTION
-    Returns information from the drives on a computer, remote computer, or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
-    
-    .PARAMETER Name
-    Specifies the computer the function will gather information from.
-
-    .INPUTS
-    You can pipe host names or AD computer objects.
-
-    .OUTPUTS
-    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
-
-    .NOTES
-    Compatible with Window 7 and newer.
-
-    .EXAMPLE
-    Get-DriveInformation
-
-    Gets drive information for the local host.
-
-    .EXAMPLE
-    Get-DriveInformation -computerName computer
-
-    Gets drive information for "computer".
-
-    .EXAMPLE
-    Get-DriveInformation -Filter * | Get-DriveSpace
-
-    Gets drive information for all computers in AD.
-
-    .EXAMPLE
-    Get-DriveInformation -OrganizationUnit "Company Computers"
-
-    Gets drive information on all computers in the "Company Computers" organizational unit.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [CmdletBinding()]
-    Param(
-
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
-
-        [string]$OrganizationalUnit = ""
-
-    )
-
-    begin{
-
-        function getdriveinformation{
-
-            [cmdletBinding()]
-            param(
-
-                [string]$computerName
-
-            )
-
-            $driveInformation = Get-CimInstance -ComputerName $computerName -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace | 
-                Where-Object -Property DeviceID -NE $null | 
-                Select-Object -Property @{n="Computer";e={$computerName}},`
-                @{n="Drive";e={$_.deviceid}},`
-                @{n="VolumeName";e={$_.volumename}},`
-                @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
-                @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
-                @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
-
-            $driveInformation
-
-            return
-
-        }
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-
-        }
-
-        $driveInformationList = @()
-
-    }
-
-    process{
-
-        if($OrganizationalUnit -ne ""){
-
-            foreach($computer in $computers){
-
-                $driveInformationList += getdriveinformation -computerName $computer
-
-            }
-
-        }else{
-
-            $driveInformationList += getdriveinformation -computerName $Name
-
-        }
-
-    }
-
-    end{
-
-        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
-
-        $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent
-
-        return
-
-    }  
-
-}
-
 function Get-FailedLogon{
 
     <#
@@ -1272,9 +955,6 @@ function Get-FailedLogon{
     .PARAMETER DaysBack
     Determines how many days in the past the function will search for failed log ons.
 
-    .PARAMETER OrganizationalUnit
-    Function will return information from computers in the passed organizatonal unit.
-
     .INPUTS
     You can pipe host names or AD computer objects.
 
@@ -1290,14 +970,9 @@ function Get-FailedLogon{
     Returns failed logon events from the local host.
 
     .EXAMPLE
-    Get-FailedLogon -Name "Server"
+    Get-FailedLogon -Name "Server1"
 
-    Returns failed logon events from computer "Server".
-
-    .EXAMPLE
-    Get-FailedLogon -OrganizationalUnit "Company Servers"
-
-    Returns failed logon attempts from computers in the "Company Servers" organizational unit.
+    Returns failed logon events from computer "Server1".
 
     .LINK
     By Ben Peterson
@@ -1313,75 +988,30 @@ function Get-FailedLogon{
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME,
 
-        [int]$DaysBack = 1,
-
-        [string]$OrganizationalUnit = ""
+        [int]$DaysBack = 1
 
     )
 
     begin{
-
-        function getfailedlogon{
-
-            [cmdletBinding()]
-            param(
-
-                [string]$computerName,
-
-                [int]$days
-
-            )
-
-            $failedLogin = Get-EventLog -ComputerName $computerName -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($days * -1)) |
-                Select-Object -Property @{n="ComputerName";e={$computerName}},TimeWritten,EventID
-
-            $failedLogin
-
-            return
-
-        }
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-
-        }
 
         $failedLoginList = @()
 
     }
 
     process{
-        
-        if($OrganizationalUnit -ne ""){
 
-            foreach($computer in $computers){
-
-                try{
-
-                    $failedLoginList += getfailedlogon -computerName $computer -days $DaysBack
-
-                }catch{}
-
-            }
-
-        }else{
-
-            try{
-
-                $failedLoginList += getfailedlogon -computerName $Name -days $DaysBack
-
-            }catch{}
+        if(Test-Connection $Name -Count 1 -Quiet){
+            
+            $failedLoginList += Get-EventLog -ComputerName $Name -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($DaysBack * -1)) |
+                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID
 
         }
-        
+
     }
 
     end{
 
-        $failedLoginList | Select-Object -Property ComputerName,TimeWritten,EventID
+        $failedLoginList | Select-Object -Property ComputerName,TimeWritten,EventID | Sort-Object -Property ComputerName
 
         return
 
@@ -1567,100 +1197,169 @@ function Get-InactiveUsers{
 
 }
 
-function Get-MappedDrive{
+function Get-LocalDiskInformation{
 
     <#
 
     .SYNOPSIS
+    Gets information about the local disks on a computer or computers.
 
     .DESCRIPTION
+    Returns information from about the local disks on a computer, remote computer, or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
 
-    .PARAMETER OrganizationalUnit
+    .PARAMETER Name
+    Specifies the computer the function will gather information from.
 
     .INPUTS
+    You can pipe host names or AD computer objects.
 
     .OUTPUTS
+    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
 
     .NOTES
+    Compatible with Window 7 and newer.
+
+    Will only try to contact computers that are on and connected to the network.
 
     .EXAMPLE
+    Get-LocalDiskInformation
+
+    Gets local disk information for the local host.
 
     .EXAMPLE
+    Get-LocalDiskInformation -computerName computer
+
+    Gets local disk information for "computer".
+
+    .EXAMPLE
+    Get-LocalDiskInformation -Filter * | Get-DriveSpace
+
+    Gets local disk information for all computers in AD.
 
     .LINK
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
 
-    #>    
+    #>
 
     [CmdletBinding()]
     Param(
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = "$env:COMPUTERNAME",
-
-        [string]$OrganizationalUnit = ""
+        [string]$Name = $env:COMPUTERNAME
 
     )
 
     begin{
 
-        function getmappeddrive{
+        $driveInformationList = @()
 
-            [cmdletBinding()]
-            param(
+    }
 
-                [string]$computerName
+    process{
 
-            )
+        if(Test-Connection $Name -Count 1 -Quiet){
 
-            try{
-
-                $drives += Get-CimInstance -ComputerName $computerName -ClassName win32_mappedlogicaldisk | Select-Object -Property SystemName,Name,ProviderName
-
-            }catch{
-
-                $drives += Get-WmiObject -ComputerName $computerName -Class Win32_MappedLogicalDisk | Select-Object -Property SystemName,Name,ProviderName
-
-            }
-
-            $drives
-
-            return
-
-        }
-
-        $mappedDrives = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
+            $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace,DriveType | 
+            Where-Object -Property DriveType -EQ 3 | 
+            Select-Object -Property @{n="Computer";e={$Name}},`
+            @{n="Drive";e={$_.deviceid}},`
+            @{n="VolumeName";e={$_.volumename}},`
+            @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
+            @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
+            @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
 
         }
 
     }
 
-    Process{
+    end{
 
-        if($OrganizationalUnit -ne ""){
+        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
 
-            foreach($computer in $computers){
+        $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
 
-                try{
+        return
 
-                    $mappedDrives += getmappeddrive -computerName $computer
+    }  
 
-                }catch{}
+}
 
-            }
+function Get-MappedNetworkDrive{
 
-        }else{
+    <#
 
-            $mappedDrives += getmappeddrive -computerName $Name
+    .SYNOPSIS
+    Gets information about the mapped drives on a computer or computers.
+
+    .DESCRIPTION
+    Returns information from about the mapped drives on a computer, remote computer, or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
+
+    .PARAMETER Name
+    Specifies the computer the function will gather information from.
+
+    .INPUTS
+    You can pipe host names or AD computer objects.
+
+    .OUTPUTS
+    Returns PS objects to the host the following information about the mapped drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
+
+    .NOTES
+    Compatible with Window 7 and newer.
+
+    Will only try to contact computers that are on and connected to the network.
+
+    .EXAMPLE
+    Get-MappedNetworlDrive
+
+    Gets mapped drive information for the local host.
+
+    .EXAMPLE
+    Get-MappedNetworlDrive -computerName computer
+
+    Gets mapped drive information for "computer".
+
+    .EXAMPLE
+    Get-DriveInformation -Filter * | Get-DriveSpace
+
+    Gets mapped drive information for all computers in AD.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [CmdletBinding()]
+    Param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = "$env:COMPUTERNAME"
+
+    )
+
+    begin{
+
+        $mappedDrives = @()
+
+    }
+
+    process{
+
+        if(Test-Connection $Name -Count 1 -Quiet){
+
+            $mappedDrives += Get-CimInstance -ComputerName $Name -ClassName win32_mappedlogicaldisk -Property deviceid,volumename,size,freespace,ProviderName | 
+                Select-Object -Property @{n="Computer";e={$Name}},`
+                @{n="Drive";e={$_.deviceid}},`
+                @{n="VolumeName";e={$_.volumename}},`
+                @{n="Path";e={$_.ProviderName}},`
+                @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
+                @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
+                @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
 
         }
 
@@ -1828,6 +1527,136 @@ function Get-OnlineComputers{
 
 }
 
+function Get-OUComputers{
+
+    <#
+
+    .SYNOPSIS
+    This function returns computers from a specific organizational unit in Active Directory.
+    
+    .DESCRIPTION
+    This function returns computer AD objects for each computer in an AD organizaitional unit. 
+    
+    .PARAMETER OrganizationalUnit
+    Sets the scope of the function to the provided organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Array of AD computer objects.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-OUComputer -OrganizationalUnit "Workstations"
+
+    Returns AD objects for all computers in the Workstations organizational unit. 
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,Mandatory=$True)]
+        [string]$OrganizationalUnit
+
+    )
+
+    begin{
+
+        $domainInfo = (Get-ADDomain).DistinguishedName
+
+        $computers = @()
+    
+    }
+
+    process{
+
+        $computers += Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+
+    }
+
+    end{
+
+        $computers
+
+        return
+
+    }
+
+}
+
+function Get-OUUsers{
+
+    <#
+
+    .SYNOPSIS
+    This function returns users from a specific organizational unit in Active Directory.
+    
+    .DESCRIPTION
+    This function returns user AD objects for each user in an AD organizaitional unit. 
+    
+    .PARAMETER OrganizationalUnit
+    Sets the scope of the function to the provided organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    Array of AD user objects.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-OUUser -OrganizationalUnit "Users"
+
+    Returns AD objects for all users in the Users organizational unit. 
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,Mandatory=$True)]
+        [string]$OrganizationalUnit
+
+    )
+
+    begin{
+
+        $domainInfo = (Get-ADDomain).DistinguishedName
+
+        $users = @()
+    
+    }
+
+    process{
+
+        $users += Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+
+    }
+
+    end{
+
+        $users
+
+        return
+
+    }
+
+}
+
 function Get-PhysicalDiskInformation{
 
     <#
@@ -1885,70 +1714,35 @@ function Get-PhysicalDiskInformation{
 
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
-
-        [string]$OrganizationalUnit = ""
+        [string]$Name = $env:COMPUTERNAME
 
     )
 
     begin{
 
-        function getphysicaldiskinformation{
+        $physicalDiskList = @()
 
-            [cmdletBinding()]
-            param(
+    }
 
-                [string]$computerName
+    process{
 
-            )
+        if(Test-Connection $Name -Count 1 -Quiet){
 
-            $disks = Get-PhysicalDisk -CimSession $computerName | 
-                Select-Object -Property @{n="ComputerName";e={$computerName}},`
+            $physicalDiskList += Get-PhysicalDisk -CimSession $Name | 
+                Select-Object -Property @{n="ComputerName";e={$Name}},`
                 FriendlyName,`
                 MediaType,`
                 OperationalStatus,`
                 HealthStatus,`
                 @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
 
-            $disks
-
-            return
-
-        }
-
-        $physicalDiskList = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-    
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").name
-    
-        }
-
-    }
-
-    process{
-
-        if($OrganizationalUnit -ne ""){
-
-            foreach($computer in $computers){
-
-                    $physicalDiskList += getphysicaldiskinformation -computerName $computer
-
-            }
-
-        }else{
-
-            $physicalDiskList += getphysicaldiskinformation -computerName $Name
-            
         }
 
     }
 
     end{
 
-        $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB
+        $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB | Sort-Object -Property ComputerName
 
         Return
 
@@ -2016,131 +1810,11 @@ function Get-SubDirectorySize{
 
     $foldersInfo
 
-}
-
-function Get-UserLastLogon{
-
-    <#
-
-    .SYNOPSIS
-    Gets the last time a user, or group of users, logged onto the domain.
-
-    .DESCRIPTION
-    Returns the last time a user or group of users logged onto the domain. Scope can be limited to an organizational unit.
-
-    .PARAMETER SamAccountName
-    User name.
-
-    .PARAMETER OrganizationalUnit
-    Returns information on users in a specific organizational unit.
-
-    .INPUTS
-    You can pipe user names and user AD objects to this function.
-
-    .OUTPUTS
-    PS objects with user name and last logon date.
-
-    .NOTES
-    None.
-
-    .EXAMPLE
-    Get-UserLastLogon -Name "Fred"
-
-    Returns the last time Fred logged into the domain.
-
-    .EXAMPLE
-    Get-ADUser -Filter * | Get-UserLastLogon
-
-    Gets the last time all users in AD logged onto the domain.
-
-    .EXAMPLE
-    Get-UserLastLogon -OrganizationalUnit "Company Users"
-
-    Returns the last logon time for all users in the organizational unit "Company Users".
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [cmdletbinding()]
-    param(
-
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [string]$SamAccountName = $env:UserName,
-
-        [string]$OrganizationalUnit = ""
-
-    )
-
-    begin{
-
-        function getuserlastlogon{
-
-            [cmdletBinding()]
-            param(
-
-                [string]$Name
-
-            )
-
-                $userlastLogon = (Get-ADuser $Name | Get-ADObject -Properties lastlogon | Select-Object -Property @{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}).LastLogon
-
-                $userLastLogon
-
-                return
-
-        }
-
-        $lastLogonList = @()
-
-        if($OrganizationalUnit -ne ""){
-
-            $domainInfo = (Get-ADDomain).DistinguishedName
-
-            $users = (Get-ADuser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").SamAccountName
-    
-        }
-
-    }
-
-    process{
-
-        if($OrganizationalUnit -ne ""){
-
-            foreach($user in $users){
-
-                $lastLogonList += [PSCustomObject]@{`
-                    "LastLogon" = (getuserlastlogon -Name $user);`
-                    "SamAccountName" = $user
-                }
-                
-            }
-
-        }else{
-
-            $lastLogonList += [PSCustomObject]@{`
-                "LastLogon" = (getuserlastlogon -Name $SamAccountName);`
-                "SamAccountName" = $SamAccountName
-            }
-
-        }
-        
-    }
-
-    end{
-
-        $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
-
-        return
-
-    }
+    return
 
 }
 
-function Get-UserLogon{
+function Get-UserActiveLogon{
 
     <#
 
@@ -2199,17 +1873,21 @@ function Get-UserLogon{
 
         foreach($computer in $computers){
 
-            try{
+            if(Test-Connection $computer -Count 1 -Quiet){
 
-                $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+                try{
 
-                if($currentUser -eq $SamAccountName){
+                    $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+
+                    if($currentUser -eq $SamAccountName){
+                    
+                        $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
                 
-                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
-            
-                }
+                    }
 
-            }catch{}
+                }catch{}
+
+            }
 
         }
 
@@ -2225,10 +1903,86 @@ function Get-UserLogon{
 
 }
 
+function Get-UserLastLogon{
+
+    <#
+
+    .SYNOPSIS
+    Gets the last time a user, or group of users, logged onto the domain.
+
+    .DESCRIPTION
+    Returns the last time a user or group of users logged onto the domain.
+
+    .PARAMETER SamAccountName
+    User name.
+
+    .INPUTS
+    You can pipe user names and user AD objects to this function.
+
+    .OUTPUTS
+    PS objects with user name and last logon date.
+
+    .NOTES
+    None.
+
+    .EXAMPLE
+    Get-UserLastLogon -Name "Fred"
+
+    Returns the last time Fred logged into the domain.
+
+    .EXAMPLE
+    Get-ADUser -Filter * | Get-UserLastLogon
+
+    Gets the last time all users in AD logged onto the domain.
+
+    .EXAMPLE
+    Get-UserLastLogon -OrganizationalUnit "Company Users"
+
+    Returns the last logon time for all users in the organizational unit "Company Users".
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [string]$SamAccountName = $env:UserName
+
+    )
+
+    begin{
+
+        $lastLogonList = @()
+
+    }
+
+    process{
+
+        $lastLogonList += Get-ADuser $SamAccountName | Get-ADObject -Properties lastlogon | Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}
+
+    }
+
+    end{
+
+        $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
+
+        return
+
+    }
+
+}
+
+##############################
+
 function Import-OutlookContactsFromCSV{
 #https://blogs.msdn.microsoft.com/jmanning/2007/01/25/using-powershell-for-outlook-automation/
     
-    [cmdletBinding()]	
+    [cmdletBinding()]
     
     param(
     
