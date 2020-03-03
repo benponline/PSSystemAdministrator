@@ -62,11 +62,17 @@ function Disable-Computer{
 
         $computer | Disable-ADAccount
 
+        #Update computer object to show disabled status.
+        $computer = Get-ADComputer $Name
+
         $disabledComputers += $computer
             
     }
 
     end{
+
+        #Update computer objects to show disabled status.
+        $disabledComputers =  $disabledComputers | Get-ADComputer
         
         $disabledComputers
 
@@ -146,6 +152,7 @@ function Disable-User{
 
     end{
 
+        #Update user objects to show disabled status.
         $disabledUsers =  $disabledUsers | Get-ADUser
 
         $disabledUsers | Sort-Object -Property Name
