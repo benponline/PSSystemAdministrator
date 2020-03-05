@@ -967,6 +967,8 @@ function Get-FailedLogon{
     .NOTES
     Compatible with Windows 10.
 
+    Not compatible with Powershell 7.
+
     .EXAMPLE
     Get-FailedLogon
 
