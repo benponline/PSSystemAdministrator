@@ -71,10 +71,7 @@ function Disable-Computer{
 
     end{
 
-        #Update computer objects to show disabled status.
-        $disabledComputers =  $disabledComputers | Get-ADComputer
-        
-        $disabledComputers
+        $disabledComputers | Sort-Object -Property Name
 
         return
 
@@ -146,16 +143,15 @@ function Disable-User{
 
         $user | Disable-ADAccount
 
+        $user = Get-ADUser $Name
+
         $disabledUsers += $user
         
     }
 
     end{
 
-        #Update user objects to show disabled status.
-        $disabledUsers =  $disabledUsers | Get-ADUser
-
-        $disabledUsers | Sort-Object -Property Name
+        $disabledUsers | Sort-Object -Property SamAccountName
 
         return
 
@@ -1834,6 +1830,9 @@ function Get-UserActiveLogon{
     .PARAMETER SamAccountName
     Takes the SamAccountName of an AD user.
 
+    .PARAMETER OrganizationalUnit
+    Limits the function's search to an organizational unit.
+
     .INPUTS
     String with SamAccountName or AD user object. Can pipe input to the function.
 
@@ -1864,7 +1863,9 @@ function Get-UserActiveLogon{
     Param(
     
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [string]$SamAccountName 
+        [string]$SamAccountName,
+        
+        [string]$OrganizationalUnit = ""
     
     )
 
@@ -1872,7 +1873,17 @@ function Get-UserActiveLogon{
 
         $computerList = @()
 
-        $computers = (Get-ADComputer -Filter *).Name
+        $domainInfo = (Get-ADDomain).DistinguishedName
+
+        if($OrganizationalUnit -eq ""){
+
+            $computers = (Get-ADComputer -Filter *).Name | Sort-Object
+
+        }else{
+
+            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").Name | Sort-Object
+
+        }
 
     }
 
@@ -2046,21 +2057,25 @@ function Move-Computer{
 
         $domainInfo = (Get-ADDomain).DistinguishedName
 
-        $computers = @()
+        $movedComputers = @()
 
     }
 
     process{
 
-        $computers += Get-ADComputer -Identity $Name
+        $computer = Get-ADComputer -Identity $Name
+
+        $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+        $computer = Get-ADComputer -Identity $Name
+
+        $movedComputers += $computer
 
     }
 
     end{
 
-        $computers | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
-        $computers
+        $movedComputers
 
         return
 
@@ -2130,21 +2145,25 @@ function Move-User{
 
         $domainInfo = (Get-ADDomain).DistinguishedName
 
-        $users = @()
+        $movedUsers = @()
 
     }
 
     process{
 
-        $users += Get-ADUser -Identity $Name
+        $user = Get-ADUser -Identity $Name
+
+        $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+        $user = Get-ADUser -Identity $Name
+
+        $movedUsers += $user
 
     }
 
     end{
 
-        $users | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
-        $users
+        $movedUsers | Sort-Object -Property SamAccountName
 
         return
 
@@ -2222,7 +2241,7 @@ function Remove-Computer{
 
         $computers | Remove-ADComputer
 
-        $computers
+        $computers | Sort-Object -Property Name
 
         return
 
@@ -2297,7 +2316,7 @@ function Remove-User{
 
         $users | Remove-ADUser
 
-        $users
+        $users | Sort-Object -Property SamAccountName
 
         return
 
