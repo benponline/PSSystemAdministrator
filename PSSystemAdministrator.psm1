@@ -1,3 +1,129 @@
+function Get-NotAccessedFiles{
+
+    <#
+
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER Name
+    
+    .INPUTS
+    
+    .OUTPUTS
+    
+    .NOTES
+
+    .EXAMPLE 
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>    
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('FullName')]
+        [string]$Path,
+
+        [int]$Days
+
+    )
+
+    begin{
+
+        $files = @()
+
+        $fileAge = (Get-Date).AddDays(-1*$Days)
+
+    }
+
+    process{
+
+        $files += Get-ChildItem -Path $Path -File -Recurse | 
+            Where-Object -Property LastAccessTime -LT $fileAge | 
+            Select-Object -Property FullName,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}}
+
+    }
+
+    end{
+
+        $files | Sort-Object -Property FullName
+        
+        return
+
+    }
+
+}
+
+function Get-InactiveFiles{
+
+    <#
+
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER Name
+    
+    .INPUTS
+    
+    .OUTPUTS
+    
+    .NOTES
+
+    .EXAMPLE 
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>    
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('FullName')]
+        [string]$Path,
+
+        [int]$Days
+
+    )
+
+    begin{
+
+        $files = @()
+
+        $fileAge = (Get-Date).AddDays(-1*$Days)
+
+    }
+
+    process{
+
+        $files += Get-ChildItem -Path $Path -File -Recurse | 
+            Where-Object -Property LastWriteTime -LT $fileAge | 
+            Select-Object -Property FullName,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}}
+
+    }
+
+    end{
+
+        $files | Sort-Object -Property FullName
+        
+        return
+
+    }
+
+}
+
+################################
+
 function Disable-Computer{
 
     <#
@@ -2172,8 +2298,6 @@ function Move-User{
     }
 
 }
-
-########################################
 
 function Remove-Computer{
 
