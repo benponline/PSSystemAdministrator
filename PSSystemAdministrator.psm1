@@ -173,7 +173,7 @@ function Get-ChildItemLastAccessTime{
     Function will gather all files recursively from this directory.
 
     .PARAMETER DaysInavtive
-    Function will return only files that have not been accessed for over this many days.
+    Function will return only files that have not been accessed for over this many days. By default is set to 0 and function returns all files.
 
     .INPUTS
     You can pipe multiple paths to this function.
@@ -251,7 +251,7 @@ function Get-ChildItemLastWriteTime{
     Function will gather all files recursively from this directory.
 
     .PARAMETER DaysInavtive
-    Function will return only files that have not been writted to for over this many days.
+    Function will return only files that have not been writted to for over this many days. By default is set to 0 and function returns all files.
 
     .INPUTS
     You can pipe multiple paths to this function.
