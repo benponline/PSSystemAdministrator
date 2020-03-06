@@ -285,7 +285,7 @@ function Get-ChildItemLastWriteTime{
         [Alias('FullName')]
         [string]$Path,
 
-        [int]$Days = 0
+        [int]$DaysInactive = 0
 
     )
 
@@ -293,7 +293,7 @@ function Get-ChildItemLastWriteTime{
 
         $files = @()
 
-        $fileAge = (Get-Date).AddDays(-1*$Days)
+        $fileAge = (Get-Date).AddDays(-1*$DaysInactive)
 
     }
 
