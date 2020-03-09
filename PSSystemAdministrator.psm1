@@ -950,6 +950,7 @@ function Get-DirectorySize{
     Param(
 
         [Parameter(Mandatory=$true)]
+        [Alias('Directory')]
         [string] $Path
     
     )
@@ -1355,6 +1356,82 @@ function Get-InactiveUsers{
     $lastLogonList | Select-Object -Property User,LastLogon | Sort-Object -Property User
     
     return
+
+}
+
+function Get-LargeFiles{
+
+    <#
+
+    .SYNOPSIS
+    This function returns files larger than a minimum set be the user.
+ 
+    .DESCRIPTION
+    Returns all files from a target directory that are larger than the minimum in MB set by the user. This function searches recursivly.
+ 
+    .PARAMETER Path
+    Sets the directory the function searches.
+
+    .PARAMETER FileSizeMB
+    Sets the file size minimum for files that are returned.
+ 
+    .INPUTS
+    Directories can be piped to this function.
+ 
+    .OUTPUTS
+    PS objects with name, fileSizeMB, and full name.
+ 
+    .NOTES
+
+    .EXAMPLE
+    Get-LargeFiles -Path "C:\Folder1" -FileSizeMB 1000
+
+    Returns all files over 1000MB from the "folder1" directory.
+ 
+    .EXAMPLE
+    "C:\Folder1","C:\Folder2" | Get-LargeFiles -FileSizeMB 5000
+
+    Returns all files over 5000MB from the "folder1" and "folder2" directories.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('Directory')]
+        [string]$Path,
+
+        [int]$FileSizeMB = 1000
+
+    )
+
+    begin{
+
+        $largeFiles = @()
+
+    }
+
+    process{
+
+        $largeFiles += Get-ChildItem -Path $Path -File -Recurse | Where-Object -Property Length -GT ($FileSizeMB * 1000000)
+
+    }
+
+    end{
+
+        $largeFiles = $largeFiles | Select-Object -Property Name,@{n="FileSizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
+
+        $largeFiles | Sort-Object -Property Name
+
+        return
+
+    }
 
 }
 
