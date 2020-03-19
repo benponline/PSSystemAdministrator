@@ -1,3 +1,85 @@
+
+
+function Get-InactiveFiles{
+
+    <#
+
+    .SYNOPSIS
+    This function gathers all files in a directory that have not been accessed recently.
+    
+    .DESCRIPTION
+    This function gathers all files in a directory recursively that have not been access recently. Returns file name, last access time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Function will gather all files recursively from this directory.
+
+    .PARAMETER ActivityWindowInDays
+    Function will return only files that have not been accessed for over this many days. By default is set to 0 and function returns all files.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes file names, last access time, size in MB, and full name.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-InactiveFiles -Path C:\Directory1 -DaysInactive 5
+
+    Gathers all files recursively in the "Directory1" folder that have not been accessed in over 5 days.
+
+    .EXAMPLE
+    "C:\Directory1","C:\Directory2" | Get-InactiveFiles
+
+    Gathers all files recursively in the "Directory1" and "Directory2" folders.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('FullName')]
+        [string]$Path,
+
+        [int]$ActivityWindowInDays = 0
+
+    )
+
+    begin{
+
+        $files = @()
+
+        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
+
+    }
+
+    process{
+
+        $files += Get-ChildItem -Path $Path -File -Recurse | 
+            Where-Object -Property LastAccessTime -LT $fileAge | 
+            Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+
+    }
+
+    end{
+
+        $files | Sort-Object -Property Name
+        
+        return
+
+    }
+
+}
+
+##############################################
+
 function Disable-Computer{
 
     <#
@@ -153,6 +235,84 @@ function Disable-User{
 
         $disabledUsers | Sort-Object -Property SamAccountName
 
+        return
+
+    }
+
+}
+
+function Get-ActiveFiles{
+
+    <#
+
+    .SYNOPSIS
+    This function gathers all files in a directory that have been accessed recently.
+    
+    .DESCRIPTION
+    This function gathers all files in a directory recursively that have been active recently. Returns file name, last access time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Function will gather all files recursively from this directory.
+
+    .PARAMETER ActivityWindowInDays
+    Function will return only files that have been accessed within this window.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes file names, last access time, size in MB, and full name.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-ActiveFiles -Path C:\Directory1 -ActivityWindowInDays 5
+
+    Gathers all files recursively in the "Directory1" folder that have been accessed within 5 days.
+
+    .EXAMPLE
+    "C:\Directory1","C:\Directory2" | Get-ActiveFiles
+
+    Gathers all files recursively in the "Directory1" and "Directory2" folders that have been accessed in the last day.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('FullName')]
+        [string]$Path,
+
+        [int]$ActivityWindowInDays = 1
+
+    )
+
+    begin{
+
+        $files = @()
+
+        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
+
+    }
+
+    process{
+
+        $files += Get-ChildItem -Path $Path -File -Recurse | 
+            Where-Object -Property LastAccessTime -GT $fileAge | 
+            Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+
+    }
+
+    end{
+
+        $files | Sort-Object -Property Name
+        
         return
 
     }
