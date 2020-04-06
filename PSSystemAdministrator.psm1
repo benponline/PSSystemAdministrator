@@ -681,7 +681,7 @@ function Get-ComputerInformation{
 
 }
 
-function Get-ComputerLastLogon{
+function Get-ComputerLastLogon{#Chanve to last boot time.
 
     <#
 
@@ -759,6 +759,7 @@ function Get-ComputerLastLogon{
 
         $lastLogon = New-Object -TypeName PSObject -Property $lastLogonProperties
 
+        #Change to last boot time.
         $lastLogonTime = [datetime]::fromfiletime((Get-ADComputer $Name | Get-ADObject -Properties lastlogon).lastlogon)
 
         $lastLogon.LastLogon = $lastLogonTime
