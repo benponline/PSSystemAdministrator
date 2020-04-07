@@ -681,7 +681,7 @@ function Get-ComputerInformation{
 
 }
 
-function Get-ComputerLastLogon{#Chanve to last boot time.
+function Get-ComputerLastBootUpTime{#Change to last boot time.
 
     <#
 
@@ -744,35 +744,20 @@ function Get-ComputerLastLogon{#Chanve to last boot time.
 
     begin{
 
-        $lastLogonList = @()
+        $lastBootUpTimeList = @()
 
     }
 
     process{
 
-        $lastLogonProperties = @{
-
-            "LastLogon" = "";
-            "Computer" = ""
-
-        }
-
-        $lastLogon = New-Object -TypeName PSObject -Property $lastLogonProperties
-
-        #Change to last boot time.
-        $lastLogonTime = [datetime]::fromfiletime((Get-ADComputer $Name | Get-ADObject -Properties lastlogon).lastlogon)
-
-        $lastLogon.LastLogon = $lastLogonTime
-
-        $lastLogon.Computer = $Name
-
-        $lastLogonList += $lastLogon
+        $lastBootUpTimeList += Get-CimInstance -ComputerName $Name -Class win32_operatingsystem -Property LastBootUpTime | 
+            Select-Object -Property @{n='ComputerName';e={$_.pscomputername}},LastBootUpTime
 
     }
 
     end{
 
-        $lastLogonList | Select-Object -Property Computer,LastLogon | Sort-Object -Property Computer
+        $lastBootUpTimeList | Select-Object -Property ComputerName,LastBootUpTime | Sort-Object -Property ComputerName
 
         return
 
