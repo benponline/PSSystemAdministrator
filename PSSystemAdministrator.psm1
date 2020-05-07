@@ -1,5 +1,3 @@
-
-
 function Get-InactiveFiles{
 
     <#
@@ -681,7 +679,7 @@ function Get-ComputerInformation{
 
 }
 
-function Get-ComputerLastBootUpTime{#Change to last boot time.
+function Get-ComputerLastBootUpTime{
 
     <#
 
