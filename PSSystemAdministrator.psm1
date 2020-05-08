@@ -46,7 +46,7 @@ function Get-InactiveFiles{
         [Alias('FullName')]
         [string]$Path,
 
-        [int]$ActivityWindowInDays = 0
+        [int]$ActivityWindowInDays = 1
 
     )
 
