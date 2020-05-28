@@ -653,13 +653,13 @@ function Get-ComputerInformation{
             $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Size) | 
                 Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
 
-            $computerInfo.currentuser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
-
-            #This command works in Powershell 5.
-            $computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).IPV4Address
-
-            #This command works in Powershell Core.
-            #$computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).replies.address.ipaddresstostring
+            if($Name -eq $env:COMPUTERNAME){
+                $computerInfo.currentuser = [System.Security.Principal.WindowsIdentity]::GetCurrent().name
+                $computerInfo.IPAddress = (Get-NetIPAddress -AddressFamily IPv4).IPAddress | Select-Object -First 1
+            }else{
+                $computerInfo.currentuser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
+                $computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).reply.address.ipaddresstostring
+            }
 
             $computerInfo.BootUpTime = (Get-CimInstance -ClassName Win32_OperatingSystem -ComputerName $Name).LastBootUpTime
 
@@ -2243,7 +2243,6 @@ function Get-UserActiveLogon{
     
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName,
-        
         [string]$OrganizationalUnit = ""
     
     )
@@ -2251,17 +2250,12 @@ function Get-UserActiveLogon{
     begin{
 
         $computerList = @()
-
         $domainInfo = (Get-ADDomain).DistinguishedName
 
         if($OrganizationalUnit -eq ""){
-
             $computers = (Get-ADComputer -Filter *).Name | Sort-Object
-
         }else{
-
             $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").Name | Sort-Object
-
         }
 
     }
@@ -2274,12 +2268,14 @@ function Get-UserActiveLogon{
 
                 try{
 
-                    $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+                    if($computer -eq $env:COMPUTERNAME){
+                        $currentUser = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name).split('\')[-1]
+                    }else{
+                        $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+                    }
 
                     if($currentUser -eq $SamAccountName){
-                    
                         $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
-                
                     }
 
                 }catch{}
@@ -2291,11 +2287,8 @@ function Get-UserActiveLogon{
     }
 
     end{
-
         $computerList
-
         return
-
     }
 
 }
