@@ -808,45 +808,29 @@ function Get-ComputerOS{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
-
     )
 
     begin{
-
         $computerOSList = @()
-
     }
 
     process{
-
         if(Test-Connection $Name -Quiet -Count 1){
-
             try{
-
-                $computerOSList += Get-CimInstance -ComputerName $Name -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption
-                    
+                $computerOSList += Get-CimInstance -ComputerName $Name -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption,BuildNumber
             }catch{
-        
-                $computerOSList += Get-WmiObject -ComputerName $Name -Class win32_operatingsystem | Select-Object -Property PSComputerName,Caption
-        
+                $computerOSList += Get-WmiObject -ComputerName $Name -Class win32_operatingsystem -ErrorAction 'Stop' | Select-Object -Property PSComputerName,Caption,BuildNumber
             }
-
         }
-
     }
 
     end{
-
         $computerOSList
-
         return
-
     }
-
 }
 
 function Get-ComputerSoftware{
