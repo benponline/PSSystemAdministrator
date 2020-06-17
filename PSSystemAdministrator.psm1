@@ -1,82 +1,4 @@
-function Get-InactiveFiles{
-
-    <#
-
-    .SYNOPSIS
-    This function gathers all files in a directory that have not been accessed recently.
-    
-    .DESCRIPTION
-    This function gathers all files in a directory recursively that have not been access recently. Returns file name, last access time, size in MB, and full name.
-    
-    .PARAMETER Path
-    Function will gather all files recursively from this directory.
-
-    .PARAMETER ActivityWindowInDays
-    Function will return only files that have not been accessed for over this many days. By default is set to 0 and function returns all files.
-
-    .INPUTS
-    You can pipe multiple paths to this function.
-    
-    .OUTPUTS
-    Array of PS objects that includes file names, last access time, size in MB, and full name.
-    
-    .NOTES
-
-    .EXAMPLE
-    Get-InactiveFiles -Path C:\Directory1 -DaysInactive 5
-
-    Gathers all files recursively in the "Directory1" folder that have not been accessed in over 5 days.
-
-    .EXAMPLE
-    "C:\Directory1","C:\Directory2" | Get-InactiveFiles
-
-    Gathers all files recursively in the "Directory1" and "Directory2" folders.
-    
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-
-    #>
-
-    [cmdletbinding()]
-    param(
-
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
-        [Alias('FullName')]
-        [string]$Path,
-
-        [int]$ActivityWindowInDays = 1
-
-    )
-
-    begin{
-
-        $files = @()
-
-        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
-
-    }
-
-    process{
-
-        $files += Get-ChildItem -Path $Path -File -Recurse | 
-            Where-Object -Property LastAccessTime -LT $fileAge | 
-            Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
-
-    }
-
-    end{
-
-        $files | Sort-Object -Property Name
-        
-        return
-
-    }
-
-}
-
-##############################################
+############################
 
 function Disable-Computer{
 
@@ -139,12 +61,10 @@ function Disable-Computer{
     process{
 
         $computer = Get-ADComputer $Name
-
         $computer | Disable-ADAccount
 
         #Update computer object to show disabled status.
         $computer = Get-ADComputer $Name
-
         $disabledComputers += $computer
             
     }
@@ -220,11 +140,8 @@ function Disable-User{
     process{
 
         $user = Get-ADUser $Name
-
         $user | Disable-ADAccount
-
         $user = Get-ADUser $Name
-
         $disabledUsers += $user
         
     }
@@ -232,7 +149,6 @@ function Disable-User{
     end{
 
         $disabledUsers | Sort-Object -Property SamAccountName
-
         return
 
     }
@@ -294,7 +210,6 @@ function Get-ActiveFiles{
     begin{
 
         $files = @()
-
         $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
 
     }
@@ -310,7 +225,6 @@ function Get-ActiveFiles{
     end{
 
         $files | Sort-Object -Property Name
-        
         return
 
     }
@@ -372,7 +286,6 @@ function Get-ChildItemLastAccessTime{
     begin{
 
         $files = @()
-
         $fileAge = (Get-Date).AddDays(-1*$DaysInactive)
 
     }
@@ -388,7 +301,6 @@ function Get-ChildItemLastAccessTime{
     end{
 
         $files | Sort-Object -Property Name
-        
         return
 
     }
@@ -450,7 +362,6 @@ function Get-ChildItemLastWriteTime{
     begin{
 
         $files = @()
-
         $fileAge = (Get-Date).AddDays(-1*$DaysInactive)
 
     }
@@ -466,7 +377,6 @@ function Get-ChildItemLastWriteTime{
     end{
 
         $files | Sort-Object -Property Name
-        
         return
 
     }
@@ -555,7 +465,6 @@ function Get-ComputerError{
     end{
 
         $errorLog | Sort-Object -Property ComputerName | Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
-
         return
 
     }
@@ -641,15 +550,10 @@ function Get-ComputerInformation{
         if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
 
             $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
-
             $computerInfo.computername = $Name
-
             $computerInfo.model = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property Model).model
-
             $computerInfo.CPU = (Get-CimInstance -ComputerName $Name -ClassName Win32_Processor -Property Name).name
-
             $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
-
             $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Size) | 
                 Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
 
@@ -662,7 +566,6 @@ function Get-ComputerInformation{
             }
 
             $computerInfo.BootUpTime = (Get-CimInstance -ClassName Win32_OperatingSystem -ComputerName $Name).LastBootUpTime
-
             $computerInfoList += $computerInfo
 
         }
@@ -672,7 +575,6 @@ function Get-ComputerInformation{
     end{
 
         $computerInfoList | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property ComputerName
-
         return
 
     }
@@ -756,7 +658,6 @@ function Get-ComputerLastBootUpTime{
     end{
 
         $lastBootUpTimeList | Select-Object -Property ComputerName,LastBootUpTime | Sort-Object -Property ComputerName
-
         return
 
     }
@@ -818,13 +719,17 @@ function Get-ComputerOS{
     }
 
     process{
+
         if(Test-Connection $Name -Quiet -Count 1){
+
             try{
                 $computerOSList += Get-CimInstance -ComputerName $Name -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption,BuildNumber
             }catch{
                 $computerOSList += Get-WmiObject -ComputerName $Name -Class win32_operatingsystem -ErrorAction 'Stop' | Select-Object -Property PSComputerName,Caption,BuildNumber
             }
+
         }
+
     }
 
     end{
@@ -911,7 +816,6 @@ function Get-ComputerSoftware{
         if((Test-Connection -ComputerName $Name -Count 1)){
 
             $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$Name)
-
             $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$Name)
 
             foreach($key in $lmKeys){
@@ -972,13 +876,9 @@ function Get-ComputerSoftware{
     end{
     
         $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
-
         $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
-
         $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
-
         $masterKeys
-
         return
 
     }
@@ -1033,7 +933,6 @@ function Get-CredentialExportToXML{
     )
 
     $credential = Get-Credential
-
     Export-Clixml -Path "$Path\$FileName.xml" -InputObject $credential
 
 }
@@ -1093,7 +992,6 @@ function Get-DirectorySize{
     }
 
     $folderInfo
-
     return
 
 }
@@ -1159,7 +1057,6 @@ function Get-DisabledComputers{
     }
 
     $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
-
     return
     
 }
@@ -1222,7 +1119,6 @@ function Get-DisabledUsers{
     }
 
     $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
-    
     return
 
 }
@@ -1302,7 +1198,6 @@ function Get-FailedLogon{
     end{
 
         $failedLoginList | Select-Object -Property ComputerName,TimeWritten,EventID | Sort-Object -Property ComputerName
-
         return
 
     }
@@ -1383,7 +1278,6 @@ function Get-InactiveComputers{
             }
     
             $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
-        
             $lastLogonList += $lastLogonObject
         
         }
@@ -1391,8 +1285,83 @@ function Get-InactiveComputers{
     }
     
     $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
-    
     return
+
+}
+
+function Get-InactiveFiles{
+
+    <#
+
+    .SYNOPSIS
+    This function gathers all files in a directory that have not been accessed recently.
+    
+    .DESCRIPTION
+    This function gathers all files in a directory recursively that have not been access recently. Returns file name, last access time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Function will gather all files recursively from this directory.
+
+    .PARAMETER ActivityWindowInDays
+    Function will return only files that have not been accessed for over this many days. By default is set to 0 and function returns all files.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes file names, last access time, size in MB, and full name.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-InactiveFiles -Path C:\Directory1 -DaysInactive 5
+
+    Gathers all files recursively in the "Directory1" folder that have not been accessed in over 5 days.
+
+    .EXAMPLE
+    "C:\Directory1","C:\Directory2" | Get-InactiveFiles
+
+    Gathers all files recursively in the "Directory1" and "Directory2" folders.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+
+    #>
+
+    [cmdletbinding()]
+    param(
+
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('FullName')]
+        [string]$Path,
+
+        [int]$ActivityWindowInDays = 1
+
+    )
+
+    begin{
+
+        $files = @()
+        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
+
+    }
+
+    process{
+
+        $files += Get-ChildItem -Path $Path -File -Recurse | 
+            Where-Object -Property LastAccessTime -LT $fileAge | 
+            Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+
+    }
+
+    end{
+
+        $files | Sort-Object -Property Name
+        return
+
+    }
 
 }
 
@@ -1482,7 +1451,6 @@ function Get-InactiveUsers{
     }
     
     $lastLogonList | Select-Object -Property User,LastLogon | Sort-Object -Property User
-    
     return
 
 }
@@ -1554,9 +1522,7 @@ function Get-LargeFiles{
     end{
 
         $largeFiles = $largeFiles | Select-Object -Property Name,@{n="FileSizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
-
         $largeFiles | Sort-Object -Property Name
-
         return
 
     }
@@ -1644,9 +1610,7 @@ function Get-LocalDiskInformation{
     end{
 
         $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
-
         $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
-
         return
 
     }  
@@ -1734,7 +1698,6 @@ function Get-MappedNetworkDrive{
     end{
 
         $mappedDrives | Sort-Object -Property SystemName
-
         return
 
     }
@@ -1812,7 +1775,6 @@ function Get-OfflineComputers{
     }
     
     $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
-    
     return
     
 }
@@ -1888,7 +1850,6 @@ function Get-OnlineComputers{
     }
     
     $onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
-    
     return
 
 }
@@ -1937,7 +1898,6 @@ function Get-OUComputers{
     begin{
 
         $domainInfo = (Get-ADDomain).DistinguishedName
-
         $computers = @()
     
     }
@@ -1951,7 +1911,6 @@ function Get-OUComputers{
     end{
 
         $computers
-
         return
 
     }
@@ -2002,7 +1961,6 @@ function Get-OUUsers{
     begin{
 
         $domainInfo = (Get-ADDomain).DistinguishedName
-
         $users = @()
     
     }
@@ -2016,7 +1974,6 @@ function Get-OUUsers{
     end{
 
         $users
-
         return
 
     }
@@ -2109,7 +2066,6 @@ function Get-PhysicalDiskInformation{
     end{
 
         $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB | Sort-Object -Property ComputerName
-
         Return
 
     }
@@ -2159,7 +2115,6 @@ function Get-SubDirectorySize{
     )
 
     $foldersInfo = @()
-
     $folders = Get-ChildItem -Path $Path -Directory
 
     foreach($folder in $folders){
@@ -2175,7 +2130,6 @@ function Get-SubDirectorySize{
     }
 
     $foldersInfo
-
     return
 
 }
@@ -2237,9 +2191,13 @@ function Get-UserActiveLogon{
         $domainInfo = (Get-ADDomain).DistinguishedName
 
         if($OrganizationalUnit -eq ""){
+
             $computers = (Get-ADComputer -Filter *).Name | Sort-Object
+
         }else{
+
             $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").Name | Sort-Object
+
         }
 
     }
@@ -2253,13 +2211,19 @@ function Get-UserActiveLogon{
                 try{
 
                     if($computer -eq $env:COMPUTERNAME){
+            
                         $currentUser = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name).split('\')[-1]
+            
                     }else{
+            
                         $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+            
                     }
 
                     if($currentUser -eq $SamAccountName){
+            
                         $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
+            
                     }
 
                 }catch{}
@@ -2271,8 +2235,10 @@ function Get-UserActiveLogon{
     }
 
     end{
+
         $computerList
         return
+
     }
 
 }
@@ -2344,7 +2310,6 @@ function Get-UserLastLogon{
     end{
 
         $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
-
         return
 
     }
@@ -2412,7 +2377,6 @@ function Move-Computer{
     begin{
 
         $domainInfo = (Get-ADDomain).DistinguishedName
-
         $movedComputers = @()
 
     }
@@ -2420,11 +2384,8 @@ function Move-Computer{
     process{
 
         $computer = Get-ADComputer -Identity $Name
-
         $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
         $computer = Get-ADComputer -Identity $Name
-
         $movedComputers += $computer
 
     }
@@ -2432,7 +2393,6 @@ function Move-Computer{
     end{
 
         $movedComputers
-
         return
 
     }
@@ -2500,7 +2460,6 @@ function Move-User{
     begin{
 
         $domainInfo = (Get-ADDomain).DistinguishedName
-
         $movedUsers = @()
 
     }
@@ -2508,11 +2467,8 @@ function Move-User{
     process{
 
         $user = Get-ADUser -Identity $Name
-
         $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
         $user = Get-ADUser -Identity $Name
-
         $movedUsers += $user
 
     }
@@ -2520,7 +2476,6 @@ function Move-User{
     end{
 
         $movedUsers | Sort-Object -Property SamAccountName
-
         return
 
     }
@@ -2594,9 +2549,7 @@ function Remove-Computer{
     end{
 
         $computers | Remove-ADComputer
-
         $computers | Sort-Object -Property Name
-
         return
 
     }
@@ -2669,9 +2622,7 @@ function Remove-User{
     end{
 
         $users | Remove-ADUser
-
         $users | Sort-Object -Property SamAccountName
-
         return
 
     }
@@ -2729,7 +2680,6 @@ function Set-ComputerIP{
             
     #Self adapter
     $SelfIPAddress = (Test-Connection -ComputerName $env:COMPUTERNAME -Count 1).IPv4Address
-
     $SelfIPInterfaceIndex = (Get-NetIPAddress | Where-Object -Property IPAddress -eq $SelfIPAddress).InterfaceIndex
 
     #Subnetmask / Prefixlength
@@ -2740,22 +2690,18 @@ function Set-ComputerIP{
 
     #DNS
     $SelfDNS = (Get-DnsClientServerAddress -InterfaceIndex $SelfIPInterfaceIndex -AddressFamily IPv4).ServerAddresses
-
     $TargetIPAddress = (Test-Connection -ComputerName $ComputerName -Count 1 ).IPv4Address
 
     try{
 
         #Target interface index
         $TargetIPInterfaceIndex = (Get-NetIPAddress -CimSession $ComputerName | Where-Object -Property IPAddress -eq $TargetIPAddress).InterfaceIndex
-
         Set-DnsClientServerAddress -CimSession $ComputerName -InterfaceIndex $TargetIPInterfaceIndex -ServerAddresses $SelfDNS
-
         New-NetIPAddress -CimSession $ComputerName -InterfaceIndex $TargetIPInterfaceIndex -IPAddress $IPAddress -AddressFamily IPv4 -PrefixLength $SelfPrefixlength -DefaultGateway $SelfDefaultGateway
     
     }catch{
 
         switch($SelfPrefixlength){
-
             30 {$SubnetMask = "255.255.255.252"}
             29 {$SubnetMask = "255.255.255.248"}
             28 {$SubnetMask = "255.255.255.240"}
@@ -2771,7 +2717,6 @@ function Set-ComputerIP{
             18 {$SubnetMask = "255.255.192.0"}
             17 {$SubnetMask = "255.255.128.0"}
             16 {$SubnetMask = "255.255.0.0"}
-
         }
 
         $TargetIPInterfaceAlias = "Local Area Connection"
@@ -2779,7 +2724,6 @@ function Set-ComputerIP{
         if($SelfDNS.count -gt 1){
 
             $SelfDNS1 = $SelfDNS[0]
-
             $SelfDNS2 = $SelfDNS[1]
 
         }
@@ -2854,9 +2798,7 @@ function Start-Computer{
     begin{
         
         [string]$BroadcastIP=([System.Net.IPAddress]::Broadcast)
-
         [int]$port=9
-
         $broadcast = [Net.IPAddress]::Parse($BroadcastIP)
 
     }
@@ -2870,15 +2812,10 @@ function Start-Computer{
             try{
 
                 $ComputerMAC = (($ComputerMAC.replace(":","")).replace("-","")).replace(".","")
-
                 $target = 0,2,4,6,8,10 | ForEach-Object {[convert]::ToByte($ComputerMAC.substring($_,2),16)}
-
                 $packet = (,[byte]255 * 6) + ($target * 16)
-        
                 $UDPclient = new-Object System.Net.Sockets.UdpClient
-
                 $UDPclient.Connect($broadcast,$port)
-
                 [void]$UDPclient.Send($packet, 102)
 
             }catch{}
