@@ -388,6 +388,7 @@ function Get-ComputerError{
     }
 
     process{
+        #Get-WinEvent -LogName system -MaxEvents 10 | Where-Object -Property leveldisplayname -eq error
         $errorLog += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | 
             Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
     }
@@ -1040,6 +1041,7 @@ function Get-FailedLogon{
 
     process{
         if(Test-Connection $Name -Count 1 -Quiet){
+            #Get-WinEvent -LogName system -MaxEvents 10 | Where-Object -Property id -eq '4625' Where-Object -Property TimeCreated -GT Get-Date-1day
             $failedLoginList += Get-EventLog -ComputerName $Name -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($DaysBack * -1)) |
                 Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID
         }
@@ -1126,7 +1128,6 @@ function Get-InactiveComputers{
     
     $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
     return
-
 }
 
 function Get-InactiveFiles{
@@ -1172,37 +1173,27 @@ function Get-InactiveFiles{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('FullName')]
         [string]$Path,
-
         [int]$ActivityWindowInDays = 1
-
     )
 
     begin{
-
         $files = @()
         $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
-
     }
 
     process{
-
         $files += Get-ChildItem -Path $Path -File -Recurse | 
             Where-Object -Property LastAccessTime -LT $fileAge | 
             Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
-
     }
 
     end{
-
-        $files | Sort-Object -Property Name
+        $files
         return
-
     }
-
 }
 
 function Get-InactiveUsers{
@@ -1254,23 +1245,16 @@ function Get-InactiveUsers{
 
     [CmdletBinding()]
     Param(
-
         [int]$DaysInactive = 30,
-    
         [string]$OrganizationalUnit = ""
-    
     )
 
     $domainInfo = (Get-ADDomain).DistinguishedName 
     
     if($OrganizationalUnit -eq ""){
-
         $users = Get-ADUser -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
-
     }else{
-
         $users = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon | Select-Object -Property lastlogon,name
-
     }
     
     $lastLogonList = @()
@@ -1278,21 +1262,16 @@ function Get-InactiveUsers{
     foreach($user in $users){
     
         if(([datetime]::fromfiletime($user.lastlogon)) -lt ((Get-Date).AddDays($DaysInactive * -1))){
-    
             $lastLogonProperties = @{
                 "LastLogon" = ([datetime]::fromfiletime($user.lastlogon));
                 "User" = ($user.name)
             }
-    
             $lastLogonList += New-Object -TypeName PSObject -Property $lastLogonProperties
-        
         }
-    
     }
     
     $lastLogonList | Select-Object -Property User,LastLogon | Sort-Object -Property User
     return
-
 }
 
 function Get-LargeFiles{
@@ -1338,35 +1317,25 @@ function Get-LargeFiles{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('Directory')]
         [string]$Path,
-
         [int]$FileSizeMB = 1000
-
     )
 
     begin{
-
         $largeFiles = @()
-
     }
 
     process{
-
         $largeFiles += Get-ChildItem -Path $Path -File -Recurse | Where-Object -Property Length -GT ($FileSizeMB * 1000000)
-
     }
 
     end{
-
         $largeFiles = $largeFiles | Select-Object -Property Name,@{n="FileSizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
         $largeFiles | Sort-Object -Property Name
         return
-
     }
-
 }
 
 function Get-LocalDiskInformation{
@@ -1417,23 +1386,18 @@ function Get-LocalDiskInformation{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
-
     )
 
     begin{
-
         $driveInformationList = @()
-
     }
 
     process{
 
         if(Test-Connection $Name -Count 1 -Quiet){
-
             $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace,DriveType | 
             Where-Object -Property DriveType -EQ 3 | 
             Select-Object -Property @{n="Computer";e={$Name}},`
@@ -1442,19 +1406,14 @@ function Get-LocalDiskInformation{
             @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
             @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
             @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
-
         }
-
     }
 
     end{
-
         $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
         $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
         return
-
     }  
-
 }
 
 function Get-MappedNetworkDrive{
@@ -1505,23 +1464,18 @@ function Get-MappedNetworkDrive{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = "$env:COMPUTERNAME"
-
     )
 
     begin{
-
         $mappedDrives = @()
-
     }
 
     process{
 
         if(Test-Connection $Name -Count 1 -Quiet){
-
             $mappedDrives += Get-CimInstance -ComputerName $Name -ClassName win32_mappedlogicaldisk -Property deviceid,volumename,size,freespace,ProviderName | 
                 Select-Object -Property @{n="Computer";e={$Name}},`
                 @{n="Drive";e={$_.deviceid}},`
@@ -1530,18 +1484,13 @@ function Get-MappedNetworkDrive{
                 @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
                 @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
                 @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
-
         }
-
     }
 
     end{
-
-        $mappedDrives | Sort-Object -Property SystemName
+        $mappedDrives
         return
-
     }
-
 }
 
 function Get-OfflineComputers{
@@ -1585,21 +1534,15 @@ function Get-OfflineComputers{
 
     [CmdletBinding()]
     Param(
-    
         [string]$OrganizationalUnit = ""
-    
     )
 
     $domainInfo = (Get-ADDomain).DistinguishedName 
     
     if($OrganizationalUnit -eq ""){
-
         $computers = Get-ADComputer -Filter *
-
     }else{
-
         $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
-
     }
 
     $offlineComputers = @()
@@ -1607,16 +1550,12 @@ function Get-OfflineComputers{
     foreach($computer in $computers){
     
         if(!(Test-Connection -ComputerName ($computer).name -Count 1 -Quiet)){
-    
             $offlineComputers += $computer
-    
         }
-    
     }
     
     $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
     return
-    
 }
 
 function Get-OnlineComputers{
@@ -1682,7 +1621,6 @@ function Get-OnlineComputers{
     #$onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
     $onlineComputers
     return
-
 }
 
 function Get-OUComputers{
@@ -1720,32 +1658,23 @@ function Get-OUComputers{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,Mandatory=$True)]
         [string]$OrganizationalUnit
-
     )
 
     begin{
-
         $domainInfo = (Get-ADDomain).DistinguishedName
         $computers = @()
-    
     }
 
     process{
-
         $computers += Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
-
     }
 
     end{
-
         $computers
         return
-
     }
-
 }
 
 function Get-OUUsers{
@@ -1783,32 +1712,23 @@ function Get-OUUsers{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,Mandatory=$True)]
         [string]$OrganizationalUnit
-
     )
 
     begin{
-
         $domainInfo = (Get-ADDomain).DistinguishedName
         $users = @()
-    
     }
 
     process{
-
         $users += Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
-
     }
 
     end{
-
         $users
         return
-
     }
-
 }
 
 function Get-PhysicalDiskInformation{
@@ -1865,23 +1785,18 @@ function Get-PhysicalDiskInformation{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
-
     )
 
     begin{
-
         $physicalDiskList = @()
-
     }
 
     process{
 
         if(Test-Connection $Name -Count 1 -Quiet){
-
             $physicalDiskList += Get-PhysicalDisk -CimSession $Name | 
                 Select-Object -Property @{n="ComputerName";e={$Name}},`
                 FriendlyName,`
@@ -1889,18 +1804,13 @@ function Get-PhysicalDiskInformation{
                 OperationalStatus,`
                 HealthStatus,`
                 @{n="SizeGB";e={[math]::Round(($_.Size / 1GB),1)}}
-
         }
-
     }
 
     end{
-
         $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB | Sort-Object -Property ComputerName
         Return
-
     }
-
 }
 
 function Get-SubDirectorySize{
@@ -1962,7 +1872,6 @@ function Get-SubDirectorySize{
 
     $foldersInfo
     return
-
 }
 
 function Get-UserActiveLogon{
@@ -2009,28 +1918,20 @@ function Get-UserActiveLogon{
 
     [CmdletBinding()]
     Param(
-    
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName,
         [string]$OrganizationalUnit = ""
-    
     )
 
     begin{
-
         $computerList = @()
         $domainInfo = (Get-ADDomain).DistinguishedName
 
         if($OrganizationalUnit -eq ""){
-
             $computers = (Get-ADComputer -Filter *).Name | Sort-Object
-
         }else{
-
             $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").Name | Sort-Object
-
         }
-
     }
 
     process{
@@ -2039,39 +1940,29 @@ function Get-UserActiveLogon{
 
             if(Test-Connection $computer -Count 1 -Quiet){
 
+                $computer
+
                 try{
 
                     if($computer -eq $env:COMPUTERNAME){
-            
                         $currentUser = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name).split('\')[-1]
-            
                     }else{
-            
                         $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
-            
                     }
 
                     if($currentUser -eq $SamAccountName){
-            
                         $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
-            
                     }
 
                 }catch{}
-
             }
-
         }
-
     }
 
     end{
-
         $computerList
         return
-
     }
-
 }
 
 function Get-UserLastLogon{
