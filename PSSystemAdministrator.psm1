@@ -45,38 +45,28 @@ function Disable-Computer{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('ComputerName')]
         [string]$Name
-
     )
 
     begin{
-
         $disabledComputers = @()
-
     }
 
     process{
-
         $computer = Get-ADComputer $Name
         $computer | Disable-ADAccount
 
         #Update computer object to show disabled status.
         $computer = Get-ADComputer $Name
         $disabledComputers += $computer
-            
     }
 
     end{
-
         $disabledComputers | Sort-Object -Property Name
-
         return
-
     }
-
 }
 
 function Disable-User{
@@ -124,35 +114,26 @@ function Disable-User{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('SamAccountName')]
         [string]$Name
-
     )
 
     begin{
-
         $disabledUsers = @()
-
     }
 
     process{
-
         $user = Get-ADUser $Name
         $user | Disable-ADAccount
         $user = Get-ADUser $Name
         $disabledUsers += $user
-        
     }
 
     end{
-
         $disabledUsers | Sort-Object -Property SamAccountName
         return
-
     }
-
 }
 
 function Get-ActiveFiles{
@@ -198,41 +179,30 @@ function Get-ActiveFiles{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('FullName')]
         [string]$Path,
-
         [int]$ActivityWindowInDays = 1
-
     )
 
     begin{
-
         $files = @()
         $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
-
     }
 
     process{
-
         $files += Get-ChildItem -Path $Path -File -Recurse | 
             Where-Object -Property LastAccessTime -GT $fileAge | 
             Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
-
     }
 
     end{
-
         $files | Sort-Object -Property Name
         return
-
     }
-
 }
 
 function Get-ChildItemLastAccessTime{
-
     <#
 
     .SYNOPSIS
@@ -243,9 +213,6 @@ function Get-ChildItemLastAccessTime{
     
     .PARAMETER Path
     Function will gather all files recursively from this directory.
-
-    .PARAMETER DaysInavtive
-    Function will return only files that have not been accessed for over this many days. By default is set to 0 and function returns all files.
 
     .INPUTS
     You can pipe multiple paths to this function.
@@ -274,37 +241,24 @@ function Get-ChildItemLastAccessTime{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('FullName')]
-        [string]$Path,
-
-        [int]$DaysInactive = 0
-
+        [string]$Path
     )
 
     begin{
-
         $files = @()
-        $fileAge = (Get-Date).AddDays(-1*$DaysInactive)
-
     }
 
     process{
-
         $files += Get-ChildItem -Path $Path -File -Recurse | 
-            Where-Object -Property LastAccessTime -LT $fileAge | 
             Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
-
     }
 
     end{
-
-        $files | Sort-Object -Property Name
+        $files
         return
-
     }
-
 }
 
 function Get-ChildItemLastWriteTime{
@@ -319,9 +273,6 @@ function Get-ChildItemLastWriteTime{
     
     .PARAMETER Path
     Function will gather all files recursively from this directory.
-
-    .PARAMETER DaysInavtive
-    Function will return only files that have not been writted to for over this many days. By default is set to 0 and function returns all files.
 
     .INPUTS
     You can pipe multiple paths to this function.
@@ -350,37 +301,24 @@ function Get-ChildItemLastWriteTime{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('FullName')]
-        [string]$Path,
-
-        [int]$DaysInactive = 0
-
+        [string]$Path
     )
 
     begin{
-
         $files = @()
-        $fileAge = (Get-Date).AddDays(-1*$DaysInactive)
-
     }
 
     process{
-
         $files += Get-ChildItem -Path $Path -File -Recurse | 
-            Where-Object -Property LastWriteTime -LT $fileAge | 
             Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
-
     }
 
     end{
-
-        $files | Sort-Object -Property Name
+        $files
         return
-
     }
-
 }
 
 function Get-ComputerError{
@@ -406,7 +344,7 @@ function Get-ComputerError{
     PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, and Message.
 
     .NOTES
-    Compatible with Windows 7 and newer.
+    Compatible with Windows 7 and newer. Not compatible with Powershell 7 or Core.
 
     Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
 
@@ -439,36 +377,25 @@ function Get-ComputerError{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = "$env:COMPUTERNAME",
-
-        [parameter()]
         [int]$Newest = 5
-        
     )
 
     begin{
-
         $errorLog = @()
-
     }
 
     process{
-
         $errorLog += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | 
             Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
-
     }
 
     end{
-
         $errorLog | Sort-Object -Property ComputerName | Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
         return
-
     }
-
 }
 
 function Get-ComputerInformation{
@@ -521,21 +448,16 @@ function Get-ComputerInformation{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
-
     )
 
     begin{
-
         $computerInfoList = @()
-
     }
 
     process{
-
         $computerObjectProperties = @{
             "ComputerName" = "";
             "Model" = "";
@@ -567,18 +489,13 @@ function Get-ComputerInformation{
 
             $computerInfo.BootUpTime = (Get-CimInstance -ClassName Win32_OperatingSystem -ComputerName $Name).LastBootUpTime
             $computerInfoList += $computerInfo
-
         }
-
     }
 
     end{
-
         $computerInfoList | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property ComputerName
         return
-
     }
-
 }
 
 function Get-ComputerLastBootUpTime{
@@ -635,33 +552,24 @@ function Get-ComputerLastBootUpTime{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
-
     )
 
     begin{
-
         $lastBootUpTimeList = @()
-
     }
 
     process{
-
         $lastBootUpTimeList += Get-CimInstance -ComputerName $Name -Class win32_operatingsystem -Property LastBootUpTime | 
             Select-Object -Property @{n='ComputerName';e={$_.pscomputername}},LastBootUpTime
-
     }
 
     end{
-
         $lastBootUpTimeList | Select-Object -Property ComputerName,LastBootUpTime | Sort-Object -Property ComputerName
         return
-
     }
-
 }
 
 function Get-ComputerOS{
@@ -709,7 +617,7 @@ function Get-ComputerOS{
 
     [CmdletBinding()]
     Param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
@@ -719,22 +627,17 @@ function Get-ComputerOS{
     }
 
     process{
-
         if(Test-Connection $Name -Quiet -Count 1){
-
             try{
-                $computerOSList += Get-CimInstance -ComputerName $Name -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property PSComputerName,Caption,BuildNumber
+                $computerOSList += Get-CimInstance -ComputerName $Name -ClassName win32_operatingsystem -ErrorAction "Stop" | Select-Object -Property @{n='Name';e={$_.PSComputerName}},Caption,BuildNumber
             }catch{
-                $computerOSList += Get-WmiObject -ComputerName $Name -Class win32_operatingsystem -ErrorAction 'Stop' | Select-Object -Property PSComputerName,Caption,BuildNumber
+                $computerOSList += Get-WmiObject -ComputerName $Name -Class win32_operatingsystem | Select-Object -Property @{n='Name';e={$_.PSComputerName}},Caption,BuildNumber
             }
-
         }
-
     }
 
     end{
-        $computerOSList
-        return
+        return $computerOSList
     }
 }
 
@@ -793,39 +696,31 @@ function Get-ComputerSoftware{
 
     [cmdletbinding()]
     param(
-    
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
-
     )
 
     begin{
-
         $masterKeys = @()
-
     }
 
     process{
-
         $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
         $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
         $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
         $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
 
         if((Test-Connection -ComputerName $Name -Count 1)){
-
             $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$Name)
             $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$Name)
 
             foreach($key in $lmKeys){
-
                 $regKey = $remoteLMRegKey.OpenSubkey($key)
                 
                 foreach ($subName in $regKey.GetSubkeyNames()){
                 
                     foreach($sub in $regKey.OpenSubkey($subName)){
-                
                         $masterKeys += (New-Object PSObject -Property @{
                             "ComputerName" = $Name;
                             "Name" = $sub.getvalue("displayname");
@@ -836,13 +731,10 @@ function Get-ComputerSoftware{
                             "InstallDate" = $sub.getvalue("InstallDate");
                             "RegPath" = $sub.ToString()})
                     }
-                        
                 }
-                    
             }
 
             foreach ($key in $cuKeys){
-
                 $regKey = $remoteCURegKey.OpenSubkey($key)
 
                 if($null -ne $regKey){
@@ -850,7 +742,6 @@ function Get-ComputerSoftware{
                     foreach($subName in $regKey.getsubkeynames()){
 
                         foreach ($sub in $regKey.opensubkey($subName)){
-
                             $masterKeys += (New-Object PSObject -Property @{
                                 "ComputerName" = $Name;
                                 "Name" = $sub.getvalue("displayname");
@@ -860,29 +751,20 @@ function Get-ComputerSoftware{
                                 "UninstallCommand" = $sub.getvalue("UninstallString");
                                 "InstallDate" = $sub.getvalue("InstallDate");
                                 "RegPath" = $sub.ToString()})
-                        
                         }
-                        
                     }
-                    
                 }
-                
             }
-                
         }
-
     }
 
     end{
-    
         $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
         $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
         $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
         $masterKeys
         return
-
     }
-
 }
 
 function Get-CredentialExportToXML{
@@ -923,18 +805,15 @@ function Get-CredentialExportToXML{
 
     [cmdletbinding()]
     param(
-
         [Parameter(Mandatory=$true)]
         [string]$FileName,
 
         [Parameter(Mandatory=$true)]
         [string]$Path
-    
     )
 
     $credential = Get-Credential
     Export-Clixml -Path "$Path\$FileName.xml" -InputObject $credential
-
 }
 
 function Get-DirectorySize{
@@ -975,25 +854,19 @@ function Get-DirectorySize{
 
     [CmdletBinding()]
     Param(
-
         [Parameter(Mandatory=$true)]
         [Alias('Directory')]
         [string] $Path
-    
     )
 
     $folderSize = (Get-ChildItem -Path $Path -File -Recurse | Measure-Object -Sum Length).sum
-
     $folderInfo += [PSCustomObject]@{
-
         Directory = $Path;
         SizeGB = [math]::round(($folderSize / 1GB),2)
-
     }
 
     $folderInfo
     return
-
 }
 
 function Get-DisabledComputers{
@@ -1038,27 +911,20 @@ function Get-DisabledComputers{
 
     [CmdletBinding()]
     Param(
-    
         [string]$OrganizationalUnit = ""
-    
     )
     
     $domainInfo = (Get-ADDomain).DistinguishedName
     
     if($OrganizationalUnit -eq ""){
-
         $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
-
     }else{
-
         $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
             Where-Object -Property Enabled -Match False
-
     }
 
     $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
     return
-    
 }
 
 function Get-DisabledUsers{
@@ -1101,26 +967,19 @@ function Get-DisabledUsers{
 
     [CmdletBinding()]
     Param(
-    
         [string]$OrganizationalUnit = ""
-    
     )
 
     $domainInfo = (Get-ADDomain).DistinguishedName 
     
     if($OrganizationalUnit -eq ""){
-
         $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
-
     }else{
-
         $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Where-Object -Property Enabled -Match False
-
     }
 
     $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
     return
-
 }
 
 function Get-FailedLogon{
@@ -1148,7 +1007,7 @@ function Get-FailedLogon{
     .NOTES
     Compatible with Windows 10.
 
-    Not compatible with Powershell 7.
+    Not compatible with Powershell 7 or Core.
 
     .EXAMPLE
     Get-FailedLogon
@@ -1169,39 +1028,27 @@ function Get-FailedLogon{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME,
-
         [int]$DaysBack = 1
-
     )
 
     begin{
-
         $failedLoginList = @()
-
     }
 
     process{
-
         if(Test-Connection $Name -Count 1 -Quiet){
-            
             $failedLoginList += Get-EventLog -ComputerName $Name -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($DaysBack * -1)) |
                 Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID
-
         }
-
     }
 
     end{
-
         $failedLoginList | Select-Object -Property ComputerName,TimeWritten,EventID | Sort-Object -Property ComputerName
         return
-
     }
-
 }
 
 function Get-InactiveComputers{
@@ -1247,41 +1094,34 @@ function Get-InactiveComputers{
 
     [CmdletBinding()]
     Param(
-    
         [int]$DaysInactive = 30,
-
         [string]$OrganizationalUnit = ""
-    
     )
 
     $domainInfo = (Get-ADDomain).DistinguishedName
     
     if($OrganizationalUnit -eq ""){
-
         $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
-
     }else{
-
         $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
-
     }
 
     $lastLogonList = @()
 
     foreach($computer in $computers){
-    
-        if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddDays(($DaysInactive * -1)))){
-    
-            $lastLogonProperties = @{
-                "LastLogon" = ([datetime]::fromfiletime($computer.lastlogon));
-                "Name" = ($computer.name)
-            }
-    
-            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
-            $lastLogonList += $lastLogonObject
+
+        if(!(Test-Connection -TargetName $computer.name -Count 1 -Quiet)){
+
+            if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddDays(($DaysInactive * -1)))){
+                $lastLogonProperties = @{
+                    "LastLogon" = ([datetime]::fromfiletime($computer.lastlogon));
+                    "Name" = ($computer.name)
+                }
         
+                $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
+                $lastLogonList += $lastLogonObject
+            }
         }
-    
     }
     
     $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
@@ -1820,36 +1660,27 @@ function Get-OnlineComputers{
 
     [CmdletBinding()]
     Param(
-
         [string]$OrganizationalUnit = ""
-    
     )
 
     $domainInfo = (Get-ADDomain).DistinguishedName 
     
     if($OrganizationalUnit -eq ""){
-
         $computers = Get-ADComputer -Filter *
-
     }else{
-
         $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
-
     }
 
     $onlineComputers = @()
     
     foreach($computer in $computers){
-    
         if(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet){
-    
             $onlineComputers += $computer
-    
         }
-    
     }
     
-    $onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
+    #$onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
+    $onlineComputers
     return
 
 }
