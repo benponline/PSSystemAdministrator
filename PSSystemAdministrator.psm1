@@ -388,7 +388,7 @@ function Get-ComputerError{
     }
 
     process{
-        #Get-WinEvent -LogName system -MaxEvents 10 | Where-Object -Property leveldisplayname -eq error
+        #$errorLog += Get-WinEvent -LogName system -MaxEvents $Newest | Where-Object -Property leveldisplayname -eq error
         $errorLog += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | 
             Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
     }
