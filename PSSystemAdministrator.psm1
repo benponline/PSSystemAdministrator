@@ -2350,7 +2350,7 @@ function Set-ComputerIP{
     )
             
     #Self adapter
-    $SelfIPAddress = (Test-Connection -ComputerName $env:COMPUTERNAME -Count 1).IPv4Address
+    $SelfIPAddress = (Test-Connection -ComputerName $env:COMPUTERNAME -Count 1 -IPv4).Address.IPAddressToString
     $SelfIPInterfaceIndex = (Get-NetIPAddress | Where-Object -Property IPAddress -eq $SelfIPAddress).InterfaceIndex
 
     #Subnetmask / Prefixlength
@@ -2361,7 +2361,7 @@ function Set-ComputerIP{
 
     #DNS
     $SelfDNS = (Get-DnsClientServerAddress -InterfaceIndex $SelfIPInterfaceIndex -AddressFamily IPv4).ServerAddresses
-    $TargetIPAddress = (Test-Connection -ComputerName $ComputerName -Count 1 ).IPv4Address
+    $TargetIPAddress = (Test-Connection -ComputerName $ComputerName -Count 1 -IPv4).Address.IPAddressToString
 
     try{
         #Target interface index
@@ -2395,6 +2395,7 @@ function Set-ComputerIP{
         }
         
         Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS1" static primary}
+        #Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set dnsservers name="$TargetIPInterfaceAlias" address="$SelfDNS1" static primary}
         
         if($SelfDNS.count -gt 1){
             Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip add dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS2"}
