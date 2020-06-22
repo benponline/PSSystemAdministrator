@@ -2451,44 +2451,34 @@ function Start-Computer{
 
     [CmdletBinding()]
     param(
-        
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("ComputerName")]
         [string]$Name
-
     )
 
     begin{
-        
         [string]$BroadcastIP=([System.Net.IPAddress]::Broadcast)
         [int]$port=9
         $broadcast = [Net.IPAddress]::Parse($BroadcastIP)
-
     }
 
     process{
-
         $ComputerMACs = (Get-DhcpServerv4Lease -ComputerName gamls-dc1 -ScopeId "10.10.10.0" | Where-Object -Property hostname -match $Name).clientid
 
         ForEach($ComputerMAC in $ComputerMACs){
 
             try{
-
                 $ComputerMAC = (($ComputerMAC.replace(":","")).replace("-","")).replace(".","")
                 $target = 0,2,4,6,8,10 | ForEach-Object {[convert]::ToByte($ComputerMAC.substring($_,2),16)}
                 $packet = (,[byte]255 * 6) + ($target * 16)
                 $UDPclient = new-Object System.Net.Sockets.UdpClient
                 $UDPclient.Connect($broadcast,$port)
                 [void]$UDPclient.Send($packet, 102)
-
             }catch{}
-
         }
 
         Write-Host "Magic packet sent to $Name."
-
     }
 
     end{}
-
 }
