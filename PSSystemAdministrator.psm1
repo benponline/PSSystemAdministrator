@@ -1938,24 +1938,19 @@ function Get-UserActiveLogon{
 
         foreach($computer in $computers){
 
-            if(Test-Connection $computer -Count 1 -Quiet){
+            try{
 
-                $computer
+                if($computer -eq $env:COMPUTERNAME){
+                    $currentUser = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name).split('\')[-1]
+                }else{
+                    $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
+                }
 
-                try{
+                if($currentUser -eq $SamAccountName){
+                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
+                }
 
-                    if($computer -eq $env:COMPUTERNAME){
-                        $currentUser = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name).split('\')[-1]
-                    }else{
-                        $currentUser = ((Get-CimInstance -ComputerName $computer -ClassName "Win32_ComputerSystem" -Property "UserName").UserName).split('\')[-1]
-                    }
-
-                    if($currentUser -eq $SamAccountName){
-                        $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
-                    }
-
-                }catch{}
-            }
+            }catch{}
         }
     }
 
@@ -2011,31 +2006,22 @@ function Get-UserLastLogon{
 
     [cmdletbinding()]
     param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName = $env:UserName
-
     )
 
     begin{
-
         $lastLogonList = @()
-
     }
 
     process{
-
         $lastLogonList += Get-ADuser $SamAccountName | Get-ADObject -Properties lastlogon | Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}
-
     }
 
     end{
-
         $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
         return
-
     }
-
 }
 
 function Move-Computer{
@@ -2086,7 +2072,6 @@ function Move-Computer{
 
     [cmdletbinding()]
     param(
-
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name,
@@ -2097,28 +2082,21 @@ function Move-Computer{
     )
     
     begin{
-
         $domainInfo = (Get-ADDomain).DistinguishedName
         $movedComputers = @()
-
     }
 
     process{
-
         $computer = Get-ADComputer -Identity $Name
         $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
         $computer = Get-ADComputer -Identity $Name
         $movedComputers += $computer
-
     }
 
     end{
-
         $movedComputers
         return
-
     }
-
 }
 
 function Move-User{
@@ -2169,39 +2147,30 @@ function Move-User{
 
     [cmdletbinding()]
     param(
-
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("SamAccountName")]
         [string]$Name,
         
         [Parameter(Mandatory=$true)]
         [string]$DestinationOU
-    
     )
     
     begin{
-
         $domainInfo = (Get-ADDomain).DistinguishedName
         $movedUsers = @()
-
     }
 
     process{
-
         $user = Get-ADUser -Identity $Name
         $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
         $user = Get-ADUser -Identity $Name
         $movedUsers += $user
-
     }
 
     end{
-
         $movedUsers | Sort-Object -Property SamAccountName
         return
-
     }
-
 }
 
 function Remove-Computer{
@@ -2249,33 +2218,24 @@ function Remove-Computer{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
-
     )
 
     begin{
-
         $computers = @()
-
     }
 
     process{
-
         $computers += Get-ADComputer $Name
-
     }
 
     end{
-
         $computers | Remove-ADComputer
         $computers | Sort-Object -Property Name
         return
-
     }
-
 }
 
 function Remove-User{
@@ -2323,32 +2283,23 @@ function Remove-User{
 
     [CmdletBinding()]
     Param(
-
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName = $env:USERNAME
-
     )
 
     begin{
-
         $users = @()
-
     }
 
     process{
-
         $users += Get-ADUser $Name
-
     }
 
     end{
-
         $users | Remove-ADUser
         $users | Sort-Object -Property SamAccountName
         return
-
     }
-
 }
 
 function Set-ComputerIP{
@@ -2391,13 +2342,11 @@ function Set-ComputerIP{
 
     [cmdletbinding()]
     param(
-
         [Parameter(Mandatory=$true)]
         [string]$ComputerName,
 
         [Parameter(Mandatory=$true)]
         [string]$IPAddress
-
     )
             
     #Self adapter
@@ -2415,14 +2364,11 @@ function Set-ComputerIP{
     $TargetIPAddress = (Test-Connection -ComputerName $ComputerName -Count 1 ).IPv4Address
 
     try{
-
         #Target interface index
         $TargetIPInterfaceIndex = (Get-NetIPAddress -CimSession $ComputerName | Where-Object -Property IPAddress -eq $TargetIPAddress).InterfaceIndex
         Set-DnsClientServerAddress -CimSession $ComputerName -InterfaceIndex $TargetIPInterfaceIndex -ServerAddresses $SelfDNS
         New-NetIPAddress -CimSession $ComputerName -InterfaceIndex $TargetIPInterfaceIndex -IPAddress $IPAddress -AddressFamily IPv4 -PrefixLength $SelfPrefixlength -DefaultGateway $SelfDefaultGateway
-    
     }catch{
-
         switch($SelfPrefixlength){
             30 {$SubnetMask = "255.255.255.252"}
             29 {$SubnetMask = "255.255.255.248"}
@@ -2444,24 +2390,18 @@ function Set-ComputerIP{
         $TargetIPInterfaceAlias = "Local Area Connection"
 
         if($SelfDNS.count -gt 1){
-
             $SelfDNS1 = $SelfDNS[0]
             $SelfDNS2 = $SelfDNS[1]
-
         }
         
         Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS1" static primary}
         
         if($SelfDNS.count -gt 1){
-
             Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip add dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS2"}
-
         }
 
         Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set address $using:TargetIPInterfaceAlias static $using:IPAddress $using:SubnetMask $using:SelfDefaultGateway}
-        
     }
-
 }
 
 function Start-Computer{
