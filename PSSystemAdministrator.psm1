@@ -197,7 +197,7 @@ function Get-ActiveFiles{
     }
 
     end{
-        $files | Sort-Object -Property Name
+        $files
         return
     }
 }
