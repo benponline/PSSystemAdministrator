@@ -1,9 +1,12 @@
-############################
+<#
+PSSystemAdministrator
+
+Ben Peterson
+github.com/BenPetersonIT
+#>
 
 function Disable-Computer{
-
     <#
-
     .SYNOPSIS
     This function disables computers that are passed to it.
 
@@ -40,7 +43,6 @@ function Disable-Computer{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -70,9 +72,7 @@ function Disable-Computer{
 }
 
 function Disable-User{
-
     <#
-
     .SYNOPSIS
     This function disables users that are passed to it.
 
@@ -109,7 +109,6 @@ function Disable-User{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -137,9 +136,7 @@ function Disable-User{
 }
 
 function Get-ActiveFiles{
-
     <#
-
     .SYNOPSIS
     This function gathers all files in a directory that have been accessed recently.
     
@@ -174,7 +171,6 @@ function Get-ActiveFiles{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -197,14 +193,13 @@ function Get-ActiveFiles{
     }
 
     end{
-        $files
+        $files | Sort-Object -Property LastAccessTime
         return
     }
 }
 
 function Get-ChildItemLastAccessTime{
     <#
-
     .SYNOPSIS
     This function gathers all files in a directory and returns information including last access time.
     
@@ -236,7 +231,6 @@ function Get-ChildItemLastAccessTime{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -256,15 +250,13 @@ function Get-ChildItemLastAccessTime{
     }
 
     end{
-        $files
+        $files | Sort-Object -Property LastAccessTime
         return
     }
 }
 
 function Get-ChildItemLastWriteTime{
-
     <#
-
     .SYNOPSIS
     This function gathers all files in a directory and returns information including last write time.
     
@@ -296,7 +288,6 @@ function Get-ChildItemLastWriteTime{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>    
 
     [cmdletbinding()]
@@ -316,7 +307,7 @@ function Get-ChildItemLastWriteTime{
     }
 
     end{
-        $files
+        $files | Sort-Object -Property LastWriteTime
         return
     }
 }
