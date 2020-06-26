@@ -302,7 +302,7 @@ function Get-ChildItemLastWriteTime{
     }
 
     process{
-        $files += Get-ChildItem -Path $Path -File -Recurse | 
+        $files += Get-ChildItem -Path $Path -File -Recurse |
             Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
     }
 
@@ -313,9 +313,7 @@ function Get-ChildItemLastWriteTime{
 }
 
 function Get-ComputerError{
-
     <#
-
     .SYNOPSIS
     Gets system errors from a computer or computers.
 
@@ -363,7 +361,6 @@ function Get-ComputerError{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -391,9 +388,7 @@ function Get-ComputerError{
 }
 
 function Get-ComputerInformation{
-
     <#
-
     .SYNOPSIS
     Gets infomation about a computer or computers.
 
@@ -435,7 +430,6 @@ function Get-ComputerInformation{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -491,9 +485,7 @@ function Get-ComputerInformation{
 }
 
 function Get-ComputerLastBootUpTime{
-
     <#
-
     .SYNOPSIS
     Gets the last time a computer or computers were connected to the domain.
 
@@ -539,7 +531,6 @@ function Get-ComputerLastBootUpTime{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -565,9 +556,7 @@ function Get-ComputerLastBootUpTime{
 }
 
 function Get-ComputerOS{
-
     <#
-
     .SYNOPSIS
     Get the operating system name of a computer or computers.
 
@@ -604,7 +593,6 @@ function Get-ComputerOS{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -634,9 +622,7 @@ function Get-ComputerOS{
 }
 
 function Get-ComputerSoftware{
-
     <#
-
     .SYNOPSIS
     Gets all of the installed software on a computer or computers.
 
@@ -683,7 +669,6 @@ function Get-ComputerSoftware{
     .LINK
     Based on code from:
     https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
-
     #>
 
     [cmdletbinding()]
@@ -760,9 +745,7 @@ function Get-ComputerSoftware{
 }
 
 function Get-CredentialExportToXML{
-
     <#
-    
     .SYNOPSIS
     This function gets credentials from the user and exports them to location provided by the user.
 
@@ -792,7 +775,6 @@ function Get-CredentialExportToXML{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -809,9 +791,7 @@ function Get-CredentialExportToXML{
 }
 
 function Get-DirectorySize{
-
     <#
-
     .SYNOPSIS
     Gets the size of a directory.
 
@@ -841,7 +821,6 @@ function Get-DirectorySize{
 
     .Link
     Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
-
     #>
 
     [CmdletBinding()]
@@ -862,9 +841,7 @@ function Get-DirectorySize{
 }
 
 function Get-DisabledComputers{
-
     <#
-
     .SYNOPSIS
     Gets a list of all computers in AD that are currently disabled.
 
@@ -898,7 +875,6 @@ function Get-DisabledComputers{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -920,9 +896,7 @@ function Get-DisabledComputers{
 }
 
 function Get-DisabledUsers{
-    
     <#
-
     .SYNOPSIS
     Gets a list of all users in AD that are currently disabled. 
 
@@ -954,7 +928,6 @@ function Get-DisabledUsers{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -975,9 +948,7 @@ function Get-DisabledUsers{
 }
 
 function Get-FailedLogon{
-
     <#
-
     .SYNOPSIS
     Gets a list of failed logon events from a computer or computers.
 
@@ -1015,7 +986,6 @@ function Get-FailedLogon{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1045,9 +1015,7 @@ function Get-FailedLogon{
 }
 
 function Get-InactiveComputers{
-
     <#
-
     .SYNOPSIS
     Gets a list of computers that have been offline for a specific number of days.
 
@@ -1082,7 +1050,6 @@ function Get-InactiveComputers{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1122,9 +1089,7 @@ function Get-InactiveComputers{
 }
 
 function Get-InactiveFiles{
-
     <#
-
     .SYNOPSIS
     This function gathers all files in a directory that have not been accessed recently.
     
@@ -1159,7 +1124,6 @@ function Get-InactiveFiles{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -1188,9 +1152,7 @@ function Get-InactiveFiles{
 }
 
 function Get-InactiveUsers{
-
     <#
-
     .SYNOPSIS
     Gets a list of all the users in AD that have been inactive for a period of time.
 
@@ -1231,7 +1193,6 @@ function Get-InactiveUsers{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1266,9 +1227,7 @@ function Get-InactiveUsers{
 }
 
 function Get-LargeFiles{
-
     <#
-
     .SYNOPSIS
     This function returns files larger than a minimum set be the user.
  
@@ -1303,7 +1262,6 @@ function Get-LargeFiles{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -1330,9 +1288,7 @@ function Get-LargeFiles{
 }
 
 function Get-LocalDiskInformation{
-
     <#
-
     .SYNOPSIS
     Gets information about the local disks on a computer or computers.
 
@@ -1372,7 +1328,6 @@ function Get-LocalDiskInformation{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1408,9 +1363,7 @@ function Get-LocalDiskInformation{
 }
 
 function Get-MappedNetworkDrive{
-
     <#
-
     .SYNOPSIS
     Gets information about the mapped drives on a computer or computers.
 
@@ -1450,7 +1403,6 @@ function Get-MappedNetworkDrive{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1485,9 +1437,7 @@ function Get-MappedNetworkDrive{
 }
 
 function Get-OfflineComputers{
-
     <#
-
     .SYNOPSIS
     Gets a list of all computers in AD that are currently offline. 
 
@@ -1520,7 +1470,6 @@ function Get-OfflineComputers{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1550,9 +1499,7 @@ function Get-OfflineComputers{
 }
 
 function Get-OnlineComputers{
-
     <#
-
     .SYNOPSIS
     Gets a list of AD computers that are currently online.
 
@@ -1585,7 +1532,6 @@ function Get-OnlineComputers{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1615,9 +1561,7 @@ function Get-OnlineComputers{
 }
 
 function Get-OUComputers{
-
     <#
-
     .SYNOPSIS
     This function returns computers from a specific organizational unit in Active Directory.
     
@@ -1644,7 +1588,6 @@ function Get-OUComputers{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -1669,9 +1612,7 @@ function Get-OUComputers{
 }
 
 function Get-OUUsers{
-
     <#
-
     .SYNOPSIS
     This function returns users from a specific organizational unit in Active Directory.
     
@@ -1698,7 +1639,6 @@ function Get-OUUsers{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -1723,9 +1663,7 @@ function Get-OUUsers{
 }
 
 function Get-PhysicalDiskInformation{
-
     <#
-
     .SYNOPSIS
     Gets the health status of the physical disks of a computer or computers.
 
@@ -1771,7 +1709,6 @@ function Get-PhysicalDiskInformation{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1805,9 +1742,7 @@ function Get-PhysicalDiskInformation{
 }
 
 function Get-SubDirectorySize{
-
     <#
-
     .SYNOPSIS
     Gets sub directory names and sizes at a particular path.
 
@@ -1837,7 +1772,6 @@ function Get-SubDirectorySize{
 
     .Link
     Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
-
     #>
 
     [CmdletBinding()]
@@ -1858,7 +1792,6 @@ function Get-SubDirectorySize{
             Directory = $folder.fullname;
             SizeGB = [math]::round(($folderSize / 1GB),2)
         }
-
     }
 
     $foldersInfo
@@ -1866,9 +1799,7 @@ function Get-SubDirectorySize{
 }
 
 function Get-UserActiveLogon{
-
     <#
-
     .SYNOPSIS
     Finds all computers where a specific user, or users, is logged in.
 
@@ -1904,7 +1835,6 @@ function Get-UserActiveLogon{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -1952,9 +1882,7 @@ function Get-UserActiveLogon{
 }
 
 function Get-UserLastLogon{
-
     <#
-
     .SYNOPSIS
     Gets the last time a user, or group of users, logged onto the domain.
 
@@ -1992,7 +1920,6 @@ function Get-UserLastLogon{
     By Ben Peterson
     linkedin.com/in/BenPetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -2016,9 +1943,7 @@ function Get-UserLastLogon{
 }
 
 function Move-Computer{
-
     <#
-
     .SYNOPSIS
     Moves a computer to an organizational unit.
     
@@ -2058,7 +1983,6 @@ function Move-Computer{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -2069,7 +1993,6 @@ function Move-Computer{
         
         [Parameter(Mandatory=$true)]
         [string]$DestinationOU
-    
     )
     
     begin{
@@ -2091,9 +2014,7 @@ function Move-Computer{
 }
 
 function Move-User{
-
     <#
-
     .SYNOPSIS
     Moves a user to an organizational unit.
     
@@ -2133,7 +2054,6 @@ function Move-User{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -2165,9 +2085,7 @@ function Move-User{
 }
 
 function Remove-Computer{
-
     <#
-
     .SYNOPSIS
     Removes a computer from AD.
 
@@ -2204,7 +2122,6 @@ function Remove-Computer{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -2230,9 +2147,7 @@ function Remove-Computer{
 }
 
 function Remove-User{
-
     <#
-
     .SYNOPSIS
     Removes a user from AD.
 
@@ -2269,7 +2184,6 @@ function Remove-User{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [CmdletBinding()]
@@ -2294,9 +2208,7 @@ function Remove-User{
 }
 
 function Set-ComputerIP{
-
     <#
-
     .SYNOPSIS
     Sets the IP address of a domain computer.
 
@@ -2328,7 +2240,6 @@ function Set-ComputerIP{
     By Ben Peterson
     linkedin.com/in/benpetersonIT
     https://github.com/BenPetersonIT
-
     #>
 
     [cmdletbinding()]
@@ -2397,9 +2308,7 @@ function Set-ComputerIP{
 }
 
 function Start-Computer{
-
     <#
-
     .SYNOPSIS
     Starts a remote computer by sending a magic packet.
     
@@ -2437,7 +2346,6 @@ function Start-Computer{
 
     .LINK
     Based on: https://gallery.technet.microsoft.com/scriptcenter/Send-WOL-packet-using-0638be7b/view/Discussions#content 
-
     #>
 
     [CmdletBinding()]
