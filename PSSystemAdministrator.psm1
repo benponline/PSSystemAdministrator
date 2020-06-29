@@ -11,7 +11,7 @@ function Disable-Computer{
     This function disables computers that are passed to it.
 
     .DESCRIPTION
-    Users can pass host names or computer AD objects to this function. It will disable these computers in Active Directory and return an array of computer objects to the host. 
+    Users can pass host names or computer AD objects to this function. It will disable these computers in Active Directory and return an array of updated computer objects to the host. 
 
     .PARAMETER Name
     This is the host name of the computer that the user wants to disable.
@@ -77,10 +77,10 @@ function Disable-User{
     This function disables users that are passed to it.
 
     .DESCRIPTION
-    Users can pass sam account names  or user AD objects to this function. It will disable these users in Active Directory and return an array of user objects to the host. 
+    Users can pass sam account names or user AD objects to this function. It will disable these users in Active Directory and return an array of updated user objects to the host. 
 
     .PARAMETER Name
-    This is the user name, sam account name, of the user that will be disabled.
+    This is the user name, or sam account name, of the user that will be disabled.
 
     .INPUTS
     User AD objects can be passed to this function.
@@ -134,6 +134,8 @@ function Disable-User{
         return
     }
 }
+
+#####################################
 
 function Get-ActiveFiles{
     <#
