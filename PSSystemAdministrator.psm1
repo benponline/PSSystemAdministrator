@@ -135,15 +135,13 @@ function Disable-User{
     }
 }
 
-#####################################
-
-function Get-ActiveFiles{
+function Get-AccessedFiles{
     <#
     .SYNOPSIS
     This function gathers all files in a directory that have been accessed recently.
     
     .DESCRIPTION
-    This function gathers all files in a directory recursively that have been active recently. Returns file name, last access time, size in MB, and full name.
+    This function gathers all files in a directory recursively that have been accessed going back one day. Returns file name, last access time, size in MB, and full name.
     
     .PARAMETER Path
     Function will gather all files recursively from this directory.
@@ -160,12 +158,12 @@ function Get-ActiveFiles{
     .NOTES
 
     .EXAMPLE
-    Get-ActiveFiles -Path C:\Directory1 -ActivityWindowInDays 5
+    Get-AccessedFiles -Path C:\Directory1 -ActivityWindowInDays 5
 
     Gathers all files recursively in the "Directory1" folder that have been accessed within 5 days.
 
     .EXAMPLE
-    "C:\Directory1","C:\Directory2" | Get-ActiveFiles
+    "C:\Directory1","C:\Directory2" | Get-AccessedFiles
 
     Gathers all files recursively in the "Directory1" and "Directory2" folders that have been accessed in the last day.
     
@@ -196,6 +194,69 @@ function Get-ActiveFiles{
 
     end{
         $files | Sort-Object -Property LastAccessTime
+        return
+    }
+}
+
+function Get-ActiveFiles{
+    <#
+    .SYNOPSIS
+    This function gathers all files in a directory that have been written to recently.
+    
+    .DESCRIPTION
+    This function gathers all files in a directory recursively that have been written to going back one day. Returns file name, last access time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Function will gather all files recursively from this directory.
+
+    .PARAMETER ActivityWindowInDays
+    Function will return only files that have been accessed within this window.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes file names, last write time, size in MB, and full name.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-ActiveFiles -Path C:\Directory1 -ActivityWindowInDays 5
+
+    Gathers all files recursively in the "Directory1" folder that have been written to within 5 days.
+
+    .EXAMPLE
+    "C:\Directory1","C:\Directory2" | Get-ActiveFiles
+
+    Gathers all files recursively in the "Directory1" and "Directory2" folders that have been written to in the last day.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('FullName')]
+        [string]$Path,
+        [int]$ActivityWindowInDays = 1
+    )
+
+    begin{
+        $files = @()
+        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
+    }
+
+    process{
+        $files += Get-ChildItem -Path $Path -File -Recurse | 
+            Where-Object -Property LastWriteTime -GT $fileAge | 
+            Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+    }
+
+    end{
+        $files | Sort-Object -Property LastWriteTime
         return
     }
 }
@@ -277,9 +338,9 @@ function Get-ChildItemLastWriteTime{
     .NOTES
 
     .EXAMPLE
-    Get-ChildItemLastWriteTime -Path C:\Directory1 -DaysInactive 5
+    Get-ChildItemLastWriteTime -Path C:\Directory1
 
-    Gathers all files recursively in the "Directory1" folder that have not been accessed in over 5 days.
+    Gathers all files recursively in the "Directory1" folder and returns file names, last write time, size in MB, and full name.
 
     .EXAMPLE
     "C:\Directory1","C:\Directory2" | Get-ChildItemLastWriteTime
@@ -313,6 +374,8 @@ function Get-ChildItemLastWriteTime{
         return
     }
 }
+
+#################################
 
 function Get-ComputerError{
     <#
