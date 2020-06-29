@@ -375,8 +375,6 @@ function Get-ChildItemLastWriteTime{
     }
 }
 
-#################################
-
 function Get-ComputerError{
     <#
     .SYNOPSIS
@@ -398,7 +396,7 @@ function Get-ComputerError{
     PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, and Message.
 
     .NOTES
-    Compatible with Windows 7 and newer. Not compatible with Powershell 7 or Core.
+    Requires "run as administrator".
 
     Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
 
@@ -441,16 +439,91 @@ function Get-ComputerError{
     }
 
     process{
-        #$errorLog += Get-WinEvent -LogName system -MaxEvents $Newest | Where-Object -Property leveldisplayname -eq error
-        $errorLog += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | 
-            Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
+        $errorLog += Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | 
+            Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
     }
 
     end{
-        $errorLog | Sort-Object -Property ComputerName | Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
+        $errorLog
         return
     }
 }
+
+function Get-ComputerFailedSignOn{
+    <#
+    .SYNOPSIS
+    Gets failed signon events from a computer or computers.
+
+    .DESCRIPTION
+    Gets failed signon events. By default returns failed sign on events from the local computer. Can return them from remote computer(s). Default number returned is 5.
+
+    .PARAMETER Name
+    Specifies which computer to pull events from.
+
+    .PARAMETER Newest
+    Specifies the number of most recent events to be returned.
+
+    .INPUTS
+    Host names or AD computer objects.
+
+    .OUTPUTS
+    PS objects for computer failed sign on events with Computer, TimeWritten, EventID, InstanceId, and Message.
+
+    .NOTES
+    Requires "run as administrator".
+
+    Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
+
+    .EXAMPLE
+    Get-ComputerFailedSignOn
+
+    This cmdlet returns the last 5 system errors from localhost.
+
+    .EXAMPLE
+    Get-ComputerFailedSignOn -ComputerName Server -Newest 2
+
+    This cmdlet returns the last 2 sign on events from Server.
+
+    .EXAMPLE
+    "computer1","computer2" | Get-ComputerFailedSignOn
+
+    This cmdlet returns failed sign on events from "computer1" and "computer2".
+
+    .EXAMPLE
+    Get-ADComputer Computer1 | Get-ComputerFailedSignOn
+
+    This cmdlet returns the last 5 failed sign on events from Computer1.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = "$env:COMPUTERNAME",
+        [int]$Newest = 5
+    )
+
+    begin{
+        $errorLog = @()
+    }
+
+    process{
+        $errorLog += Get-WinEvent @{LogName='Security';ProviderName='Microsoft-Windows-Security-Auditing';ID=4625 } -ComputerName $Name -MaxEvents $Newest | 
+            Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
+    }
+
+    end{
+        $errorLog
+        return
+    }
+}
+
+####
 
 function Get-ComputerInformation{
     <#
