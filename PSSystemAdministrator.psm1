@@ -11,7 +11,7 @@ function Disable-Computer{
     This function disables computers that are passed to it.
 
     .DESCRIPTION
-    Users can pass host names or computer AD objects to this function. It will disable these computers in Active Directory and return an array of computer objects to the host. 
+    Users can pass host names or computer AD objects to this function. It will disable these computers in Active Directory and return an array of updated computer objects to the host. 
 
     .PARAMETER Name
     This is the host name of the computer that the user wants to disable.
@@ -77,10 +77,10 @@ function Disable-User{
     This function disables users that are passed to it.
 
     .DESCRIPTION
-    Users can pass sam account names  or user AD objects to this function. It will disable these users in Active Directory and return an array of user objects to the host. 
+    Users can pass sam account names or user AD objects to this function. It will disable these users in Active Directory and return an array of updated user objects to the host. 
 
     .PARAMETER Name
-    This is the user name, sam account name, of the user that will be disabled.
+    This is the user name, or sam account name, of the user that will be disabled.
 
     .INPUTS
     User AD objects can be passed to this function.
@@ -135,13 +135,13 @@ function Disable-User{
     }
 }
 
-function Get-ActiveFiles{
+function Get-AccessedFiles{
     <#
     .SYNOPSIS
     This function gathers all files in a directory that have been accessed recently.
     
     .DESCRIPTION
-    This function gathers all files in a directory recursively that have been active recently. Returns file name, last access time, size in MB, and full name.
+    This function gathers all files in a directory recursively that have been accessed going back one day. Returns file name, last access time, size in MB, and full name.
     
     .PARAMETER Path
     Function will gather all files recursively from this directory.
@@ -158,12 +158,12 @@ function Get-ActiveFiles{
     .NOTES
 
     .EXAMPLE
-    Get-ActiveFiles -Path C:\Directory1 -ActivityWindowInDays 5
+    Get-AccessedFiles -Path C:\Directory1 -ActivityWindowInDays 5
 
     Gathers all files recursively in the "Directory1" folder that have been accessed within 5 days.
 
     .EXAMPLE
-    "C:\Directory1","C:\Directory2" | Get-ActiveFiles
+    "C:\Directory1","C:\Directory2" | Get-AccessedFiles
 
     Gathers all files recursively in the "Directory1" and "Directory2" folders that have been accessed in the last day.
     
@@ -194,6 +194,69 @@ function Get-ActiveFiles{
 
     end{
         $files | Sort-Object -Property LastAccessTime
+        return
+    }
+}
+
+function Get-ActiveFiles{
+    <#
+    .SYNOPSIS
+    This function gathers all files in a directory that have been written to recently.
+    
+    .DESCRIPTION
+    This function gathers all files in a directory recursively that have been written to going back one day. Returns file name, last access time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Function will gather all files recursively from this directory.
+
+    .PARAMETER ActivityWindowInDays
+    Function will return only files that have been accessed within this window.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes file names, last write time, size in MB, and full name.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-ActiveFiles -Path C:\Directory1 -ActivityWindowInDays 5
+
+    Gathers all files recursively in the "Directory1" folder that have been written to within 5 days.
+
+    .EXAMPLE
+    "C:\Directory1","C:\Directory2" | Get-ActiveFiles
+
+    Gathers all files recursively in the "Directory1" and "Directory2" folders that have been written to in the last day.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('FullName')]
+        [string]$Path,
+        [int]$ActivityWindowInDays = 1
+    )
+
+    begin{
+        $files = @()
+        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
+    }
+
+    process{
+        $files += Get-ChildItem -Path $Path -File -Recurse | 
+            Where-Object -Property LastWriteTime -GT $fileAge | 
+            Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+    }
+
+    end{
+        $files | Sort-Object -Property LastWriteTime
         return
     }
 }
@@ -275,9 +338,9 @@ function Get-ChildItemLastWriteTime{
     .NOTES
 
     .EXAMPLE
-    Get-ChildItemLastWriteTime -Path C:\Directory1 -DaysInactive 5
+    Get-ChildItemLastWriteTime -Path C:\Directory1
 
-    Gathers all files recursively in the "Directory1" folder that have not been accessed in over 5 days.
+    Gathers all files recursively in the "Directory1" folder and returns file names, last write time, size in MB, and full name.
 
     .EXAMPLE
     "C:\Directory1","C:\Directory2" | Get-ChildItemLastWriteTime
@@ -333,7 +396,7 @@ function Get-ComputerError{
     PS objects for computer system errors with Computer, TimeWritten, EventID, InstanceId, and Message.
 
     .NOTES
-    Compatible with Windows 7 and newer. Not compatible with Powershell 7 or Core.
+    Requires "run as administrator".
 
     Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
 
@@ -376,16 +439,91 @@ function Get-ComputerError{
     }
 
     process{
-        #$errorLog += Get-WinEvent -LogName system -MaxEvents $Newest | Where-Object -Property leveldisplayname -eq error
-        $errorLog += Get-EventLog -ComputerName $Name -LogName System -EntryType Error -Newest $Newest | 
-            Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID,InstanceID,Message
+        $errorLog += Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | 
+            Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
     }
 
     end{
-        $errorLog | Sort-Object -Property ComputerName | Select-Object -Property ComputerName,TimeWritten,EventID,InstanceID,Message
+        $errorLog
         return
     }
 }
+
+function Get-ComputerFailedSignOn{
+    <#
+    .SYNOPSIS
+    Gets failed signon events from a computer or computers.
+
+    .DESCRIPTION
+    Gets failed signon events. By default returns failed sign on events from the local computer. Can return them from remote computer(s). Default number returned is 5.
+
+    .PARAMETER Name
+    Specifies which computer to pull events from.
+
+    .PARAMETER Newest
+    Specifies the number of most recent events to be returned.
+
+    .INPUTS
+    Host names or AD computer objects.
+
+    .OUTPUTS
+    PS objects for computer failed sign on events with Computer, TimeWritten, EventID, InstanceId, and Message.
+
+    .NOTES
+    Requires "run as administrator".
+
+    Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
+
+    .EXAMPLE
+    Get-ComputerFailedSignOn
+
+    This cmdlet returns the last 5 system errors from localhost.
+
+    .EXAMPLE
+    Get-ComputerFailedSignOn -ComputerName Server -Newest 2
+
+    This cmdlet returns the last 2 sign on events from Server.
+
+    .EXAMPLE
+    "computer1","computer2" | Get-ComputerFailedSignOn
+
+    This cmdlet returns failed sign on events from "computer1" and "computer2".
+
+    .EXAMPLE
+    Get-ADComputer Computer1 | Get-ComputerFailedSignOn
+
+    This cmdlet returns the last 5 failed sign on events from Computer1.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = "$env:COMPUTERNAME",
+        [int]$Newest = 5
+    )
+
+    begin{
+        $errorLog = @()
+    }
+
+    process{
+        $errorLog += Get-WinEvent @{LogName='Security';ProviderName='Microsoft-Windows-Security-Auditing';ID=4625 } -ComputerName $Name -MaxEvents $Newest | 
+            Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
+    }
+
+    end{
+        $errorLog
+        return
+    }
+}
+
+####
 
 function Get-ComputerInformation{
     <#
