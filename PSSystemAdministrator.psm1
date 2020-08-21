@@ -5,6 +5,56 @@ Ben Peterson
 github.com/BenPetersonIT
 #>
 
+#new function
+function Reset-UserPassword{
+    <#
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER Name
+    
+    .INPUTS
+    
+    .OUTPUTS
+    
+    .NOTES
+
+    .EXAMPLE 
+    
+    .EXAMPLE
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias("SamAccountName")]
+        [string]$Name
+    )
+
+    begin{
+        $userList = @()
+    }
+
+    process{
+        $user = Get-ADUser $Name
+        #$user | Set-ADUser -ChangePasswordAtLogon $True
+        Set-ADUser -Identity $user -ChangePasswordAtLogon $true
+        $userList += $user
+    }
+
+    end{
+        $userList | Sort-Object -Property Name
+        return
+    }
+    
+}
+
 function Disable-Computer{
     <#
     .SYNOPSIS
