@@ -1258,7 +1258,7 @@ function Get-InactiveComputers{
 
     foreach($computer in $computers){
 
-        if(!(Test-Connection -TargetName $computer.name -Count 1 -Quiet)){
+        if(!(Test-Connection -ComputerName $computer.name -Count 1 -Quiet)){
 
             if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddDays(($DaysInactive * -1)))){
                 $lastLogonProperties = @{
@@ -1986,7 +1986,7 @@ function Get-SubDirectorySize{
     return
 }
 
-function Get-UserActiveLogon{
+function Get-UserActiveLogon{ #add message to host when computer can't be reached.
     <#
     .SYNOPSIS
     Finds all computers where a specific user, or users, is logged in.
