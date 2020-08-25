@@ -5,6 +5,56 @@ Ben Peterson
 github.com/BenPetersonIT 
 #>
 
+#new function
+function Reset-UserPassword{
+    <#
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER Name
+    
+    .INPUTS
+    
+    .OUTPUTS
+    
+    .NOTES
+
+    .EXAMPLE 
+    
+    .EXAMPLE
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias("SamAccountName")]
+        [string]$Name
+    )
+
+    begin{
+        $userList = @()
+    }
+
+    process{
+        $user = Get-ADUser $Name
+        #$user | Set-ADUser -ChangePasswordAtLogon $True
+        Set-ADUser -Identity $user -ChangePasswordAtLogon $true
+        $userList += $user
+    }
+
+    end{
+        $userList | Sort-Object -Property Name
+        return
+    }
+    
+}
+
 function Disable-Computer{
     <#
     .SYNOPSIS
@@ -1208,7 +1258,7 @@ function Get-InactiveComputers{
 
     foreach($computer in $computers){
 
-        if(!(Test-Connection -TargetName $computer.name -Count 1 -Quiet)){
+        if(!(Test-Connection -ComputerName $computer.name -Count 1 -Quiet)){
 
             if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddDays(($DaysInactive * -1)))){
                 $lastLogonProperties = @{
@@ -1936,7 +1986,7 @@ function Get-SubDirectorySize{
     return
 }
 
-function Get-UserActiveLogon{
+function Get-UserActiveLogon{ #add message to host when computer can't be reached.
     <#
     .SYNOPSIS
     Finds all computers where a specific user, or users, is logged in.
