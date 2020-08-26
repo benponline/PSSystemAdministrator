@@ -56,12 +56,34 @@ function Reset-UserPassword{
 }
 
 function Get-ComputerShareFolder{
+    <#
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER Name
+    
+    .INPUTS
+    
+    .OUTPUTS
+    
+    .NOTES
+
+    .EXAMPLE 
+    
+    .EXAMPLE
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+    #>
     
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias("ComputerName")]
-        [string]$Computer
+        [string]$Name = $env:COMPUTERNAME
     )
 
     begin{
@@ -69,12 +91,12 @@ function Get-ComputerShareFolder{
     }
 
     process{
-        $computerShares = Get-FileShare -CimSession $Computer        
+        $computerShares = Get-FileShare -CimSession $Name        
         
         foreach($rawShare in $computerShares){
 
             $computerShareList += [PSCustomObject]@{
-                ComputerName = $Computer;
+                ComputerName = $Name;
                 ShareName = $rawShare.Name;
                 Path = $rawShare.VolumeRelativePath;
                 Status = $rawShare.OperationalStatus
