@@ -5,7 +5,7 @@ Ben Peterson
 github.com/BenPetersonIT 
 #>
 
-#new function
+###new functions
 function Reset-UserPassword{
     <#
     .SYNOPSIS
@@ -55,6 +55,42 @@ function Reset-UserPassword{
     
 }
 
+function Get-ComputerShareFolder{
+    
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias("ComputerName")]
+        [string]$Computer
+    )
+
+    begin{
+        $computerShareList = @()
+    }
+
+    process{
+        $computerShares = Get-FileShare -CimSession $Computer        
+        
+        foreach($rawShare in $computerShares){
+
+            $computerShareList += [PSCustomObject]@{
+                ComputerName = $Computer;
+                ShareName = $rawShare.Name;
+                Path = $rawShare.VolumeRelativePath;
+                Status = $rawShare.OperationalStatus
+            }
+
+        }
+    }
+
+    end{
+        $computerShareList | Sort-Object -Property ComputerName
+        return
+    }
+
+}
+
+###
 function Disable-Computer{
     <#
     .SYNOPSIS
@@ -2547,10 +2583,12 @@ function Start-Computer{
         [string]$BroadcastIP=([System.Net.IPAddress]::Broadcast)
         [int]$port=9
         $broadcast = [Net.IPAddress]::Parse($BroadcastIP)
+        $domainController = (Get-ADDomainController).Name
+        $scopeID = (Get-DhcpServerv4Scope -ComputerName $domainController).ScopeID
     }
 
     process{
-        $ComputerMACs = (Get-DhcpServerv4Lease -ComputerName gamls-dc1 -ScopeId "10.10.10.0" | Where-Object -Property hostname -match $Name).clientid
+        $ComputerMACs = (Get-DhcpServerv4Lease -ComputerName $domainController -ScopeId $scopeID | Where-Object -Property hostname -match $Name).clientid
 
         ForEach($ComputerMAC in $ComputerMACs){
 
