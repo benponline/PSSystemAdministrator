@@ -9,20 +9,38 @@ github.com/BenPetersonIT
 function Reset-UserPassword{
     <#
     .SYNOPSIS
+    This function triggers an AD user account to require a password change at the next log in.
     
     .DESCRIPTION
+    This function requires the AD user accounts passed to it to require the user to create a new password at the their next login. 
+    If the account's 'PasswordNeverExpires' tag is set to true, then it is not affected by this function.
     
     .PARAMETER Name
+    This is the SamAccountName of the user you want to require a new password for.
     
     .INPUTS
+    Can take AD user objects as input.
     
     .OUTPUTS
+    AD user objects that have been tagged for creating a new password on log in.
     
     .NOTES
 
     .EXAMPLE 
+    Reset-UserPassword -Name 'billy'
+
+    Requires the AD account with the SamAccountID of 'billy' to create a new password on next login.
     
     .EXAMPLE
+    Get-ADUser -Filter * | Reset-UserPassword
+
+    Requires all users in AD to create a new password on next login.
+
+    .Example
+    Get-OUUser -OrganizationalUnit 'Users' | Reset-UserPassword
+
+    Requires all users in the 'Users' OU to create a new password when they log in next. Get-OUUser
+    is a function from the PSSystemAdministrator module.
     
     .LINK
     By Ben Peterson
@@ -43,7 +61,6 @@ function Reset-UserPassword{
 
     process{
         $user = Get-ADUser $Name
-        #$user | Set-ADUser -ChangePasswordAtLogon $True
         Set-ADUser -Identity $user -ChangePasswordAtLogon $true
         $userList += $user
     }
@@ -58,20 +75,37 @@ function Reset-UserPassword{
 function Get-ComputerShareFolder{
     <#
     .SYNOPSIS
+    This function returns all of the share folders on a computer.
     
     .DESCRIPTION
+    This function returns all of the share folders on a computer or remote computer.
     
     .PARAMETER Name
+    This is the computer that the function will search for share folders.
     
     .INPUTS
+    Can accept AD computer objects from the pipeline.
     
     .OUTPUTS
+    PS objects with the computer name, share folder name, path to the folder, and status of the folder.
     
     .NOTES
 
-    .EXAMPLE 
+    .EXAMPLE
+    Get-ComputerShareFolder -Name 'Computer1'
+
+    Returns all of the share folders from 'Computer1'.
     
     .EXAMPLE
+    Get-ADComputer -filter * | Get-ComputerShareFolder
+
+    Returns the share folders from all computers in AD.
+
+    .EXAMPLE
+    Get-OUComputer -OrganizationalUnit 'Workstations' | Get-ComputerShareFolder
+
+    Returns the share folders from all computers in the 'Workstations' OU. Get-OUComputer 
+    is a function from the PSSystemAdministrator module.
     
     .LINK
     By Ben Peterson
@@ -81,7 +115,7 @@ function Get-ComputerShareFolder{
     
     [cmdletbinding()]
     param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("ComputerName")]
         [string]$Name = $env:COMPUTERNAME
     )
@@ -91,7 +125,7 @@ function Get-ComputerShareFolder{
     }
 
     process{
-        $computerShares = Get-FileShare -CimSession $Name        
+        $computerShares = Get-FileShare -CimSession $Name
         
         foreach($rawShare in $computerShares){
 
@@ -101,7 +135,6 @@ function Get-ComputerShareFolder{
                 Path = $rawShare.VolumeRelativePath;
                 Status = $rawShare.OperationalStatus
             }
-
         }
     }
 
