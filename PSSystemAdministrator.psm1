@@ -48,9 +48,9 @@ function Reset-UserPassword{
     https://github.com/BenPetersonIT
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding()]#Does not take objects from the pipeline
     param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
         [Alias("SamAccountName")]
         [string]$Name
     )
