@@ -5,147 +5,6 @@ Ben Peterson
 github.com/BenPetersonIT 
 #>
 
-###new functions
-function Reset-UserPassword{
-    <#
-    .SYNOPSIS
-    This function triggers an AD user account to require a password change at the next log in.
-    
-    .DESCRIPTION
-    This function requires the AD user accounts passed to it to require the user to create a new password at the their next login. 
-    If the account's 'PasswordNeverExpires' tag is set to true, then it is not affected by this function.
-    
-    .PARAMETER Name
-    This is the SamAccountName of the user you want to require a new password for.
-    
-    .INPUTS
-    Can take AD user objects as input.
-    
-    .OUTPUTS
-    AD user objects that have been tagged for creating a new password on log in.
-    
-    .NOTES
-
-    .EXAMPLE 
-    Reset-UserPassword -Name 'billy'
-
-    Requires the AD account with the SamAccountID of 'billy' to create a new password on next login.
-    
-    .EXAMPLE
-    Get-ADUser -Filter * | Reset-UserPassword
-
-    Requires all users in AD to create a new password on next login.
-
-    .Example
-    Get-OUUser -OrganizationalUnit 'Users' | Reset-UserPassword
-
-    Requires all users in the 'Users' OU to create a new password when they log in next. Get-OUUser
-    is a function from the PSSystemAdministrator module.
-    
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-    #>
-
-    [cmdletbinding()]#Does not take objects from the pipeline
-    param(
-        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
-        [Alias("SamAccountName")]
-        [string]$Name
-    )
-
-    begin{
-        $userList = @()
-    }
-
-    process{
-        $user = Get-ADUser $Name
-        Set-ADUser -Identity $user -ChangePasswordAtLogon $true
-        $userList += $user
-    }
-
-    end{
-        $userList | Sort-Object -Property Name
-        return
-    }
-    
-}
-
-function Get-ComputerShareFolder{
-    <#
-    .SYNOPSIS
-    This function returns all of the share folders on a computer.
-    
-    .DESCRIPTION
-    This function returns all of the share folders on a computer or remote computer.
-    
-    .PARAMETER Name
-    This is the computer that the function will search for share folders.
-    
-    .INPUTS
-    Can accept AD computer objects from the pipeline.
-    
-    .OUTPUTS
-    PS objects with the computer name, share folder name, path to the folder, and status of the folder.
-    
-    .NOTES
-
-    .EXAMPLE
-    Get-ComputerShareFolder -Name 'Computer1'
-
-    Returns all of the share folders from 'Computer1'.
-    
-    .EXAMPLE
-    Get-ADComputer -filter * | Get-ComputerShareFolder
-
-    Returns the share folders from all computers in AD.
-
-    .EXAMPLE
-    Get-OUComputer -OrganizationalUnit 'Workstations' | Get-ComputerShareFolder
-
-    Returns the share folders from all computers in the 'Workstations' OU. Get-OUComputer 
-    is a function from the PSSystemAdministrator module.
-    
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
-    #>
-    
-    [cmdletbinding()]
-    param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias("ComputerName")]
-        [string]$Name = $env:COMPUTERNAME
-    )
-
-    begin{
-        $computerShareList = @()
-    }
-
-    process{
-        $computerShares = Get-FileShare -CimSession $Name
-        
-        foreach($rawShare in $computerShares){
-
-            $computerShareList += [PSCustomObject]@{
-                ComputerName = $Name;
-                ShareName = $rawShare.Name;
-                Path = $rawShare.VolumeRelativePath;
-                Status = $rawShare.OperationalStatus
-            }
-        }
-    }
-
-    end{
-        $computerShareList | Sort-Object -Property ComputerName
-        return
-    }
-
-}
-
-###
 function Disable-Computer{
     <#
     .SYNOPSIS
@@ -189,7 +48,6 @@ function Disable-Computer{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
-        [Alias('ComputerName')]
         [string]$Name
     )
 
@@ -255,8 +113,7 @@ function Disable-User{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
-        [Alias('SamAccountName')]
-        [string]$Name
+        [string]$SamAccountName
     )
 
     begin{
@@ -264,9 +121,9 @@ function Disable-User{
     }
 
     process{
-        $user = Get-ADUser $Name
+        $user = Get-ADUser $SamAccountName
         $user | Disable-ADAccount
-        $user = Get-ADUser $Name
+        $user = Get-ADUser $SamAccountName
         $disabledUsers += $user
     }
 
@@ -324,7 +181,7 @@ function Get-AccessedFiles{
 
     begin{
         $files = @()
-        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
+        $fileAge = (Get-Date).AddDays(-1 * $ActivityWindowInDays)
     }
 
     process{
@@ -380,7 +237,6 @@ function Get-ActiveFiles{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
-        [Alias('FullName')]
         [string]$Path,
         [int]$ActivityWindowInDays = 1
     )
@@ -440,7 +296,6 @@ function Get-ChildItemLastAccessTime{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
-        [Alias('FullName')]
         [string]$Path
     )
 
@@ -497,7 +352,6 @@ function Get-ChildItemLastWriteTime{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
-        [Alias('FullName')]
         [string]$Path
     )
 
@@ -516,7 +370,7 @@ function Get-ChildItemLastWriteTime{
     }
 }
 
-function Get-ComputerError{
+function Get-ComputerSystemEvent{
     <#
     .SYNOPSIS
     Gets system errors from a computer or computers.
@@ -570,7 +424,6 @@ function Get-ComputerError{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
         [string]$Name = "$env:COMPUTERNAME",
         [int]$Newest = 5
     )
@@ -664,8 +517,6 @@ function Get-ComputerFailedSignOn{
     }
 }
 
-####
-
 function Get-ComputerInformation{
     <#
     .SYNOPSIS
@@ -714,7 +565,6 @@ function Get-ComputerInformation{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
-        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -724,7 +574,7 @@ function Get-ComputerInformation{
 
     process{
         $computerObjectProperties = @{
-            "ComputerName" = "";
+            "Name" = "";
             "Model" = "";
             "CPU" = "";
             "MemoryGB" = "";
@@ -737,7 +587,7 @@ function Get-ComputerInformation{
         if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
 
             $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
-            $computerInfo.computername = $Name
+            $computerInfo.name = $Name
             $computerInfo.model = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property Model).model
             $computerInfo.CPU = (Get-CimInstance -ComputerName $Name -ClassName Win32_Processor -Property Name).name
             $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
@@ -758,7 +608,7 @@ function Get-ComputerInformation{
     }
 
     end{
-        $computerInfoList | Select-Object -Property ComputerName,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property ComputerName
+        $computerInfoList | Select-Object -Property Name,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
         return
     }
 }
@@ -815,7 +665,6 @@ function Get-ComputerLastBootUpTime{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -825,7 +674,7 @@ function Get-ComputerLastBootUpTime{
 
     process{
         $lastBootUpTimeList += Get-CimInstance -ComputerName $Name -Class win32_operatingsystem -Property LastBootUpTime | 
-            Select-Object -Property @{n='ComputerName';e={$_.pscomputername}},LastBootUpTime
+            Select-Object -Property @{n='Name';e={$_.pscomputername}},LastBootUpTime
     }
 
     end{
@@ -877,7 +726,6 @@ function Get-ComputerOS{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -897,6 +745,77 @@ function Get-ComputerOS{
 
     end{
         return $computerOSList
+    }
+}
+
+function Get-ComputerShareFolder{
+    <#
+    .SYNOPSIS
+    This function returns all of the share folders on a computer.
+    
+    .DESCRIPTION
+    This function returns all of the share folders on a computer or remote computer.
+    
+    .PARAMETER Name
+    This is the computer that the function will search for share folders.
+    
+    .INPUTS
+    Can accept AD computer objects from the pipeline.
+    
+    .OUTPUTS
+    PS objects with the computer name, share folder name, path to the folder, and status of the folder.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-ComputerShareFolder -Name 'Computer1'
+
+    Returns all of the share folders from 'Computer1'.
+    
+    .EXAMPLE
+    Get-ADComputer -filter * | Get-ComputerShareFolder
+
+    Returns the share folders from all computers in AD.
+
+    .EXAMPLE
+    Get-OUComputer -OrganizationalUnit 'Workstations' | Get-ComputerShareFolder
+
+    Returns the share folders from all computers in the 'Workstations' OU. Get-OUComputer 
+    is a function from the PSSystemAdministrator module.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+    #>
+    
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computerShareList = @()
+    }
+
+    process{
+        $computerShares = Get-FileShare -CimSession $Name
+        
+        foreach($rawShare in $computerShares){
+
+            $computerShareList += [PSCustomObject]@{
+                Name = $Name;
+                ShareName = $rawShare.Name;
+                Path = $rawShare.VolumeRelativePath;
+                Status = $rawShare.OperationalStatus
+            }
+        }
+    }
+
+    end{
+        $computerShareList | Sort-Object -Property Name
+        return
     }
 }
 
@@ -953,7 +872,6 @@ function Get-ComputerSoftware{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -1022,6 +940,8 @@ function Get-ComputerSoftware{
         return
     }
 }
+
+### Function testing here
 
 function Get-CredentialExportToXML{
     <#
@@ -2484,6 +2404,72 @@ function Remove-User{
         $users | Sort-Object -Property SamAccountName
         return
     }
+}
+
+function Reset-UserPassword{
+    <#
+    .SYNOPSIS
+    This function triggers an AD user account to require a password change at the next log in.
+    
+    .DESCRIPTION
+    This function requires the AD user accounts passed to it to require the user to create a new password at the their next login. 
+    If the account's 'PasswordNeverExpires' tag is set to true, then it is not affected by this function.
+    
+    .PARAMETER Name
+    This is the SamAccountName of the user you want to require a new password for.
+    
+    .INPUTS
+    Can take AD user objects as input.
+    
+    .OUTPUTS
+    AD user objects that have been tagged for creating a new password on log in.
+    
+    .NOTES
+
+    .EXAMPLE 
+    Reset-UserPassword -Name 'billy'
+
+    Requires the AD account with the SamAccountID of 'billy' to create a new password on next login.
+    
+    .EXAMPLE
+    Get-ADUser -Filter * | Reset-UserPassword
+
+    Requires all users in AD to create a new password on next login.
+
+    .Example
+    Get-OUUser -OrganizationalUnit 'Users' | Reset-UserPassword
+
+    Requires all users in the 'Users' OU to create a new password when they log in next. Get-OUUser
+    is a function from the PSSystemAdministrator module.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benpetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [cmdletbinding()]#Does not take objects from the pipeline
+    param(
+        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
+        [Alias("Name")]
+        [string]$SamAccountName
+    )
+
+    begin{
+        $userList = @()
+    }
+
+    process{
+        $user = Get-ADUser $SamAccountName
+        Set-ADUser -Identity $user -ChangePasswordAtLogon $true
+        $userList += $user
+    }
+
+    end{
+        $userList | Sort-Object -Property Name
+        return
+    }
+    
 }
 
 function Set-ComputerIP{
