@@ -941,8 +941,6 @@ function Get-ComputerSoftware{
     }
 }
 
-### Function testing here
-
 function Get-CredentialExportToXML{
     <#
     .SYNOPSIS
@@ -988,6 +986,8 @@ function Get-CredentialExportToXML{
     $credential = Get-Credential
     Export-Clixml -Path "$Path\$FileName.xml" -InputObject $credential
 }
+
+### Function testing here
 
 function Get-DirectorySize{
     <#
