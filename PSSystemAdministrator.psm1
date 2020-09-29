@@ -65,8 +65,7 @@ function Disable-Computer{
     }
 
     end{
-        $disabledComputers | Sort-Object -Property Name
-        return
+        return $disabledComputers | Sort-Object -Property Name
     }
 }
 
@@ -128,8 +127,7 @@ function Disable-User{
     }
 
     end{
-        $disabledUsers | Sort-Object -Property SamAccountName
-        return
+        return $disabledUsers | Sort-Object -Property SamAccountName
     }
 }
 
@@ -191,8 +189,7 @@ function Get-AccessedFiles{
     }
 
     end{
-        $files | Sort-Object -Property LastAccessTime
-        return
+        return $files | Sort-Object -Property LastAccessTime
     }
 }
 
@@ -253,8 +250,7 @@ function Get-ActiveFiles{
     }
 
     end{
-        $files | Sort-Object -Property LastWriteTime
-        return
+        return $files | Sort-Object -Property LastWriteTime
     }
 }
 
@@ -309,8 +305,7 @@ function Get-ChildItemLastAccessTime{
     }
 
     end{
-        $files | Sort-Object -Property LastAccessTime
-        return
+        return $files | Sort-Object -Property LastAccessTime
     }
 }
 
@@ -365,8 +360,7 @@ function Get-ChildItemLastWriteTime{
     }
 
     end{
-        $files | Sort-Object -Property LastWriteTime
-        return
+        return $files | Sort-Object -Property LastWriteTime
     }
 }
 
@@ -438,8 +432,7 @@ function Get-ComputerSystemEvent{
     }
 
     end{
-        $errorLog
-        return
+        return $errorLog
     }
 }
 
@@ -512,8 +505,7 @@ function Get-ComputerFailedSignOn{
     }
 
     end{
-        $errorLog
-        return
+        return $errorLog
     }
 }
 
@@ -608,8 +600,7 @@ function Get-ComputerInformation{
     }
 
     end{
-        $computerInfoList | Select-Object -Property Name,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
-        return
+        return $computerInfoList | Select-Object -Property Name,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
     }
 }
 
@@ -678,8 +669,7 @@ function Get-ComputerLastBootUpTime{
     }
 
     end{
-        $lastBootUpTimeList | Select-Object -Property ComputerName,LastBootUpTime | Sort-Object -Property ComputerName
-        return
+        return $lastBootUpTimeList | Select-Object -Property ComputerName,LastBootUpTime | Sort-Object -Property ComputerName
     }
 }
 
@@ -814,8 +804,7 @@ function Get-ComputerShareFolder{
     }
 
     end{
-        $computerShareList | Sort-Object -Property Name
-        return
+        return $computerShareList | Sort-Object -Property Name
     }
 }
 
@@ -936,8 +925,7 @@ function Get-ComputerSoftware{
         $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
         $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
         $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
-        $masterKeys
-        return
+        return $masterKeys
     }
 }
 
@@ -1035,8 +1023,7 @@ function Get-DirectorySize{
         SizeGB = [math]::round(($folderSize / 1GB),2)
     }
 
-    $folderInfo
-    return
+    return $folderInfo
 }
 
 function Get-DisabledComputers{
@@ -1090,8 +1077,7 @@ function Get-DisabledComputers{
             Where-Object -Property Enabled -Match False
     }
 
-    $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
-    return
+    return $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
 }
 
 function Get-DisabledUsers{
@@ -1142,8 +1128,7 @@ function Get-DisabledUsers{
         $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Where-Object -Property Enabled -Match False
     }
 
-    $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
-    return
+    return $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
 }
 
 function Get-FailedLogon{
@@ -1208,8 +1193,7 @@ function Get-FailedLogon{
     }
 
     end{
-        $failedLoginList | Select-Object -Property ComputerName,TimeWritten,EventID | Sort-Object -Property ComputerName
-        return
+        return $failedLoginList | Select-Object -Property ComputerName,TimeWritten,EventID | Sort-Object -Property ComputerName
     }
 }
 
@@ -1283,8 +1267,7 @@ function Get-InactiveComputers{
         }
     }
     
-    $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
-    return
+    return $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
 }
 
 function Get-InactiveFiles{
@@ -1421,8 +1404,7 @@ function Get-InactiveUsers{
         }
     }
     
-    $lastLogonList | Select-Object -Property User,LastLogon | Sort-Object -Property User
-    return
+    return $lastLogonList | Select-Object -Property User,LastLogon | Sort-Object -Property User
 }
 
 function Get-LargeFiles{
@@ -1481,8 +1463,7 @@ function Get-LargeFiles{
 
     end{
         $largeFiles = $largeFiles | Select-Object -Property Name,@{n="FileSizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
-        $largeFiles | Sort-Object -Property Name
-        return
+        return $largeFiles | Sort-Object -Property Name
     }
 }
 
@@ -1556,8 +1537,7 @@ function Get-LocalDiskInformation{
 
     end{
         $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
-        $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
-        return
+        return $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
     }  
 }
 
@@ -1630,8 +1610,7 @@ function Get-MappedNetworkDrive{
     }
 
     end{
-        $mappedDrives
-        return
+        return $mappedDrives
     }
 }
 
@@ -1693,8 +1672,7 @@ function Get-OfflineComputers{
         }
     }
     
-    $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
-    return
+    return $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
 }
 
 function Get-OnlineComputers{
@@ -1755,8 +1733,7 @@ function Get-OnlineComputers{
     }
     
     #$onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
-    $onlineComputers
-    return
+    return $onlineComputers
 }
 
 function Get-OUComputers{
@@ -1805,8 +1782,7 @@ function Get-OUComputers{
     }
 
     end{
-        $computers
-        return
+        return $computers
     }
 }
 
@@ -1856,8 +1832,7 @@ function Get-OUUsers{
     }
 
     end{
-        $users
-        return
+        return $users
     }
 }
 
@@ -1935,8 +1910,7 @@ function Get-PhysicalDiskInformation{
     }
 
     end{
-        $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB | Sort-Object -Property ComputerName
-        Return
+        return $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB | Sort-Object -Property ComputerName
     }
 }
 
@@ -1993,8 +1967,7 @@ function Get-SubDirectorySize{
         }
     }
 
-    $foldersInfo
-    return
+    return $foldersInfo
 }
 
 function Get-UserActiveLogon{ #add message to host when computer can't be reached.
@@ -2075,8 +2048,7 @@ function Get-UserActiveLogon{ #add message to host when computer can't be reache
     }
 
     end{
-        $computerList
-        return
+        return $computerList
     }
 }
 
@@ -2136,8 +2108,7 @@ function Get-UserLastLogon{
     }
 
     end{
-        $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
-        return
+        return $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
     }
 }
 
@@ -2207,8 +2178,7 @@ function Move-Computer{
     }
 
     end{
-        $movedComputers
-        return
+        return $movedComputers
     }
 }
 
@@ -2278,8 +2248,7 @@ function Move-User{
     }
 
     end{
-        $movedUsers | Sort-Object -Property SamAccountName
-        return
+        return $movedUsers | Sort-Object -Property SamAccountName
     }
 }
 
@@ -2340,8 +2309,7 @@ function Remove-Computer{
 
     end{
         $computers | Remove-ADComputer
-        $computers | Sort-Object -Property Name
-        return
+        return $computers | Sort-Object -Property Name
     }
 }
 
@@ -2401,8 +2369,7 @@ function Remove-User{
 
     end{
         $users | Remove-ADUser
-        $users | Sort-Object -Property SamAccountName
-        return
+        return $users | Sort-Object -Property SamAccountName
     }
 }
 
@@ -2466,8 +2433,7 @@ function Reset-UserPassword{
     }
 
     end{
-        $userList | Sort-Object -Property Name
-        return
+        return $userList | Sort-Object -Property Name
     }
     
 }
