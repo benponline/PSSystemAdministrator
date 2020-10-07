@@ -975,8 +975,6 @@ function Get-CredentialExportToXML{
     Export-Clixml -Path "$Path\$FileName.xml" -InputObject $credential
 }
 
-### Function testing here
-
 function Get-DirectorySize{
     <#
     .SYNOPSIS
@@ -1131,6 +1129,8 @@ function Get-DisabledUsers{
     return $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
 }
 
+### Function testing here
+
 function Get-FailedLogon{
     <#
     .SYNOPSIS
@@ -1182,18 +1182,18 @@ function Get-FailedLogon{
 
     begin{
         $failedLoginList = @()
+        $date = (Get-Date).AddDays($DaysBack * -1)
     }
 
     process{
         if(Test-Connection $Name -Count 1 -Quiet){
-            #Get-WinEvent -LogName system -MaxEvents 10 | Where-Object -Property id -eq '4625' Where-Object -Property TimeCreated -GT Get-Date-1day
-            $failedLoginList += Get-EventLog -ComputerName $Name -LogName Security -InstanceId 4625 -After ((Get-Date).AddDays($DaysBack * -1)) |
-                Select-Object -Property @{n="ComputerName";e={$Name}},TimeWritten,EventID
+            $failedLoginList += Get-WinEvent -ComputerName $name -FilterHashtable @{LogName='Security'; ID='4625'; StartTime=$date} | 
+                Select-Object -Property @{n="ComputerName";e={$Name}},TimeCreated,Id,Message
         }
     }
 
     end{
-        return $failedLoginList | Select-Object -Property ComputerName,TimeWritten,EventID | Sort-Object -Property ComputerName
+        return $failedLoginList | Select-Object -Property ComputerName,TimeCreated,Id,Message | Sort-Object -Property ComputerName
     }
 }
 
