@@ -2,7 +2,13 @@
 PSSystemAdministrator
 
 Ben Peterson
-github.com/BenPetersonIT 
+github.com/BenPetersonIT
+
+Developement note:
+Check the use of Test-Connection. Make sure it makes sense and is needed.
+Create better building blocks. Create functions that act on one computer or user then use that to create functions that repeat that task across multiple targets.
+Create functions that gather accounts from OUs then use those to power scripts that act on groups of accounts.
+Break down Get-ComputerInformation into separate functions and then recombine.
 #>
 
 function Disable-Computer{
@@ -48,6 +54,7 @@ function Disable-Computer{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('ComputerName')]
         [string]$Name
     )
 
@@ -364,6 +371,78 @@ function Get-ChildItemLastWriteTime{
     }
 }
 
+function Get-ComputerDriveInformation{
+    <#
+    .SYNOPSIS
+    Gets information about the drives on a computer or computers.
+
+    .DESCRIPTION
+    Returns information from about the drives on a computer, remote computer, or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
+
+    .PARAMETER Name
+    Specifies the computer the function will gather information from.
+
+    .INPUTS
+    You can pipe host names or AD computer objects.
+
+    .OUTPUTS
+    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
+
+    .NOTES
+    Compatible with Window 7 and newer.
+
+    .EXAMPLE
+    Get-ComputerDriveInformation
+
+    Gets local drive information for the local host.
+
+    .EXAMPLE
+    Get-ComputerDriveInformation -Name computer
+
+    Gets local ddrive information for "computer".
+
+    .EXAMPLE
+    Get-ADComputer -Filter * | Get-ComputerDriveInformation
+
+    Gets drive information for all computers in AD.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $driveInformationList = @()
+    }
+
+    process{
+
+        if(Test-Connection $Name -Count 1 -Quiet){
+            $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace,DriveType | 
+            Where-Object -Property DriveType -EQ 3 | 
+            Select-Object -Property @{n="Computer";e={$Name}},`
+            @{n="Drive";e={$_.deviceid}},`
+            @{n="VolumeName";e={$_.volumename}},`
+            @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
+            @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
+            @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
+        }
+    }
+
+    end{
+        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
+        return $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
+    }  
+}
+
 function Get-ComputerSystemEvent{
     <#
     .SYNOPSIS
@@ -390,7 +469,7 @@ function Get-ComputerSystemEvent{
     Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
 
     .EXAMPLE
-    Get-ComputerError
+    Get-ComputerSystemEvent
 
     This cmdlet returns the last 5 system errors from localhost.
 
@@ -418,6 +497,7 @@ function Get-ComputerSystemEvent{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
         [string]$Name = "$env:COMPUTERNAME",
         [int]$Newest = 5
     )
@@ -492,20 +572,25 @@ function Get-ComputerFailedSignOn{
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
         [string]$Name = "$env:COMPUTERNAME",
-        [int]$Newest = 5
+        [int]$DaysBack = 1
     )
 
     begin{
-        $errorLog = @()
+        $failedLoginList = @()
+        $date = (Get-Date).AddDays($DaysBack * -1)
     }
 
     process{
-        $errorLog += Get-WinEvent @{LogName='Security';ProviderName='Microsoft-Windows-Security-Auditing';ID=4625 } -ComputerName $Name -MaxEvents $Newest | 
-            Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
+        try{
+            $failedLoginList += Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date} | 
+                Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,Message
+        }catch{
+
+        }
     }
 
     end{
-        return $errorLog
+        return $failedLoginList
     }
 }
 
@@ -557,6 +642,7 @@ function Get-ComputerInformation{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -656,6 +742,7 @@ function Get-ComputerLastBootUpTime{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -716,6 +803,7 @@ function Get-ComputerOS{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -738,7 +826,7 @@ function Get-ComputerOS{
     }
 }
 
-function Get-ComputerShareFolder{
+function Get-ComputerShareFolders{
     <#
     .SYNOPSIS
     This function returns all of the share folders on a computer.
@@ -782,6 +870,7 @@ function Get-ComputerShareFolder{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -861,6 +950,7 @@ function Get-ComputerSoftware{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
         [string]$Name = $env:COMPUTERNAME
     )
 
@@ -1066,12 +1156,10 @@ function Get-DisabledComputers{
         [string]$OrganizationalUnit = ""
     )
     
-    $domainInfo = (Get-ADDomain).DistinguishedName
-    
     if($OrganizationalUnit -eq ""){
         $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
     }else{
-        $disabledComputers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | 
+        $disabledComputers = Get-OUComputers -OrganizationalUnit $OrganizationalUnit | 
             Where-Object -Property Enabled -Match False
     }
 
@@ -1131,72 +1219,6 @@ function Get-DisabledUsers{
 
 ### Function testing here
 
-function Get-FailedLogon{
-    <#
-    .SYNOPSIS
-    Gets a list of failed logon events from a computer or computers.
-
-    .DESCRIPTION
-    This function returns failed logon events from the local computer, remote computer, or group of computers.
-
-    .PARAMETER Name
-    Specifies the computer the function gathers information from.
-
-    .PARAMETER DaysBack
-    Determines how many days in the past the function will search for failed log ons.
-
-    .INPUTS
-    You can pipe host names or AD computer objects.
-
-    .OUTPUTS
-    PS objects with computer names, time written, and event IDs for failed logon events.
-
-    .NOTES
-    Compatible with Windows 10.
-
-    Not compatible with Powershell 7 or Core.
-
-    .EXAMPLE
-    Get-FailedLogon
-
-    Returns failed logon events from the local host.
-
-    .EXAMPLE
-    Get-FailedLogon -Name "Server1"
-
-    Returns failed logon events from computer "Server1".
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-    #>
-
-    [CmdletBinding()]
-    Param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME,
-        [int]$DaysBack = 1
-    )
-
-    begin{
-        $failedLoginList = @()
-        $date = (Get-Date).AddDays($DaysBack * -1)
-    }
-
-    process{
-        if(Test-Connection $Name -Count 1 -Quiet){
-            $failedLoginList += Get-WinEvent -ComputerName $name -FilterHashtable @{LogName='Security'; ID='4625'; StartTime=$date} | 
-                Select-Object -Property @{n="ComputerName";e={$Name}},TimeCreated,Id,Message
-        }
-    }
-
-    end{
-        return $failedLoginList | Select-Object -Property ComputerName,TimeCreated,Id,Message | Sort-Object -Property ComputerName
-    }
-}
-
 function Get-InactiveComputers{
     <#
     .SYNOPSIS
@@ -1241,32 +1263,28 @@ function Get-InactiveComputers{
         [string]$OrganizationalUnit = ""
     )
 
-    $domainInfo = (Get-ADDomain).DistinguishedName
-    
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter * | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
     }else{
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Get-ADObject -Properties lastlogon | Select-Object -Property name,lastlogon
+        $computers = Get-OUComputers -OrganizationalUnit $OrganizationalUnit | Get-ADObject -Properties lastlogon | 
+            Select-Object -Property name,lastlogon
     }
 
     $lastLogonList = @()
 
     foreach($computer in $computers){
 
-        if(!(Test-Connection -ComputerName $computer.name -Count 1 -Quiet)){
-
-            if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddDays(($DaysInactive * -1)))){
-                $lastLogonProperties = @{
-                    "LastLogon" = ([datetime]::fromfiletime($computer.lastlogon));
-                    "Name" = ($computer.name)
-                }
-        
-                $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
-                $lastLogonList += $lastLogonObject
+        if(([datetime]::fromfiletime($computer.lastlogon)) -lt ((Get-Date).AddDays(($DaysInactive * -1)))){
+            $lastLogonProperties = @{
+                "LastLogon" = ([datetime]::fromfiletime($computer.lastlogon));
+                "Name" = ($computer.name)
             }
+    
+            $lastLogonObject = New-Object -TypeName PSObject -Property $lastLogonProperties
+            $lastLogonList += $lastLogonObject
         }
     }
-    
+
     return $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
 }
 
@@ -1467,81 +1485,7 @@ function Get-LargeFiles{
     }
 }
 
-function Get-LocalDiskInformation{
-    <#
-    .SYNOPSIS
-    Gets information about the local disks on a computer or computers.
-
-    .DESCRIPTION
-    Returns information from about the local disks on a computer, remote computer, or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
-
-    .PARAMETER Name
-    Specifies the computer the function will gather information from.
-
-    .INPUTS
-    You can pipe host names or AD computer objects.
-
-    .OUTPUTS
-    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
-
-    .NOTES
-    Compatible with Window 7 and newer.
-
-    Will only try to contact computers that are on and connected to the network.
-
-    .EXAMPLE
-    Get-LocalDiskInformation
-
-    Gets local disk information for the local host.
-
-    .EXAMPLE
-    Get-LocalDiskInformation -computerName computer
-
-    Gets local disk information for "computer".
-
-    .EXAMPLE
-    Get-LocalDiskInformation -Filter * | Get-DriveSpace
-
-    Gets local disk information for all computers in AD.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-    #>
-
-    [CmdletBinding()]
-    Param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
-    )
-
-    begin{
-        $driveInformationList = @()
-    }
-
-    process{
-
-        if(Test-Connection $Name -Count 1 -Quiet){
-            $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace,DriveType | 
-            Where-Object -Property DriveType -EQ 3 | 
-            Select-Object -Property @{n="Computer";e={$Name}},`
-            @{n="Drive";e={$_.deviceid}},`
-            @{n="VolumeName";e={$_.volumename}},`
-            @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
-            @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
-            @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
-        }
-    }
-
-    end{
-        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
-        return $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
-    }  
-}
-
-function Get-MappedNetworkDrive{
+function Get-CompuerMappedNetworkDrive{
     <#
     .SYNOPSIS
     Gets information about the mapped drives on a computer or computers.
@@ -1564,7 +1508,7 @@ function Get-MappedNetworkDrive{
     Will only try to contact computers that are on and connected to the network.
 
     .EXAMPLE
-    Get-MappedNetworlDrive
+    Get-ComputerMappedNetworlDrive
 
     Gets mapped drive information for the local host.
 
@@ -1655,12 +1599,10 @@ function Get-OfflineComputers{
         [string]$OrganizationalUnit = ""
     )
 
-    $domainInfo = (Get-ADDomain).DistinguishedName 
-    
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter *
     }else{
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+        $computers = Get-OUComputers -OrganizationalUnit $OrganizationalUnit
     }
 
     $offlineComputers = @()
@@ -1716,12 +1658,10 @@ function Get-OnlineComputers{
         [string]$OrganizationalUnit = ""
     )
 
-    $domainInfo = (Get-ADDomain).DistinguishedName 
-    
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter *
     }else{
-        $computers = Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo"
+        $computers = Get-OUComputers -OrganizationalUnit $OrganizationalUnit
     }
 
     $onlineComputers = @()
@@ -2018,12 +1958,11 @@ function Get-UserActiveLogon{ #add message to host when computer can't be reache
 
     begin{
         $computerList = @()
-        $domainInfo = (Get-ADDomain).DistinguishedName
 
         if($OrganizationalUnit -eq ""){
             $computers = (Get-ADComputer -Filter *).Name | Sort-Object
         }else{
-            $computers = (Get-ADComputer -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo").Name | Sort-Object
+            $computers = (Get-OUComputers -OrganizationalUnit $OrganizationalUnit).Name | Sort-Object
         }
     }
 
