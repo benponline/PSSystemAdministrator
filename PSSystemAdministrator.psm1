@@ -4,12 +4,375 @@ PSSystemAdministrator
 Ben Peterson
 github.com/BenPetersonIT
 
-Developement note:
+Developement notes:
 Check the use of Test-Connection. Make sure it makes sense and is needed.
 Create better building blocks. Create functions that act on one computer or user then use that to create functions that repeat that task across multiple targets.
 Create functions that gather accounts from OUs then use those to power scripts that act on groups of accounts.
 Break down Get-ComputerInformation into separate functions and then recombine.
 #>
+
+### Get-ComputerInformation functions
+
+function Get-ComputerModel{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER Name
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    https://github.com/benponline
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computerModels = @()
+    }
+
+    process{
+        $computerModels += Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property Model | Select-Object -Property @{n='Name';e={$Name}},@{n='Model';e={$_.Model}}
+    }
+
+    end{
+        return $computerModels
+    }
+}
+
+function Get-ComputerProcessor{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER Name
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    https://github.com/benponline
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computerProcessors = @()
+    }
+
+    process{
+        $computerProcessors += Get-CimInstance -ComputerName $Name -ClassName Win32_Processor -Property Name | Select-Object -Property @{n='Name';e={$Name}},@{n='Processor';e={$_.Name}}
+    }
+
+    end{
+        return $computerProcessors
+    }
+}
+
+function Get-ComputerMemory{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER Name
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    https://github.com/benponline
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computerMemories = @()
+    }
+
+    process{
+        $computerMemories += [PSCustomObject]@{
+            Name = $Name;
+            MemoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
+        }
+    }
+
+    end{
+        return $computerMemories
+    }
+}
+
+function Get-ComputerStorage{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER Name
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    https://github.com/benponline
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computerStorageList = @()
+    }
+
+    process{
+        $computerStorageList += [PSCustomObject]@{
+            Name = $Name;
+            StorageGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Size) | 
+                Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
+        }
+    }
+
+    end{
+        return $computerStorageList
+    }
+}
+
+function Get-ComputerCurrentUser{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER Name
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    https://github.com/benponline
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computerUserList = @()
+    }
+
+    process{
+        $computerUserList += [PSCustomObject]@{
+            Name = $Name;
+            CurrentUser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
+        }
+    }
+
+    end{
+        return $computerUserList
+    }
+}
+
+function Get-ComputerIPAddress{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER Name
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    https://github.com/benponline
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computerIPList = @()
+    }
+
+    process{
+
+        if($Name -eq $env:COMPUTERNAME){
+            $ipAddress = (Get-NetIPAddress | Where-Object {$_.PrefixOrigin -eq 'dhcp'}).IPAddress
+        }else{
+            $ipAddress = (Test-Connection -TargetName $Name -Count 1).Address.IPAddressToString
+        }
+
+        $computerIPList += [PSCustomObject]@{
+            Name = $Name;
+            IPAddress = $ipAddress 
+        }
+    }
+
+    end{
+        return $computerIPList
+    }
+}
+
+function Get-ComputerInformation{
+    <#
+    .SYNOPSIS
+    Gets infomation about a computer or computers.
+
+    .DESCRIPTION
+    This function gathers infomation about a computer or computers. By default it gathers info from the local host. The information includes computer name, model, CPU, memory in GB, storage in GB, the current user, IP address, and last bootuptime.
+
+    .PARAMETER Name
+    Specifies which computer's information is gathered.
+
+    .INPUTS
+    You can pipe host names or AD computer objects.
+
+    .OUTPUTS
+    Returns an object with computer name, model, CPU, memory in GB, storage in GB, the current user, IP address, and last boot time.
+
+    .NOTES
+    Compatible for Windows 7 and newer.
+
+    Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
+
+    Will not return information on computers that are offline.
+
+    .EXAMPLE
+    Get-ComputerInformation
+
+    Returns computer information for the local host.
+
+    .EXAMPLE
+    Get-ComputerInformation -Name Server1
+
+    Returns computer information for Server1.
+
+    .EXAMPLE
+    Get-ADComputer -filter * | Get-ComputerInformation
+
+    Returns computer information on all AD computers. 
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/BenPetersonIT
+    https://github.com/BenPetersonIT
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computerInfoList = @()
+    }
+
+    process{
+        $computerObjectProperties = @{
+            "Name" = "";
+            "Model" = "";
+            "Processor" = "";
+            "MemoryGB" = "";
+            "StorageGB" = "";
+            "CurrentUser" = "";
+            "IPAddress" = "";
+            "BootUpTime" = ""
+        }
+
+        if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
+
+            $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
+            $computerInfo.Name = $Name
+            $computerInfo.Model = (Get-ComputerModel -Name $Name).Model
+            $computerInfo.Processor = (Get-ComputerProcessor -Name $Name).Processor
+            $computerInfo.MemoryGB = (Get-ComputerMemory -Name $Name).MemoryGB
+            $computerInfo.StorageGB = (Get-ComputerStorage -Name $Name).StorageGB
+            $computerInfo.CurrentUser = (Get-ComputerCurrentUser -Name $Name).CurrentUser
+            $computerInfo.IPAddress = (Get-ComputerIPAddress -Name $Name).IPAddress
+            $computerInfo.BootUpTime = (Get-ComputerLastBootUpTime -Name $Name).LastBootUpTime
+            $computerInfoList += $computerInfo
+        }
+    }
+
+    end{
+        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
+    }
+}
+###
 
 function Disable-Computer{
     <#
@@ -591,102 +954,6 @@ function Get-ComputerFailedSignOn{
 
     end{
         return $failedLoginList
-    }
-}
-
-function Get-ComputerInformation{
-    <#
-    .SYNOPSIS
-    Gets infomation about a computer or computers.
-
-    .DESCRIPTION
-    This function gathers infomation about a computer or computers. By default it gathers info from the local host. The information includes computer name, model, CPU, memory in GB, storage in GB, the current user, IP address, and last bootuptime.
-
-    .PARAMETER Name
-    Specifies which computer's information is gathered.
-
-    .INPUTS
-    You can pipe host names or AD computer objects.
-
-    .OUTPUTS
-    Returns an object with computer name, model, CPU, memory in GB, storage in GB, the current user, IP address, and last boot time.
-
-    .NOTES
-    Compatible for Windows 7 and newer.
-
-    Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
-
-    Will not return information on computers that are offline.
-
-    .EXAMPLE
-    Get-ComputerInformation
-
-    Returns computer information for the local host.
-
-    .EXAMPLE
-    Get-ComputerInformation -Name Server1
-
-    Returns computer information for Server1.
-
-    .EXAMPLE
-    Get-ADComputer -filter * | Get-ComputerInformation
-
-    Returns computer information on all AD computers. 
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
-    #>
-
-    [CmdletBinding()]
-    Param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
-    )
-
-    begin{
-        $computerInfoList = @()
-    }
-
-    process{
-        $computerObjectProperties = @{
-            "Name" = "";
-            "Model" = "";
-            "CPU" = "";
-            "MemoryGB" = "";
-            "StorageGB" = "";
-            "CurrentUser" = "";
-            "IPAddress" = "";
-            "BootUpTime" = ""
-        }
-
-        if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
-
-            $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
-            $computerInfo.name = $Name
-            $computerInfo.model = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property Model).model
-            $computerInfo.CPU = (Get-CimInstance -ComputerName $Name -ClassName Win32_Processor -Property Name).name
-            $computerInfo.memoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
-            $computerInfo.storageGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Size) | 
-                Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
-
-            if($Name -eq $env:COMPUTERNAME){
-                $computerInfo.currentuser = [System.Security.Principal.WindowsIdentity]::GetCurrent().name
-                $computerInfo.IPAddress = (Get-NetIPAddress -AddressFamily IPv4).IPAddress | Select-Object -First 1
-            }else{
-                $computerInfo.currentuser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
-                $computerInfo.IPAddress = (Test-Connection -ComputerName $Name -Count 1).reply.address.ipaddresstostring
-            }
-
-            $computerInfo.BootUpTime = (Get-CimInstance -ClassName Win32_OperatingSystem -ComputerName $Name).LastBootUpTime
-            $computerInfoList += $computerInfo
-        }
-    }
-
-    end{
-        return $computerInfoList | Select-Object -Property Name,Model,CPU,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
     }
 }
 
@@ -1776,7 +2043,7 @@ function Get-OUUsers{
     }
 }
 
-function Get-PhysicalDiskInformation{
+function Get-ComputerPhysicalDiskInformation{
     <#
     .SYNOPSIS
     Gets the health status of the physical disks of a computer or computers.
@@ -1786,9 +2053,6 @@ function Get-PhysicalDiskInformation{
 
     .PARAMETER Name
     Specifies the computer the fuction will gather information from.
-
-    .PARAMETER OrganizationalUnit
-    Pulls information from computers in an organizational unit.
 
     .INPUTS
     You can pipe host names or AD computer objects.
@@ -1800,24 +2064,19 @@ function Get-PhysicalDiskInformation{
     Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
 
     .EXAMPLE
-    Get-PhysicalDiskInformation
+    Get-ComputerPhysicalDiskInformation
 
     Returns disk health information for the local computer.
 
     .EXAMPLE
-    Get-PhysicalDiskInformation -Name Computer1
+    Get-ComputerPhysicalDiskInformation -Name Computer1
 
     Returns disk health information for the computer named Computer1.
 
     .EXAMPLE
-    "computer1","computer2" | Get-PhysicalDiskInformation
+    "computer1","computer2" | Get-ComputerPhysicalDiskInformation
 
     Returns physical disk information from "computer1" and "computer2".
-
-    .EXAMPLE
-    Get-PhysicalDiskInformation -OrganizationalUnit "Company Servers"
-
-    Returns physical disk information from all computers in the "Company Servers" organizational unit.
 
     .LINK
     By Ben Peterson
