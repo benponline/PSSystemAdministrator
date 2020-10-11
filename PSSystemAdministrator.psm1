@@ -32,7 +32,7 @@ function Get-ComputerModel{
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
-    https://github.com/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -74,7 +74,7 @@ function Get-ComputerProcessor{
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
-    https://github.com/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -116,7 +116,7 @@ function Get-ComputerMemory{
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
-    https://github.com/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -161,7 +161,7 @@ function Get-ComputerStorage{
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
-    https://github.com/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -207,7 +207,7 @@ function Get-ComputerCurrentUser{
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
-    https://github.com/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -252,7 +252,7 @@ function Get-ComputerIPAddress{
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
-    https://github.com/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -326,8 +326,8 @@ function Get-ComputerInformation{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -410,8 +410,8 @@ function Disable-Computer{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -475,8 +475,8 @@ function Disable-User{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -535,8 +535,8 @@ function Get-AccessedFiles{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -597,8 +597,8 @@ function Get-ActiveFiles{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -655,8 +655,8 @@ function Get-ChildItemLastAccessTime{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -710,8 +710,8 @@ function Get-ChildItemLastWriteTime{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>    
 
     [cmdletbinding()]
@@ -771,8 +771,8 @@ function Get-ComputerDriveInformation{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -853,8 +853,8 @@ function Get-ComputerSystemEvent{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -926,8 +926,8 @@ function Get-ComputerFailedSignOn{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1002,8 +1002,8 @@ function Get-ComputerLastBootUpTime{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1063,8 +1063,8 @@ function Get-ComputerOS{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1130,8 +1130,8 @@ function Get-ComputerShareFolders{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
     
     [cmdletbinding()]
@@ -1206,8 +1206,8 @@ function Get-ComputerSoftware{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
 
     .LINK
     Based on code from:
@@ -1315,8 +1315,8 @@ function Get-CredentialExportToXML{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -1358,8 +1358,8 @@ function Get-DirectorySize{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
 
     .Link
     Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
@@ -1414,8 +1414,8 @@ function Get-DisabledComputers{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1464,8 +1464,8 @@ function Get-DisabledUsers{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1520,8 +1520,8 @@ function Get-InactiveComputers{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1589,8 +1589,8 @@ function Get-InactiveFiles{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -1658,8 +1658,8 @@ function Get-InactiveUsers{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1726,8 +1726,8 @@ function Get-LargeFiles{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -1791,8 +1791,8 @@ function Get-CompuerMappedNetworkDrive{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1857,8 +1857,8 @@ function Get-OfflineComputers{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1916,8 +1916,8 @@ function Get-OnlineComputers{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -1969,8 +1969,8 @@ function Get-OUComputers{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -2019,8 +2019,8 @@ function Get-OUUsers{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -2080,8 +2080,8 @@ function Get-ComputerPhysicalDiskInformation{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -2139,8 +2139,8 @@ function Get-SubDirectorySize{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
 
     .Link
     Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
@@ -2204,8 +2204,8 @@ function Get-UserActiveLogon{ #add message to host when computer can't be reache
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -2287,8 +2287,8 @@ function Get-UserLastLogon{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -2349,8 +2349,8 @@ function Move-Computer{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -2419,8 +2419,8 @@ function Move-User{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -2486,8 +2486,8 @@ function Remove-Computer{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -2547,8 +2547,8 @@ function Remove-User{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [CmdletBinding()]
@@ -2609,8 +2609,8 @@ function Reset-UserPassword{
     
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]#Does not take objects from the pipeline
@@ -2667,8 +2667,8 @@ function Set-ComputerIP{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/benpetersonIT
-    https://github.com/BenPetersonIT
+    linkedin.com/in/benponline
+    github.com/benponline
     #>
 
     [cmdletbinding()]
@@ -2770,8 +2770,8 @@ function Start-Computer{
 
     .LINK
     By Ben Peterson
-    linkedin.com/in/BenPetersonIT
-    https://github.com/BenPetersonIT    
+    linkedin.com/in/benponline
+    github.com/benponline    
 
     .LINK
     Based on: https://gallery.technet.microsoft.com/scriptcenter/Send-WOL-packet-using-0638be7b/view/Discussions#content 
