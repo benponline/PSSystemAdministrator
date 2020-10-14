@@ -16,6 +16,7 @@ Break down Get-ComputerInformation into separate functions and then recombine.
 function Get-ComputerModel{
     <#
     .SYNOPSIS
+    Gets the model of a computer.
 
     .DESCRIPTION
 
