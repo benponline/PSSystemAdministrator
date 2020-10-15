@@ -1,6 +1,0 @@
-Developement notes:
-
-- Check the use of Test-Connection. Make sure it makes sense and is needed.
-- Create better building blocks. Create functions that act on one computer or user then use that to create functions that repeat that task across multiple targets.
-- Create functions that gather accounts from OUs then use those to power scripts that act on groups of accounts.
-- Break down Get-ComputerInformation into separate functions and then recombine.
