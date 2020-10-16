@@ -5,6 +5,7 @@ Ben Peterson
 linkedin.com/in/benponline
 github.com/benponline
 twitter.com/benponline
+paypal.me/teknically
 
 Developement notes
 Test Get-ComputerInformation. New setup for getting c drive size.
@@ -49,6 +50,7 @@ function Get-ComputerModel{
     linkedin.com/in/benponline
     github.com/benponline
     twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -112,6 +114,7 @@ function Get-ComputerProcessor{
     linkedin.com/in/benponline
     github.com/benponline
     twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -173,6 +176,7 @@ function Get-ComputerMemory{
     linkedin.com/in/benponline
     github.com/benponline
     twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -218,6 +222,8 @@ function Get-ComputerCurrentUser{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -263,6 +269,8 @@ function Get-ComputerIPAddress{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -338,6 +346,8 @@ function Get-ComputerInformation{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -357,7 +367,7 @@ function Get-ComputerInformation{
             "Model" = "";
             "Processor" = "";
             "MemoryGB" = "";
-            "StorageGB" = "";
+            "CDriveGB" = "";
             "CurrentUser" = "";
             "IPAddress" = "";
             "BootUpTime" = ""
@@ -379,7 +389,7 @@ function Get-ComputerInformation{
     }
 
     end{
-        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
+        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,CDriveGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
     }
 }
 ####
@@ -422,6 +432,8 @@ function Disable-Computer{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -487,6 +499,8 @@ function Disable-User{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -547,6 +561,8 @@ function Get-AccessedFiles{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -609,6 +625,8 @@ function Get-ActiveFiles{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -667,6 +685,8 @@ function Get-ChildItemLastAccessTime{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -722,6 +742,8 @@ function Get-ChildItemLastWriteTime{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>    
 
     [cmdletbinding()]
@@ -783,6 +805,8 @@ function Get-ComputerDriveInformation{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -810,7 +834,7 @@ function Get-ComputerDriveInformation{
 
     end{
         $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
-        return $driveInformationList | Select-Object -Property Computer,Drive,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
+        return $driveInformationList | Select-Object -Property Computer,DeviceID,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
     }  
 }
 
@@ -863,6 +887,8 @@ function Get-ComputerSystemEvent{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -936,6 +962,8 @@ function Get-ComputerFailedSignOn{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1012,6 +1040,8 @@ function Get-ComputerLastBootUpTime{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1073,6 +1103,8 @@ function Get-ComputerOS{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1140,6 +1172,8 @@ function Get-ComputerShareFolders{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
     
     [cmdletbinding()]
@@ -1216,6 +1250,8 @@ function Get-ComputerSoftware{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
 
     .LINK
     Based on code from:
@@ -1325,6 +1361,8 @@ function Get-CredentialExportToXML{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -1368,6 +1406,8 @@ function Get-DirectorySize{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
 
     .Link
     Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
@@ -1424,6 +1464,8 @@ function Get-DisabledComputers{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1474,6 +1516,8 @@ function Get-DisabledUsers{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1530,6 +1574,8 @@ function Get-InactiveComputers{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1599,6 +1645,8 @@ function Get-InactiveFiles{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -1668,6 +1716,8 @@ function Get-InactiveUsers{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1736,6 +1786,8 @@ function Get-LargeFiles{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -1801,6 +1853,8 @@ function Get-ComputerMappedNetworkDrive{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1867,6 +1921,8 @@ function Get-OfflineComputers{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1926,6 +1982,8 @@ function Get-OnlineComputers{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -1979,6 +2037,8 @@ function Get-OUComputers{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -2029,6 +2089,8 @@ function Get-OUUsers{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -2090,6 +2152,8 @@ function Get-ComputerPhysicalDiskInformation{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -2149,6 +2213,8 @@ function Get-SubDirectorySize{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
 
     .Link
     Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
@@ -2214,6 +2280,8 @@ function Get-UserActiveLogon{ #add message to host when computer can't be reache
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -2297,6 +2365,8 @@ function Get-UserLastLogon{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -2359,6 +2429,8 @@ function Move-Computer{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -2429,6 +2501,8 @@ function Move-User{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -2496,6 +2570,8 @@ function Remove-Computer{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -2557,6 +2633,8 @@ function Remove-User{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [CmdletBinding()]
@@ -2619,6 +2697,8 @@ function Reset-UserPassword{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]#Does not take objects from the pipeline
@@ -2677,6 +2757,8 @@ function Set-ComputerIP{
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
     #>
 
     [cmdletbinding()]
@@ -2779,7 +2861,9 @@ function Start-Computer{
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
-    github.com/benponline    
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
 
     .LINK
     Based on: https://gallery.technet.microsoft.com/scriptcenter/Send-WOL-packet-using-0638be7b/view/Discussions#content 
