@@ -5,6 +5,9 @@ Ben Peterson
 linkedin.com/in/benponline
 github.com/benponline
 twitter.com/benponline
+
+Developement notes
+Test Get-ComputerInformation. New setup for getting c drive size.
 #>
 
 function Get-ComputerModel{
@@ -76,23 +79,39 @@ function Get-ComputerProcessor{
     Gets the processor of a computer.
 
     .DESCRIPTION
-    Gets the processor of a computer or computers. 
+    Gets the processor of a computer or group of computers. 
 
     .PARAMETER Name
-    
+    The processor of the computer with this name will be returned. By defualt it is the local computer.
 
     .INPUTS
+    Takes an array of computer names or AD computer objects over the pipeline.
 
     .OUTPUTS
+    Returns PS Object/s of the computers passed to it including computer name and processor.
 
     .NOTES
 
     .EXAMPLE
+    Get-ComputerProcessor -Name 'computer1'
+
+    Returns a PS Object with the computer name and processor of the 'Computer1'.
+
+    .EXAMPLE
+    'computer1','computer2' | Get-ComputerProcessor
+    
+    Returns a PS Object for each computer containing computer name and processor.
+
+    .EXAMPLE
+    Get-OUComputer -OrganizationalUnit 'Department X' | Get-ComputerProcessor
+
+    Returns a PS Object for each computer in the 'Department X' Active Directory organizational unit containing computer name and processor.
 
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
     #>
 
     [CmdletBinding()]
@@ -118,23 +137,42 @@ function Get-ComputerProcessor{
 function Get-ComputerMemory{
     <#
     .SYNOPSIS
+    Gets the memory in GB of a computer.
 
     .DESCRIPTION
+    Gets the memory in GB of a computer or group of computers. 
 
     .PARAMETER Name
+    The memory in GB of the computer with this name will be returned. By defualt it is the local computers.
 
     .INPUTS
+    Takes an array of computer names or AD computer objects over the pipeline.
 
     .OUTPUTS
+    Returns PS Object/s of the computers passed to it including computer name and memory in GB.
 
     .NOTES
 
     .EXAMPLE
+    Get-ComputerMemory -Name 'computer1'
+
+    Returns a PS Object with the computer name and memory in GB of the 'Computer1'.
+
+    .EXAMPLE
+    'computer1','computer2' | Get-ComputerMemory
+    
+    Returns a PS Object for each computer containing computer name and memory in GB.
+
+    .EXAMPLE
+    Get-OUComputer -OrhanizationalUnit 'Department X' | Get-ComputerMemory
+
+    Returns a PS Object for each computer in the 'Department X' Active Directory organizational unit containing computer name and memory in GB.
 
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
     #>
 
     [CmdletBinding()]
@@ -157,52 +195,6 @@ function Get-ComputerMemory{
 
     end{
         return $computerMemories
-    }
-}
-
-function Get-ComputerStorage{
-    <#
-    .SYNOPSIS
-
-    .DESCRIPTION
-
-    .PARAMETER Name
-
-    .INPUTS
-
-    .OUTPUTS
-
-    .NOTES
-
-    .EXAMPLE
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benponline
-    github.com/benponline
-    #>
-
-    [CmdletBinding()]
-    Param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
-    )
-
-    begin{
-        $computerStorageList = @()
-    }
-
-    process{
-        $computerStorageList += [PSCustomObject]@{
-            Name = $Name;
-            StorageGB = [math]::Round((((Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property Size) | 
-                Where-Object -Property DeviceID -eq "C:").size / 1GB),1)
-        }
-    }
-
-    end{
-        return $computerStorageList
     }
 }
 
@@ -378,7 +370,7 @@ function Get-ComputerInformation{
             $computerInfo.Model = (Get-ComputerModel -Name $Name).Model
             $computerInfo.Processor = (Get-ComputerProcessor -Name $Name).Processor
             $computerInfo.MemoryGB = (Get-ComputerMemory -Name $Name).MemoryGB
-            $computerInfo.StorageGB = (Get-ComputerStorage -Name $Name).StorageGB
+            $computerInfo.CDriveGB = (Get-ComputerDriveInformation -Name $Name | Where-Object -Property DeviceID -Match 'C').SizeGB
             $computerInfo.CurrentUser = (Get-ComputerCurrentUser -Name $Name).CurrentUser
             $computerInfo.IPAddress = (Get-ComputerIPAddress -Name $Name).IPAddress
             $computerInfo.BootUpTime = (Get-ComputerLastBootUpTime -Name $Name).LastBootUpTime
@@ -806,16 +798,14 @@ function Get-ComputerDriveInformation{
 
     process{
 
-        if(Test-Connection $Name -Count 1 -Quiet){
-            $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace,DriveType | 
+        $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace,DriveType | 
             Where-Object -Property DriveType -EQ 3 | 
             Select-Object -Property @{n="Computer";e={$Name}},`
-            @{n="Drive";e={$_.deviceid}},`
+            @{n="DeviceID";e={$_.deviceid}},`
             @{n="VolumeName";e={$_.volumename}},`
             @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
             @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
             @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
-        }
     }
 
     end{
