@@ -2,10 +2,10 @@
 PSSystemAdministrator
 
 Ben Peterson
+linkedin.com/in/benponline
 github.com/benponline
+twitter.com/benponline
 #>
-
-### Get-ComputerInformation functions
 
 function Get-ComputerModel{
     <#
@@ -13,21 +13,39 @@ function Get-ComputerModel{
     Gets the model of a computer.
 
     .DESCRIPTION
+    Gets the model of a computer or group of computers. 
 
     .PARAMETER Name
+    The model of the computer with this name will be returned. By defualt it is the local computers.
 
     .INPUTS
+    Takes an array of computer names or AD computer objects over the pipeline.
 
     .OUTPUTS
+    Returns PS Object/s of the computers passed to it including computer name and model.
 
     .NOTES
 
     .EXAMPLE
+    Get-ComputerModel -Name 'computer1'
+
+    Returns a PS Object with the computer name and model of the 'Computer1'.
+
+    .EXAMPLE
+    'computer1','computer2' | Get-ComputerModel
+    
+    Returns a PS Object for each computer containing computer name and model.
+
+    .EXAMPLE
+    Get-OUComputer -OrhanizationalUnit 'Department X' | Get-ComputerModel
+
+    Returns a PS Object for each computer in the 'Department X' Active Directory organizational unit containing computer name and model.
 
     .LINK
     By Ben Peterson
     linkedin.com/in/benponline
     github.com/benponline
+    twitter.com/benponline
     #>
 
     [CmdletBinding()]
@@ -50,13 +68,18 @@ function Get-ComputerModel{
     }
 }
 
+###
+
 function Get-ComputerProcessor{
     <#
     .SYNOPSIS
+    Gets the processor of a computer.
 
     .DESCRIPTION
+    Gets the processor of a computer or computers. 
 
     .PARAMETER Name
+    
 
     .INPUTS
 
@@ -367,7 +390,7 @@ function Get-ComputerInformation{
         return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,StorageGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
     }
 }
-###
+####
 
 function Disable-Computer{
     <#
@@ -1747,7 +1770,7 @@ function Get-LargeFiles{
     }
 }
 
-function Get-CompuerMappedNetworkDrive{
+function Get-ComputerMappedNetworkDrive{
     <#
     .SYNOPSIS
     Gets information about the mapped drives on a computer or computers.
