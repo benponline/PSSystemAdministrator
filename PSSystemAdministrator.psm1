@@ -589,7 +589,7 @@ function Get-ComputerDriveInformation{
     You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns PS objects to the host the following information about the drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
+    Returns PS objects to the host the following information about the drives on a computer: Name, DeviceID, VolumeName,SizeGB, FreeGB, and indicates those under 20% desc space remaining.
 
     .NOTES
     Compatible with Window 7 and newer.
@@ -651,47 +651,47 @@ function Get-ComputerDriveInformation{
 function Get-ComputerFailedLogonEvent{
     <#
     .SYNOPSIS
-    Gets failed logon events from a computer or computers.
+    Gets failed logon events from a computer in the last day.
 
     .DESCRIPTION
-    Gets failed logon events. By default returns failed logon events from the local computer. Can return them from remote computer(s). Default number returned is 5.
+    Gets failed logon events from a computer or computers in the last day. Can adjust how far back in days events are returned.
 
     .PARAMETER Name
-    Specifies which computer to pull events from.
+    Host name of the computer events will be returned from.
 
-    .PARAMETER Newest
-    Specifies the number of most recent events to be returned.
+    .PARAMETER Days
+    Sets how far back in days the function will look for failed logon events.
 
     .INPUTS
-    Host names or AD computer objects.
+    Computer AD objects.
 
     .OUTPUTS
     PS objects for computer failed logon events with Computer, TimeWritten, EventID, InstanceId, and Message.
 
     .NOTES
-    Requires "run as administrator".
+    Requires administrator privilages.
 
     Requires "Printer and file sharing", "Network Discovery", and "Remote Registry" to be enabled on computers that are searched. This funtion can take a long time to complete if more than 5 computers are searched.
 
     .EXAMPLE
-    Get-ComputerFailedLogon
+    Get-ComputerFailedLogonEvent
 
     This cmdlet returns the last 5 system errors from localhost.
 
     .EXAMPLE
-    Get-ComputerFailedLogon -ComputerName Server -Newest 2
+    Get-ComputerFailedLogonEvent -Name "Server" -Days 2
 
-    This cmdlet returns the last 2 logon events from Server.
-
-    .EXAMPLE
-    "computer1","computer2" | Get-ComputerFailedLogon
-
-    This cmdlet returns failed logon events from "computer1" and "computer2".
+    This function returns the last 2 days of failed logon events from Server.
 
     .EXAMPLE
-    Get-ADComputer Computer1 | Get-ComputerFailedLogon
+    "computer1","computer2" | Get-ComputerFailedLogonEvent
 
-    This cmdlet returns the last 5 failed logon events from Computer1.
+    This function returns failed logon events from "computer1" and "computer2" in the last day.
+
+    .EXAMPLE
+    Get-ADComputer "Computer1" | Get-ComputerFailedLogonEvent
+
+    This cmdlet returns failed logon event from the last day from Computer1.
 
     .LINK
     By Ben Peterson
