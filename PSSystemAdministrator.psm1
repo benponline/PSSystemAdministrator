@@ -11,16 +11,16 @@ paypal.me/teknically
 function Disable-Computer{
     <#
     .SYNOPSIS
-    This function disables computers that are passed to it.
+    Disables a computer or group of computers.
 
     .DESCRIPTION
-    Users can pass host names or computer AD objects to this function. It will disable these computers in Active Directory and return an array of updated computer objects to the host. 
+    Disables a computer or group of computers by passing host names or computer AD objects to this function. 
 
     .PARAMETER Name
-    This is the host name of the computer that the user wants to disable.
+    This is the host name of the computer that will be disable.
 
     .INPUTS
-    Computer AD objects can be passed to this function.
+    Computer AD objects can be passed to this function from the pipeline.
 
     .OUTPUTS
     An array of computer AD objects. One for each computer that this function disables.
@@ -28,9 +28,9 @@ function Disable-Computer{
     .NOTES
 
     .EXAMPLE 
-    Disable-Computer -Name Computer1
+    Disable-Computer -Name "Computer1"
 
-    Disables the computer named Computer1 in Active Directory.
+    Disables the computer named "Computer1" in Active Directory.
 
     .EXAMPLE
     "Computer1","Computer2" | Disable-Computer
@@ -65,7 +65,7 @@ function Disable-Computer{
         $computer = Get-ADComputer $Name
         $computer | Disable-ADAccount
 
-        #Update computer object to show disabled status.
+        #Updates computer object to show disabled status.
         $computer = Get-ADComputer $Name
         $disabledComputers += $computer
     }
@@ -78,13 +78,13 @@ function Disable-Computer{
 function Disable-User{
     <#
     .SYNOPSIS
-    This function disables users that are passed to it.
+    Disables a user or group of users.
 
     .DESCRIPTION
-    Users can pass sam account names or user AD objects to this function. It will disable these users in Active Directory and return an array of updated user objects to the host. 
+    Disables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
 
-    .PARAMETER Name
-    This is the user name, or sam account name, of the user that will be disabled.
+    .PARAMETER SamAccountName
+    This is the user name of the user that will be disabled.
 
     .INPUTS
     User AD objects can be passed to this function.
@@ -95,7 +95,7 @@ function Disable-User{
     .NOTES
 
     .EXAMPLE 
-    Disable-User -Name User1
+    Disable-User -Name "User1"
 
     Disables the user named User1 in Active Directory.
 
@@ -105,7 +105,7 @@ function Disable-User{
     Disables users User1 and User2 in Active Directory.
 
     .EXAMPLE
-    Get-ADUser User1 | Disable-User
+    Get-ADUser "User1" | Disable-User
 
     Disables User1 in Active Directory.
 
@@ -130,6 +130,8 @@ function Disable-User{
     process{
         $user = Get-ADUser $SamAccountName
         $user | Disable-ADAccount
+
+        #Gets updated AD user object to pass back to the host.
         $user = Get-ADUser $SamAccountName
         $disabledUsers += $user
     }
@@ -142,13 +144,13 @@ function Disable-User{
 function Get-AccessedFile{
     <#
     .SYNOPSIS
-    This function gathers all files in a directory that have been accessed recently.
+    Gets all files in a directory that have been accessed recently.
     
     .DESCRIPTION
-    This function gathers all files in a directory recursively that have been accessed going back one day bt default. Returns file name, last access time, size in MB, and full name.
+    Gets all files in a directory recursively that have been accessed less than a day ago. Directory and days in the past can be adjusted.
     
     .PARAMETER Path
-    Function will gather all files recursively from this directory.
+    Function will gather all files recursively from the directory at the end of the path.
 
     .PARAMETER Days
     Function will return only files that have been accessed this number of days into the past.
@@ -157,19 +159,19 @@ function Get-AccessedFile{
     You can pipe multiple paths to this function.
     
     .OUTPUTS
-    Array of PS objects that includes file names, last access time, size in MB, and full name.
+    Array of PS objects that includes file Name, LastAccessTme, SizeMB, and FullName.
     
     .NOTES
 
     .EXAMPLE
-    Get-AccessedFile -Path C:\Directory1 -ActivityWindowInDays 5
+    Get-AccessedFile -Path "C:\Directory1" -Days
 
-    Gathers all files recursively in the "Directory1" folder that have been accessed within 5 days.
+    Gets all files recursively in the "Directory1" folder that have been accessed within 5 days.
 
     .EXAMPLE
     "C:\Directory1","C:\Directory2" | Get-AccessedFile
 
-    Gathers all files recursively in the "Directory1" and "Directory2" folders that have been accessed in the last day.
+    Gets all files recursively in the "Directory1" and "Directory2" folders that have been accessed in the last day.
     
     .LINK
     By Ben Peterson
@@ -205,34 +207,34 @@ function Get-AccessedFile{
 function Get-ActiveComputer{
     <#
     .SYNOPSIS
-    Gets a list of computers that have been offline for a specific number of days.
+    Gets a list of computers that have logged onto the domain in the last 30 days.
 
     .DESCRIPTION
-    Returns a list of computers in AD that have not been online a number of days. The default amount of days is 30. By default all computers are checked. Can be limited to a specific organizational unit.
+    Gets a list of computers from Active Directory that have logged onto the domain in the last 30 days. By default all computers are checked, but can be limited to a specific organizational unit. Days inactive can be adjusted.
 
-    .PARAMETER DaysInactive
-    Determines how long the computer account has to be inactive for it to be returned.
+    .PARAMETER Days
+    Sets how recently in days the computer account has to be active for it to be returned.
 
     .PARAMETER OrganizationalUnit
-    Focuses the function on a specific organizational unit.
+    Limits the function to a specific organizational unit.
 
     .INPUTS
     None.
 
     .OUTPUTS
-    PS objects with information including computer names and the date they were last connected to the domain.
+    Computer AD object for each computer returned.
 
     .NOTES
 
     .EXAMPLE
     Get-ActiveComputer
 
-    Lists all computers in the domain that have not been online for more than 6 months.
+    Lists all computers in the domain that have been online in the last 30 days.
 
     .EXAMPLE
-    Get-ActiveComputer -DaysInactive 35
+    Get-ActiveComputer -Days 100
 
-    Lists all computers in the domain that have not been on the network for 35 days.
+    Lists all computers in the domain that have been online in the last 100 days.
 
     .LINK
     By Ben Peterson
@@ -264,32 +266,32 @@ function Get-ActiveComputer{
 function Get-ActiveFile{
     <#
     .SYNOPSIS
-    This function gathers all files in a directory that have been written to recently.
+    Gets all files in a directory that have been written to recently.
     
     .DESCRIPTION
-    This function gathers all files in a directory recursively that have been written to going back one day. Returns file name, last access time, size in MB, and full name.
+    Gets all files in a directory recursively that have been written to going back one day. Path and days back can be adjusted.
     
     .PARAMETER Path
-    Function will gather all files recursively from this directory.
+    Sets directory the function returns files from.
 
-    .PARAMETER ActivityWindowInDays
-    Function will return only files that have been accessed within this window.
+    .PARAMETER Days
+    Sets how recently, in days, the file has been written to.
 
     .INPUTS
     You can pipe multiple paths to this function.
     
     .OUTPUTS
-    Array of PS objects that includes file names, last write time, size in MB, and full name.
+    Array of PS objects that includes file Name, LastWriteTime, SizeMB, and FullName.
     
     .NOTES
 
     .EXAMPLE
-    Get-ActiveFiles -Path C:\Directory1 -ActivityWindowInDays 5
+    Get-ActiveFile -Path "C:\Directory1" -Days 5
 
     Gathers all files recursively in the "Directory1" folder that have been written to within 5 days.
 
     .EXAMPLE
-    "C:\Directory1","C:\Directory2" | Get-ActiveFiles
+    "C:\Directory1","C:\Directory2" | Get-ActiveFile
 
     Gathers all files recursively in the "Directory1" and "Directory2" folders that have been written to in the last day.
     
@@ -305,12 +307,12 @@ function Get-ActiveFile{
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [string]$Path,
-        [int]$ActivityWindowInDays = 1
+        [int]$Days = 1
     )
 
     begin{
         $files = @()
-        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
+        $fileAge = (Get-Date).AddDays(-1*$Days)
     }
 
     process{
@@ -326,13 +328,13 @@ function Get-ActiveFile{
 function Get-ActiveUser{
     <#
     .SYNOPSIS
-    Gets a list of all the users in AD that have logged on for a period of time.
+    Gets a list of all users in Active Directory that have logged onto the domain within a number of days.
 
     .DESCRIPTION
-    Returns a list of users in active directory that have been inactive for a number of days. The default number of days is 30. Function can also be focused on a specific OU.
+    Gets a list of all users in active directory that have logged on in the last 30 days. Days and Organizational Unit can be adjusted.
 
-    .PARAMETER MonthsOld
-    Determines how long the user account has to be inactive for it to be returned.
+    .PARAMETER Days
+    Sets how long the user account has to be inactive for it to be returned.
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -347,17 +349,17 @@ function Get-ActiveUser{
     Function is intended to help find inactive user accounts.
 
     .EXAMPLE
-    Get-InactiveUser
+    Get-ActiveUser
 
     Lists all users in the domain that have not checked in for more than 3 months.
 
     .EXAMPLE
-    Get-InactiveUser -DaysInactive 2
+    Get-ActiveUser -Days 2
 
     Lists all users in the domain that have not checked in for more than 2 days.
 
     .EXAMPLE
-    Get-InactiveUser -DaysInactive 45 -OrganizationalUnit "Company Servers"
+    Get-ActiveUser -Days 45 -OrganizationalUnit "Company Servers"
 
     Lists all users in the domain that have not checked in for more than 45 days in the "Company Servers" organizational unit.
 
@@ -391,10 +393,10 @@ function Get-ActiveUser{
 function Get-ChildItemLastAccessTime{
     <#
     .SYNOPSIS
-    This function gathers all files in a directory and returns information including last access time.
+    Gets all files in a directory and returns information including file name and last access time.
     
     .DESCRIPTION
-    This function gathers all files in a directory recursively. Returns file name, last access time, size in MB, and full name.
+    Gets all files in a directory recursively and returns file name, last access time, size in MB, and full name.
     
     .PARAMETER Path
     Function will gather all files recursively from this directory.
@@ -403,14 +405,14 @@ function Get-ChildItemLastAccessTime{
     You can pipe multiple paths to this function.
     
     .OUTPUTS
-    Array of PS objects that includes file names, last access time, size in MB, and full name.
+    Array of PS objects that includes FileNames, LastAccessTime, SizeMB, and FullName.
     
     .NOTES
 
     .EXAMPLE
-    Get-ChildItemLastAccessTime -Path C:\Directory1 -DaysInactive 5
+    Get-ChildItemLastAccessTime -Path "C:\Directory1"
 
-    Gathers all files recursively in the "Directory1" folder that have not been accessed in over 5 days.
+    Gathers  information on all files recursively in the "Directory1" directory.
 
     .EXAMPLE
     "C:\Directory1","C:\Directory2" | Get-ChildItemLastAccessTime
@@ -457,15 +459,15 @@ function Get-ChildItemLastWriteTime{
     Function will gather all files recursively from this directory.
 
     .INPUTS
-    You can pipe multiple paths to this function.
+    None.
     
     .OUTPUTS
-    Array of PS objects that includes file names, last write time, size in MB, and full name.
+    Array of PS objects that includes file Name, LastWriteTime, SizeMB, and FullName.
     
     .NOTES
 
     .EXAMPLE
-    Get-ChildItemLastWriteTime -Path C:\Directory1
+    Get-ChildItemLastWriteTime -Path "C:\Directory1"
 
     Gathers all files recursively in the "Directory1" folder and returns file names, last write time, size in MB, and full name.
 
@@ -514,10 +516,10 @@ function Get-ComputerCurrentUser{
     The host name of the computer that the current user will be returned from.
 
     .INPUTS
-    An array of host names or AD Computer objects. Accepts inputs from the pipeline.
+    An array of host names or AD Computer objects.
 
     .OUTPUTS
-    Returns a PS Object with the computer name and current user.
+    Returns a PS Object with the computer Name and CurrentUser.
 
     .NOTES
 
@@ -578,7 +580,7 @@ function Get-ComputerDriveInformation{
     Gets information about the drives on a computer or computers.
 
     .DESCRIPTION
-    Returns information from about the drives on a computer, remote computer, or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
+    Returns information about the drives on a computer or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
 
     .PARAMETER Name
     Specifies the computer the function will gather information from.
@@ -592,15 +594,17 @@ function Get-ComputerDriveInformation{
     .NOTES
     Compatible with Window 7 and newer.
 
+    Results include mapped drives.
+
     .EXAMPLE
     Get-ComputerDriveInformation
 
-    Gets local drive information for the local host.
+    Gets drive information for the local host.
 
     .EXAMPLE
     Get-ComputerDriveInformation -Name computer
 
-    Gets local ddrive information for "computer".
+    Gets ddrive information for "computer".
 
     .EXAMPLE
     Get-ADComputer -Filter * | Get-ComputerDriveInformation
@@ -724,6 +728,8 @@ function Get-ComputerFailedLogonEvent{
     }
 }
 
+###
+
 function Get-ComputerInformation{
     <#
     .SYNOPSIS
@@ -791,7 +797,8 @@ function Get-ComputerInformation{
             "CDriveGB" = "";
             "CurrentUser" = "";
             "IPAddress" = "";
-            "BootUpTime" = ""
+            "LastBootupTime" = "";
+            "LastLogonTime" = ""
         }
 
         if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
@@ -804,13 +811,14 @@ function Get-ComputerInformation{
             $computerInfo.CDriveGB = (Get-ComputerDriveInformation -Name $Name | Where-Object -Property DeviceID -Match 'C').SizeGB
             $computerInfo.CurrentUser = (Get-ComputerCurrentUser -Name $Name).CurrentUser
             $computerInfo.IPAddress = (Get-ComputerIPAddress -Name $Name).IPAddress
-            $computerInfo.BootUpTime = (Get-ComputerLastBootUpTime -Name $Name).LastBootUpTime
+            $computerInfo.LastBootupTime = (Get-ComputerLastBootUpTime -Name $Name).LastBootupTime
+            $computerInfo.LastLogonTime = (Get-ComputerLastLogonTime -Name $Name).LastLogonTime
             $computerInfoList += $computerInfo
         }
     }
 
     end{
-        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,CDriveGB,CurrentUser,IPAddress,BootUpTime | Sort-Object -Property Name
+        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,CDriveGB,CurrentUser,IPAddress,LastBootupTime,LastLogonTime | Sort-Object -Property Name
     }
 }
 
@@ -1002,11 +1010,13 @@ function Get-ComputerLastLogonTime{
     }
 
     process{
-        $lastLogonList += Get-ADComputer $Name | Get-ADObject -Properties lastlogon | Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}
+        $lastLogonList += Get-ADComputer $Name | 
+            Get-ADObject -Properties lastlogon | 
+            Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogonTime";e={([datetime]::fromfiletime($_.lastlogon))}}
     }
 
     end{
-        return $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
+        return $lastLogonList | Select-Object -Property Name,LastLogonTime | Sort-Object -Property Name
     }
 }
 
@@ -1414,7 +1424,7 @@ function Get-ComputerProcessor{
     }
 }
 
-function Get-ComputerShareFolders{
+function Get-ComputerShareFolder{
     <#
     .SYNOPSIS
     This function returns all of the share folders on a computer.
@@ -1785,7 +1795,7 @@ function Get-DirectorySize{
     return $folderInfo
 }
 
-function Get-DisabledComputers{
+function Get-DisabledComputer{
     <#
     .SYNOPSIS
     Gets a list of all computers in AD that are currently disabled.
@@ -2552,7 +2562,9 @@ function Get-UserLastLogonTime{
     }
 
     process{
-        $lastLogonList += Get-ADuser $SamAccountName | Get-ADObject -Properties lastlogon | Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}
+        $lastLogonList += Get-ADuser $SamAccountName | 
+            Get-ADObject -Properties lastlogon | 
+            Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}
     }
 
     end{
