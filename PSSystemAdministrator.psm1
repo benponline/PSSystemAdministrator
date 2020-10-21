@@ -632,8 +632,8 @@ function Get-ComputerDriveInformation{
 
     process{
 
-        $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property deviceid,volumename,size,freespace,DriveType | 
-            Where-Object -Property DriveType -EQ 3 | 
+        $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property DeviceID,VolumeName,Size,FreeSpace,DriveType | 
+             Where-Object -Property DriveType -EQ 3 | 
             Select-Object -Property @{n="Computer";e={$Name}},`
             @{n="DeviceID";e={$_.deviceid}},`
             @{n="VolumeName";e={$_.volumename}},`
@@ -643,7 +643,7 @@ function Get-ComputerDriveInformation{
     }
 
     end{
-        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 | Where-Object -Property VolumeName -NotMatch "Recovery"
+        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 #| Where-Object -Property VolumeName -NotMatch "Recovery"
         return $driveInformationList | Select-Object -Property Computer,DeviceID,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
     }  
 }
@@ -728,15 +728,13 @@ function Get-ComputerFailedLogonEvent{
     }
 }
 
-###
-
 function Get-ComputerInformation{
     <#
     .SYNOPSIS
     Gets infomation about a computer or computers.
 
     .DESCRIPTION
-    This function gathers infomation about a computer or computers. By default it gathers info from the local host. The information includes computer name, model, CPU, memory in GB, C drive storage in GB, the current user, IP address, and last bootuptime.
+    This function gathers infomation about a computer or computers. By default it gathers info from the local host.
 
     .PARAMETER Name
     Specifies which computer's information is gathered.
@@ -745,7 +743,7 @@ function Get-ComputerInformation{
     You can pipe host names or AD computer objects.
 
     .OUTPUTS
-    Returns an object with computer name, model, CPU, memory in GB, storage in GB, the current user, IP address, and last boot time.
+    Returns an object with computer Name, Model, Processor, MemoryGB, CDriveGB, CurrentUser, IPAddress, LastBootupTime, and LastLogonTime.
 
     .NOTES
     Compatible for Windows 7 and newer.
@@ -760,7 +758,7 @@ function Get-ComputerInformation{
     Returns computer information for the local host.
 
     .EXAMPLE
-    Get-ComputerInformation -Name Server1
+    Get-ComputerInformation -Name "Server1"
 
     Returns computer information for Server1.
 
@@ -831,13 +829,13 @@ function Get-ComputerIPAddress{
     Gets the IPv4 address of a computer or computers.
 
     .PARAMETER Name
-    The host name of the computer the function will return the IP address of.
+    Target computer's host name.
 
     .INPUTS
     This function takes an array of host names or AD computer objects.
 
     .OUTPUTS
-    Returns an array of PS Objects with computer name and IPv4 address.
+    Returns an array of PS Objects with computer Name and IPAddress.
 
     .NOTES
 
@@ -887,45 +885,42 @@ function Get-ComputerIPAddress{
 function Get-ComputerLastBootUpTime{
     <#
     .SYNOPSIS
-    Gets the last time a computer or computers were connected to the domain.
+    Gets the last time a computer or computers has booted up.
 
     .DESCRIPTION
-    Returns the name and last time a computer connected to the domain. By default targets localhost. Can target a remote computer, computers, or organizational unit.
+    Gets the name and last time a computer or computers booted up. By default targets localhost.
     
     .PARAMETER Name
-    Target computer.
-
-    .PARAMETER OrganizationalUnit
-    Targets computers in an organiational unit.
+    Target computer's host name.
 
     .INPUTS
     Can pipe host names or AD computer objects to function.
 
     .OUTPUTS
-    PS object with computer name and the last time is was connected to the domain.
+    PS object with computer Name and LastBootupTime.
 
     .NOTES
     Compatible with Windows 7 and newer.
 
     .EXAMPLE
-    Get-ComputerLastLogon
+    Get-ComputerLastBootupTime
 
-    Returns the last time the local host logged onto the domain.
-
-    .EXAMPLE
-    Get-ComputerLastLogon -Name "Borg"
-
-    Returns the last time the computer "Borg" logged onto the domain.
+    Returns the last time the local host booted up.
 
     .EXAMPLE
-    Get-ComputerLastLog -OrganizationalUnit "Company Servers"
+    Get-ComputerLastBootupTime -Name "Borg"
 
-    Returns last logon time for computers in "Company Servers".
+    Returns the last time the computer "Borg" booted up.
 
     .EXAMPLE
-    "Computer1","Computer2" | Get-ComputerLastLogon
+    "Computer1","Computer2" | Get-ComputerLastBootupTime
 
-    Returns last logon time for "Computer1" and "Computer2".
+    Returns last bootup time for "Computer1" and "Computer2".
+
+    .EXAMPLE
+    Get-OUComputer -OrganizationalUnit 'Department X' | Get-ComputerLastBootupTime
+
+    Returns the last bootup time of all the computers in the 'Department X' organizational unit.
 
     .LINK
     By Ben Peterson
@@ -952,7 +947,7 @@ function Get-ComputerLastBootUpTime{
     }
 
     end{
-        return $lastBootUpTimeList | Select-Object -Property Name,LastBootUpTime | Sort-Object -Property ComputerName
+        return $lastBootUpTimeList | Select-Object -Property Name,LastBootUpTime | Sort-Object -Property Name
     }
 }
 
@@ -962,34 +957,34 @@ function Get-ComputerLastLogonTime{
     Gets the last time a computer, or group of computers, logged onto the domain.
 
     .DESCRIPTION
-    Returns the last time a computer or group of computers logged onto the domain.
+    Gets the last time a computer or group of computers logged onto the domain. By default gets the last logon time for the local computer.
 
     .PARAMETER Name
-    Computer name.
+    Target computer.
 
     .INPUTS
     You can pipe computer names and computer AD objects to this function.
 
     .OUTPUTS
-    PS objects with computer name and last logon date and time.
+    PS objects with computer Name and LastLogonTime.
 
     .NOTES
     None.
 
     .EXAMPLE
-    Get-UserLastLogon -Name "Fred"
+    Get-ComputerLastLogonTime -Name "Computer1"
 
-    Returns the last time Fred logged into the domain.
-
-    .EXAMPLE
-    Get-ADUser -Filter * | Get-UserLastLogon
-
-    Gets the last time all users in AD logged onto the domain.
+    Returns the last time 'Computer1" logged into the domain.
 
     .EXAMPLE
-    Get-UserLastLogon -OrganizationalUnit "Company Users"
+    Get-ADComputer -Filter * | Get-ComputerLastLogonTime
 
-    Returns the last logon time for all users in the organizational unit "Company Users".
+    Gets the last time all computers in AD logged onto the domain.
+
+    .EXAMPLE
+    'Computer1','Computer2' | Get-ComputerLastLogonTime
+
+    Returns the last logon time for 'Computer1' and 'Computer2'.
 
     .LINK
     By Ben Peterson
@@ -1019,6 +1014,8 @@ function Get-ComputerLastLogonTime{
         return $lastLogonList | Select-Object -Property Name,LastLogonTime | Sort-Object -Property Name
     }
 }
+
+###
 
 function Get-ComputerMappedNetworkDrive{
     <#
@@ -1079,7 +1076,7 @@ function Get-ComputerMappedNetworkDrive{
     process{
 
         if(Test-Connection $Name -Count 1 -Quiet){
-            $mappedDrives += Get-CimInstance -ComputerName $Name -ClassName win32_mappedlogicaldisk -Property deviceid,volumename,size,freespace,ProviderName | 
+            $mappedDrives += Get-CimInstance -ComputerName $Name -ClassName win32_mappedlogicaldisk -Property DeviceID,VolumeName,Size,FreeSpace,ProviderName | 
                 Select-Object -Property @{n="Computer";e={$Name}},`
                 @{n="Drive";e={$_.deviceid}},`
                 @{n="VolumeName";e={$_.volumename}},`
