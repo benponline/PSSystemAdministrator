@@ -631,9 +631,8 @@ function Get-ComputerDriveInformation{
     }
 
     process{
-
         $driveInformationList += Get-CimInstance -ComputerName $Name -ClassName win32_logicaldisk -Property DeviceID,VolumeName,Size,FreeSpace,DriveType | 
-             Where-Object -Property DriveType -EQ 3 | 
+            Where-Object -Property DriveType -EQ 3 | 
             Select-Object -Property @{n="Computer";e={$Name}},`
             @{n="DeviceID";e={$_.deviceid}},`
             @{n="VolumeName";e={$_.volumename}},`
@@ -1015,10 +1014,9 @@ function Get-ComputerLastLogonTime{
     }
 }
 
-###
-
+<# Draft - Function returns drives inconsistantly.
 function Get-ComputerMappedNetworkDrive{
-    <#
+    
     .SYNOPSIS
     Gets information about the mapped drives on a computer or computers.
 
@@ -1060,7 +1058,7 @@ function Get-ComputerMappedNetworkDrive{
     github.com/benponline
     twitter.com/benponline
     paypal.me/teknically
-    #>
+    
 
     [CmdletBinding()]
     Param(
@@ -1078,12 +1076,12 @@ function Get-ComputerMappedNetworkDrive{
         if(Test-Connection $Name -Count 1 -Quiet){
             $mappedDrives += Get-CimInstance -ComputerName $Name -ClassName win32_mappedlogicaldisk -Property DeviceID,VolumeName,Size,FreeSpace,ProviderName | 
                 Select-Object -Property @{n="Computer";e={$Name}},`
-                @{n="Drive";e={$_.deviceid}},`
-                @{n="VolumeName";e={$_.volumename}},`
+                @{n="Drive";e={$_.DeviceID}},`
+                @{n="VolumeName";e={$_.VolumeName}},`
                 @{n="Path";e={$_.ProviderName}},`
-                @{n="SizeGB";e={$_.size / 1GB -as [int]}},`
-                @{n="FreeGB";e={$_.freespace / 1GB -as [int]}},`
-                @{n="Under20Percent";e={if(($_.freespace / $_.size) -le 0.2){"True"}else{"False"}}}
+                @{n="SizeGB";e={$_.Size / 1GB -as [int]}},`
+                @{n="FreeGB";e={$_.FreeSpace / 1GB -as [int]}},`
+                @{n="Under20Percent";e={if(($_.FreeSpace / $_.Size) -le 0.2){"True"}else{"False"}}}
         }
     }
 
@@ -1091,6 +1089,7 @@ function Get-ComputerMappedNetworkDrive{
         return $mappedDrives
     }
 }
+#>
 
 function Get-ComputerMemory{
     <#
@@ -1146,9 +1145,16 @@ function Get-ComputerMemory{
     }
 
     process{
-        $computerMemories += [PSCustomObject]@{
-            Name = $Name;
-            MemoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
+
+        if(Test-Connection -TargetName $Name -Count 1 -Quiet){
+            Write-Verbose -Message "Connecting to $Name."
+
+            $computerMemories += [PSCustomObject]@{
+                Name = $Name;
+                MemoryGB = [math]::Round(((Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property TotalPhysicalMemory).TotalPhysicalMemory / 1GB),1)
+            }
+        }else{
+            Write-Verbose -Message "$Name is offline."
         }
     }
 
@@ -1503,16 +1509,13 @@ function Get-ComputerSoftware{
     This function gathers all of the installed software on a computer or group of computers. By default gathers from the local host.
 
     .PARAMETER Name
-    Specifies the computer this function will gather information from. 
-
-    .PARAMETER OrganizationalUnit
-    Targets computers in a specific organizational unit.
+    Host name of target computer. 
 
     .INPUTS
     You can pipe host names or computer AD objects input to this function.
 
     .OUTPUTS
-    Returns PS objects containing computer name, software name, version, installdate, uninstall command, registry path.
+    Returns PS objects containing ComputerName, Name, Version, Installdate, UninstallCommand, and RegPath.
 
     .NOTES
     Compatible with Windows 7 and newer.
@@ -1530,7 +1533,7 @@ function Get-ComputerSoftware{
     This cmdlet returns all the software installed on "Computer".
 
     .EXAMPLE
-    Get-ComputerSoftware -Filter * | Get-ComputerSoftware
+    Get-ADComputer -Filter * | Get-ComputerSoftware
 
     This cmdlet returns the installed software on all computers on the domain.
 
@@ -1656,7 +1659,7 @@ function Get-ComputerSystemEvent{
     .EXAMPLE
     "computer1","computer2" | Get-ComputerError
 
-    This cmdlet returns system errors from "computer1" and "computer2".
+    This cmdlet returns newest 5 system errors from "computer1" and "computer2".
 
     .EXAMPLE
     Get-ADComputer Computer1 | Get-ComputerError
@@ -1699,19 +1702,19 @@ function Get-CredentialExportToXML{
     This function gets credentials from the user and exports them to location provided by the user.
 
     .DESCRIPTION
-    This function promps the user for a user name and password. It encryps the password and saves it all to a CLIXML file at the path provided to the function. You can then import these credentials in other functions and scripts that require credentials without having to hard code them in.
+    This function promps the user for a user name and password. It encryps the password and saves it all to an XML file at the path provided to the function. You can then import these credentials in other functions and scripts that require credentials without having to hard code them in.
     
     .PARAMETER FileName
     The name that will be given to the file containing the credentials. Do not include file extention.
 
     .PARAMETER Path
-    The location the credentials will be saved. Do not include trailing "\".
+    The directory the credentials will be saved. Do not include trailing "\".
 
     .INPUTS
     None.
 
     .OUTPUTS
-    CLIXML file with credentials.
+    XML file with credentials.
 
     .NOTES
 
@@ -1747,7 +1750,7 @@ function Get-DirectorySize{
     Gets the size of a directory.
 
     .DESCRIPTION
-    Returns the size of a directors in GB.
+    Gets the size of a directory or directories in GB.
 
     .PARAMETER Path
     Path to the directory to be measured.
@@ -1756,14 +1759,17 @@ function Get-DirectorySize{
     None.
 
     .OUTPUTS
-    Returns object with directory path and size in GB.
+    Returns object with directory and size in GB.
 
     .NOTES
 
     .EXAMPLE
-    Get-DirectorySize -Path C:\Users
+    Get-DirectorySize -Path 'C:\Users'
 
     Returns the size of the Users folder.
+
+    .EXAMPLE
+    '\\FileShareServer\Folder1','\\FileShareServer\Folder2' | Get-DirectorySize
 
     .LINK
     By Ben Peterson
@@ -1778,18 +1784,27 @@ function Get-DirectorySize{
 
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('Directory')]
         [string] $Path
     )
 
-    $folderSize = (Get-ChildItem -Path $Path -File -Recurse | Measure-Object -Sum Length).sum
-    $folderInfo += [PSCustomObject]@{
-        Directory = $Path;
-        SizeGB = [math]::round(($folderSize / 1GB),2)
+    begin{
+        $directorySizes = @()
     }
 
-    return $folderInfo
+    process{
+        $directorySize = (Get-ChildItem -Path $Path -File -Recurse | Measure-Object -Sum Length).sum
+
+        $directorySizes += [PSCustomObject]@{
+            Directory = $Path;
+            SizeGB = [math]::round(($directorySize / 1GB),2)
+        }
+    }
+
+    end{
+        return $directorySizes
+    }
 }
 
 function Get-DisabledComputer{
@@ -1798,7 +1813,7 @@ function Get-DisabledComputer{
     Gets a list of all computers in AD that are currently disabled.
 
     .DESCRIPTION
-    Returns a list of computers from AD that are disabled with information including name, enabled status, DNSHostName, and DistinguishedName.
+    Gets a list of computers from AD that are disabled with information including name, enabled status, DNSHostName, and DistinguishedName.
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -1807,18 +1822,18 @@ function Get-DisabledComputer{
     None.
 
     .OUTPUTS
-    PS objects with information including name, enabled status, DNSHostName, and DistinguishedName.
+    PS objects with information including Name, Enabled status, DNSHostName, and DistinguishedName.
 
     .NOTES
     Firewalls must be configured to allow ping requests.
 
     .EXAMPLE
-    Get-ADDisabledComputer
+    Get-DisabledComputer
 
     Returns a list of all AD computers that are currently disabled.
 
     .EXAMPLE
-    Get-ADDisabledComputer -OrganizationalUnit "Servers"
+    Get-DisabledComputer -OrganizationalUnit "Servers"
 
     Returns a list of all AD computers in the organizational unit "Servers" that are currently disabled.
 
@@ -1866,12 +1881,12 @@ function Get-DisabledUser{
     .NOTES
     
     .EXAMPLE
-    Get-DisabledUsers
+    Get-DisabledUser
 
     Returns a list of all AD users that are currently disabled.
 
     .EXAMPLE
-    Get-DisabledUsers -OrganizationalUnit "Employees"
+    Get-DisabledUser -OrganizationalUnit "Employees"
 
     Returns a list of all AD users that are currently disabled in the "Employees" organizational unit.
 
@@ -1888,26 +1903,25 @@ function Get-DisabledUser{
         [string]$OrganizationalUnit = ""
     )
 
-    $domainInfo = (Get-ADDomain).DistinguishedName 
-    
     if($OrganizationalUnit -eq ""){
         $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
     }else{
-        $disabledUsers = Get-ADUser -Filter * -SearchBase "ou=$OrganizationalUnit,$domainInfo" | Where-Object -Property Enabled -Match False
+        $disabledUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit | Where-Object -Property Enabled -Match False
     }
 
     return $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
 }
 
+###
 function Get-InactiveComputer{
     <#
     .SYNOPSIS
     Gets a list of computers that have been offline for a specific number of days.
 
     .DESCRIPTION
-    Returns a list of computers in AD that have not been online a number of days. The default amount of days is 30. By default all computers are checked. Can be limited to a specific organizational unit.
+    Gets a list of computers in AD that have not been online a number of days. The default amount of days is 30. By default all computers are checked. Can be limited to a specific organizational unit.
 
-    .PARAMETER DaysInactive
+    .PARAMETER Days
     Determines how long the computer account has to be inactive for it to be returned.
 
     .PARAMETER OrganizationalUnit
@@ -1927,7 +1941,7 @@ function Get-InactiveComputer{
     Lists all computers in the domain that have not been online for more than 6 months.
 
     .EXAMPLE
-    Get-InactiveComputer -DaysInactive 35
+    Get-InactiveComputer -Days 35
 
     Lists all computers in the domain that have not been on the network for 35 days.
 
@@ -1941,18 +1955,18 @@ function Get-InactiveComputer{
 
     [CmdletBinding()]
     Param(
-        [int]$DaysInactive = 30,
+        [int]$Days = 30,
         [string]$OrganizationalUnit = ""
     )
 
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter * | 
             Get-ComputerLastLogonTime | 
-            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($DaysInactive * -1)))
+            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
     }else{
         $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
             Get-ComputerLastLogonTime |
-            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($DaysInactive * -1)))
+            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
     }
 
     return $computers | Sort-Object -Property Name
@@ -1961,15 +1975,15 @@ function Get-InactiveComputer{
 function Get-InactiveFile{
     <#
     .SYNOPSIS
-    This function gathers all files in a directory that have not been accessed recently.
+    Gets all files in a directory that have not been accessed recently.
     
     .DESCRIPTION
-    This function gathers all files in a directory recursively that have not been access recently. Returns file name, last access time, size in MB, and full name.
+    Gets all files in a directory recursively that have not been access recently. Returns file name, last access time, size in MB, and full name.
     
     .PARAMETER Path
     Function will gather all files recursively from this directory.
 
-    .PARAMETER ActivityWindowInDays
+    .PARAMETER Days
     Function will return only files that have not been accessed for over this many days. By default is set to 0 and function returns all files.
 
     .INPUTS
@@ -2003,12 +2017,12 @@ function Get-InactiveFile{
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('FullName')]
         [string]$Path,
-        [int]$ActivityWindowInDays = 1
+        [int]$Days = 1
     )
 
     begin{
         $files = @()
-        $fileAge = (Get-Date).AddDays(-1*$ActivityWindowInDays)
+        $fileAge = (Get-Date).AddDays(-1 * $Days)
     }
 
     process{
@@ -2027,9 +2041,9 @@ function Get-InactiveUser{
     Gets a list of all the users in AD that have logged on for a period of time.
 
     .DESCRIPTION
-    Returns a list of users in active directory that have been inactive for a number of days. The default number of days is 30. Function can also be focused on a specific OU.
+    Gets a list of users in active directory that have been inactive for a number of days. The default number of days is 30. Function can also be focused on a specific OU.
 
-    .PARAMETER MonthsOld
+    .PARAMETER Days
     Determines how long the user account has to be inactive for it to be returned.
 
     .PARAMETER OrganizationalUnit
@@ -2047,15 +2061,15 @@ function Get-InactiveUser{
     .EXAMPLE
     Get-InactiveUser
 
-    Lists all users in the domain that have not checked in for more than 3 months.
+    Lists all users in the domain that have not checked in for more than 30 days.
 
     .EXAMPLE
-    Get-InactiveUser -DaysInactive 2
+    Get-InactiveUser -Days 2
 
     Lists all users in the domain that have not checked in for more than 2 days.
 
     .EXAMPLE
-    Get-InactiveUser -DaysInactive 45 -OrganizationalUnit "Company Servers"
+    Get-InactiveUser -Days 45 -OrganizationalUnit "Company Servers"
 
     Lists all users in the domain that have not checked in for more than 45 days in the "Company Servers" organizational unit.
 
@@ -2089,15 +2103,15 @@ function Get-InactiveUser{
 function Get-LargeFile{
     <#
     .SYNOPSIS
-    This function returns files larger than a minimum set be the user.
+    Gets files larger than 500 MB.
  
     .DESCRIPTION
-    Returns all files from a target directory that are larger than the minimum in MB set by the user. This function searches recursivly.
+    Gets files from a directory recursively that are larger than 500 MB. Directory and file size can be set.
  
     .PARAMETER Path
     Sets the directory the function searches.
 
-    .PARAMETER FileSizeMB
+    .PARAMETER Megabytes
     Sets the file size minimum for files that are returned.
  
     .INPUTS
@@ -2129,9 +2143,9 @@ function Get-LargeFile{
     [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
-        [Alias('Directory')]
+        [Alias('Directory','FullName')]
         [string]$Path,
-        [int]$FileSizeMB = 1000
+        [int]$Megabytes = 500
     )
 
     begin{
@@ -2139,11 +2153,11 @@ function Get-LargeFile{
     }
 
     process{
-        $largeFiles += Get-ChildItem -Path $Path -File -Recurse | Where-Object -Property Length -GT ($FileSizeMB * 1000000)
+        $largeFiles += Get-ChildItem -Path $Path -File -Recurse | Where-Object -Property Length -GT ($Megabytes * 1000000)
     }
 
     end{
-        $largeFiles = $largeFiles | Select-Object -Property Name,@{n="FileSizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
+        $largeFiles = $largeFiles | Select-Object -Property Name,@{n="SizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
         return $largeFiles | Sort-Object -Property Name
     }
 }
@@ -2154,7 +2168,7 @@ function Get-OfflineComputer{
     Gets a list of all computers in AD that are currently offline. 
 
     .DESCRIPTION
-    Returns a list of computers from AD that are offline with information including name, DNS host name, and distinguished name. By default searches the whole AD. Can be limited to a specific organizational unit.
+    Gets a list of computers from AD that are offline with information including name, DNS host name, and distinguished name. By default searches the whole AD. Can be limited to a specific organizational unit.
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -2215,7 +2229,7 @@ function Get-OnlineComputer{
     Gets a list of AD computers that are currently online.
 
     .DESCRIPTION
-    Returns an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are currently online. 
+    Gets an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are currently online. 
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -2230,14 +2244,14 @@ function Get-OnlineComputer{
     Firewalls must be configured to allow ping requests.
 
     .EXAMPLE
-    Get-OnlineComputers
+    Get-OnlineComputer
 
     Returns list of all AD computers that are currently online.
 
     .EXAMPLE
-    Get-OnlineComputers
+    Get-OnlineComputer -OrganizationalUnit 'Department X'
 
-    Returns the online computers from an organizational unit.
+    Returns the online computers from the 'Department X' organizational unit.
 
     .LINK
     By Ben Peterson
@@ -2273,10 +2287,10 @@ function Get-OnlineComputer{
 function Get-OUComputer{
     <#
     .SYNOPSIS
-    This function returns computers from a specific organizational unit in Active Directory.
+    Gets computers from a specific organizational unit in Active Directory.
     
     .DESCRIPTION
-    This function returns computer AD objects for each computer in an AD organizaitional unit. 
+    Gets a computer AD objects for each computer in an AD organizaitional unit. 
     
     .PARAMETER OrganizationalUnit
     Sets the scope of the function to the provided organizational unit.
@@ -2325,10 +2339,10 @@ function Get-OUComputer{
 function Get-OUUser{
     <#
     .SYNOPSIS
-    This function returns users from a specific organizational unit in Active Directory.
+    Gets users from a specific organizational unit in Active Directory.
     
     .DESCRIPTION
-    This function returns user AD objects for each user in an AD organizaitional unit. 
+    Gets user AD objects for each user in an AD organizaitional unit. 
     
     .PARAMETER OrganizationalUnit
     Sets the scope of the function to the provided organizational unit.
@@ -2377,7 +2391,7 @@ function Get-OUUser{
 function Get-SubDirectorySize{
     <#
     .SYNOPSIS
-    Gets sub directory names and sizes at a particular path.
+    Gets sub directory names and sizes.
 
     .DESCRIPTION
     Returns a list of directories and their sizes from the submitted path.
@@ -2394,7 +2408,7 @@ function Get-SubDirectorySize{
     .NOTES
 
     .EXAMPLE
-    Get-SubDirectorySize -Path C:\Users
+    Get-SubDirectorySize -Path 'C:\Users'
 
     Gets the name and size of all folders contained in the Users directory.
 
@@ -2404,32 +2418,30 @@ function Get-SubDirectorySize{
     github.com/benponline
     twitter.com/benponline
     paypal.me/teknically
-
-    .Link
-    Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
     #>
 
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [alias('FullName')]
         [string] $Path
     )
 
-    $foldersInfo = @()
-    $folders = Get-ChildItem -Path $Path -Directory
+    begin{
+        $directorySizes = @()
+    }
 
-    foreach($folder in $folders){
+    process{
+        $directories = Get-ChildItem -Path $Path -Directory
 
-        $folderSize = (Get-ChildItem -Path $folder.fullname -File -Recurse | 
-            Measure-Object -Sum Length).sum
-
-        $foldersInfo += [PSCustomObject]@{
-            Directory = $folder.fullname;
-            SizeGB = [math]::round(($folderSize / 1GB),2)
+        foreach($dir in $directories){
+            $directorySizes += Get-DirectorySize -Path $dir.FullName
         }
     }
 
-    return $foldersInfo
+    end{
+        return $directorySizes
+    }
 }
 
 function Get-UserActiveLogon{ #add message to host when computer can't be reached.
