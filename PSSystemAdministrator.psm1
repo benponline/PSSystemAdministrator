@@ -1,6 +1,8 @@
 <#
 PSSystemAdministrator
 
+Ment to be used in a Windows Domain with one DHCP Server Scope.
+
 Ben Peterson
 linkedin.com/in/benponline
 github.com/benponline
@@ -1912,17 +1914,16 @@ function Get-DisabledUser{
     return $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
 }
 
-###
 function Get-InactiveComputer{
     <#
     .SYNOPSIS
-    Gets a list of computers that have been offline for a specific number of days.
+    Gets computers from Active Directory that have not logged onto the domain for more than 30 days.
 
     .DESCRIPTION
-    Gets a list of computers in AD that have not been online a number of days. The default amount of days is 30. By default all computers are checked. Can be limited to a specific organizational unit.
+    Gets computers from Active Directory that have not logged onto the domain for more than 30 days. The default amount of days is 30. Can be limited to a specific organizational unit.
 
     .PARAMETER Days
-    Determines how long the computer account has to be inactive for it to be returned.
+    Sets minimum age for last logon time.
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific organizational unit.
@@ -1931,19 +1932,19 @@ function Get-InactiveComputer{
     None.
 
     .OUTPUTS
-    PS objects with information including computer names and the date they were last connected to the domain.
+    PS objects with information including computer Name and LastLogonTime.
 
     .NOTES
 
     .EXAMPLE
     Get-InactiveComputer
 
-    Lists all computers in the domain that have not been online for more than 6 months.
+    Lists all computers in the domain that have not been online for more than 30 days.
 
     .EXAMPLE
-    Get-InactiveComputer -Days 35
+    Get-InactiveComputer -Days 35 -OrganizationalUnit 'Department X'
 
-    Lists all computers in the domain that have not been on the network for 35 days.
+    Lists all computers in the 'Department X' organizational unit that have not been on the network for 35 days.
 
     .LINK
     By Ben Peterson
@@ -1962,11 +1963,11 @@ function Get-InactiveComputer{
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter * | 
             Get-ComputerLastLogonTime | 
-            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogonTime -LT ((Get-Date).AddDays(($Days * -1)))
     }else{
         $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
             Get-ComputerLastLogonTime |
-            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogonTime -LT ((Get-Date).AddDays(($Days * -1)))
     }
 
     return $computers | Sort-Object -Property Name
@@ -2053,10 +2054,9 @@ function Get-InactiveUser{
     None.
 
     .OUTPUTS
-    PS objects with user names and last logon date.
+    PS objects with SamAccountName and LastLogonTime.
 
     .NOTES
-    Function is intended to help find inactive user accounts.
 
     .EXAMPLE
     Get-InactiveUser
@@ -2069,9 +2069,9 @@ function Get-InactiveUser{
     Lists all users in the domain that have not checked in for more than 2 days.
 
     .EXAMPLE
-    Get-InactiveUser -Days 45 -OrganizationalUnit "Company Servers"
+    Get-InactiveUser -Days 45 -OrganizationalUnit "Department X Users"
 
-    Lists all users in the domain that have not checked in for more than 45 days in the "Company Servers" organizational unit.
+    Lists all users in the domain that have not checked in for more than 45 days in the "Department X Users" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -2165,10 +2165,10 @@ function Get-LargeFile{
 function Get-OfflineComputer{
     <#
     .SYNOPSIS
-    Gets a list of all computers in AD that are currently offline. 
+    Gets all computers in Active Directory that are offline. 
 
     .DESCRIPTION
-    Gets a list of computers from AD that are offline with information including name, DNS host name, and distinguished name. By default searches the whole AD. Can be limited to a specific organizational unit.
+    Gets all computers in Active Directory that are offline with information including name, DNS host name, and distinguished name. By default searches the whole AD. Can be limited to a specific organizational unit.
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -2177,7 +2177,7 @@ function Get-OfflineComputer{
     None.
 
     .OUTPUTS
-    PS objects with information including name, DNS host name, and distinguished name.
+    PS objects with information including Name, DNSHostName, and DistinguishedName.
 
     .NOTES
     Firewalls must be configured to allow ping requests.
@@ -2185,12 +2185,12 @@ function Get-OfflineComputer{
     .EXAMPLE
     Get-OfflineComputer
 
-    Returns a list of all AD computers that are currently offline.
+    Returns computer AD Objects for all AD computers that are offline.
 
     .EXAMPLE
     Get-OfflineComputer -OrganizationalUnit "WorkStations"
 
-    Returns a list of all AD computers that are currently offline in the "Workstations" organizational unit.
+    Returns computer AD objects for all AD computers that are offline in the "Workstations" organizational unit.
 
     .LINK
     By Ben Peterson
@@ -2226,10 +2226,10 @@ function Get-OfflineComputer{
 function Get-OnlineComputer{
     <#
     .SYNOPSIS
-    Gets a list of AD computers that are currently online.
+    Gets computers that are online.
 
     .DESCRIPTION
-    Gets an array of PS objects containing the name, DNS host name, and distinguished name of AD computers that are currently online. 
+    Gets computers that are online with information including name, DNS host name, and distinguished name. 
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
@@ -2238,7 +2238,7 @@ function Get-OnlineComputer{
     None.
 
     .OUTPUTS
-    PS objects containing name, DNS host name, and distinguished name.
+    PS objects containing Name, DNSHostName, and DistinguishedName.
 
     .NOTES
     Firewalls must be configured to allow ping requests.
@@ -2284,6 +2284,7 @@ function Get-OnlineComputer{
     return $onlineComputers
 }
 
+###
 function Get-OUComputer{
     <#
     .SYNOPSIS
@@ -3037,6 +3038,7 @@ function Start-Computer{
     None.
 
     .NOTES
+    Run Enable-WakeOnLan, a function in the PSSystemAdministrator module, on computers that you want to start using this function. This will ensure Start-Computer will work on them.
 
     .EXAMPLE
     Start-Computer -Name SERVER1
@@ -3070,29 +3072,70 @@ function Start-Computer{
     )
 
     begin{
-        [string]$BroadcastIP=([System.Net.IPAddress]::Broadcast)
-        [int]$port=9
-        $broadcast = [Net.IPAddress]::Parse($BroadcastIP)
+        $domainController = (Get-ADDomainController).Name
+        $scopeID = (Get-DhcpServerv4Scope -ComputerName $domainController).ScopeID
+        $UdpClient = New-Object System.Net.Sockets.UdpClient
+        $UdpClient.Connect(([System.Net.IPAddress]::Broadcast),7)
+    }
+
+    process{
+        $computerMAC = (Get-DhcpServerv4Lease -ComputerName $domainController -ScopeId $scopeID | Where-Object -Property hostname -match $Name).clientid
+        $MacByteArray = $computerMAC -split "-" | ForEach-Object { "0x$_"}
+        $MagicPacketHeader = "0xFF","0xFF","0xFF","0xFF","0xFF","0xFF"
+        $MagicPacketRaw = $MagicPacketHeader + ($MacByteArray  * 16)
+        $MagicPacket = $MagicPacketRaw | ForEach-Object { [Byte]$_ }
+        $UdpClient.Send($MagicPacket,$MagicPacket.Length) | Out-Null
+        Write-Host "Magic packet sent to $Name."
+    }
+    
+    end{
+        $UdpClient.Close()
+    }
+}
+
+###
+function Enable-WakeOnLan{
+    <#
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER Name
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    Based on: https://docs.microsoft.com/en-us/powershell/module/netadapter/enable-netadapterpowermanagement
+    #>
+
+    [CmdletBinding()]
+    param(
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias("ComputerName")]
+        [string]$Name
+    )
+
+    begin{
         $domainController = (Get-ADDomainController).Name
         $scopeID = (Get-DhcpServerv4Scope -ComputerName $domainController).ScopeID
     }
 
     process{
-        $ComputerMACs = (Get-DhcpServerv4Lease -ComputerName $domainController -ScopeId $scopeID | Where-Object -Property hostname -match $Name).clientid
-
-        ForEach($ComputerMAC in $ComputerMACs){
-
-            try{
-                $ComputerMAC = (($ComputerMAC.replace(":","")).replace("-","")).replace(".","")
-                $target = 0,2,4,6,8,10 | ForEach-Object {[convert]::ToByte($ComputerMAC.substring($_,2),16)}
-                $packet = (,[byte]255 * 6) + ($target * 16)
-                $UDPclient = new-Object System.Net.Sockets.UdpClient
-                $UDPclient.Connect($broadcast,$port)
-                [void]$UDPclient.Send($packet, 102)
-            }catch{}
-        }
-
-        Write-Host "Magic packet sent to $Name."
+        $cimSession = New-CimSession -ComputerName $Name
+        $computerMAC = (Get-DhcpServerv4Lease -ComputerName $domainController -ScopeId $scopeID | Where-Object -Property hostname -match $Name).clientid
+        $adapterName = (Get-NetAdapter -CimSession $cimSession | Where-Object -Property MacAddress -match $computerMAC).Name
+        Enable-NetAdapterPowerManagement -CimSession $cimSession -Name $adapterName -WakeOnMagicPacket
     }
 
     end{}
