@@ -3097,18 +3097,37 @@ function Start-Computer{
 function Enable-WakeOnLan{
     <#
     .SYNOPSIS
+    Configures a computer allow wake on lan.
     
     .DESCRIPTION
+    Configures a computer's ethernet network adapter to respond to wake on lan commands. This allow the computer to be turned on while it is shut down. 
     
     .PARAMETER Name
+    Target computer's host name.
 
     .INPUTS
+    Computer AD objects
 
     .OUTPUTS
+    None.
 
     .NOTES
+    This function needs to be run against a computer before you can be sure that the Start-Computer function in the PSSystemAdministrator modile will work.
 
     .EXAMPLE
+    Enable-WakeOnLan -Name 'Computer1'
+
+    Sets the network adapter on 'Computer1' to respond to WOL commands and boot from a shutdown state.
+
+    .EXAMPLE
+    'Computer1','Computer2' | Enable-WakeOnLan
+
+    Sets the network adapters on 'Computer1' and 'Computer2' to respond to WOL commands and boot from a shutdown state.
+
+    .EXAMPLE
+    Get-OUComputer -OrganizationalUnit 'Department X' | Enable-WakeOnLan
+
+    Sets the network adapters on all computers in the 'Department X' OU to respond to WOL commands and boot from a shutdown state.
 
     .LINK
     By Ben Peterson
