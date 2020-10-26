@@ -143,6 +143,72 @@ function Disable-User{
     }
 }
 
+function Enable-WakeOnLan{
+    <#
+    .SYNOPSIS
+    Configures a computer allow wake on lan.
+    
+    .DESCRIPTION
+    Configures a computer's ethernet network adapter to respond to wake on lan commands. This allow the computer to be turned on while it is shut down. 
+    
+    .PARAMETER Name
+    Target computer's host name.
+
+    .INPUTS
+    Computer AD objects
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+    This function needs to be run against a computer before you can be sure that the Start-Computer function in the PSSystemAdministrator modile will work.
+
+    .EXAMPLE
+    Enable-WakeOnLan -Name 'Computer1'
+
+    Sets the network adapter on 'Computer1' to respond to WOL commands and boot from a shutdown state.
+
+    .EXAMPLE
+    'Computer1','Computer2' | Enable-WakeOnLan
+
+    Sets the network adapters on 'Computer1' and 'Computer2' to respond to WOL commands and boot from a shutdown state.
+
+    .EXAMPLE
+    Get-OUComputer -OrganizationalUnit 'Department X' | Enable-WakeOnLan
+
+    Sets the network adapters on all computers in the 'Department X' OU to respond to WOL commands and boot from a shutdown state.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    Based on: https://docs.microsoft.com/en-us/powershell/module/netadapter/enable-netadapterpowermanagement
+    #>
+
+    [CmdletBinding()]
+    param(
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias("ComputerName")]
+        [string]$Name
+    )
+
+    begin{
+        $domainController = (Get-ADDomainController).Name
+        $scopeID = (Get-DhcpServerv4Scope -ComputerName $domainController).ScopeID
+    }
+
+    process{
+        $cimSession = New-CimSession -ComputerName $Name
+        $computerMAC = (Get-DhcpServerv4Lease -ComputerName $domainController -ScopeId $scopeID | Where-Object -Property hostname -match $Name).clientid
+        $adapterName = (Get-NetAdapter -CimSession $cimSession | Where-Object -Property MacAddress -match $computerMAC).Name
+        Enable-NetAdapterPowerManagement -CimSession $cimSession -Name $adapterName -WakeOnMagicPacket
+    }
+
+    end{}
+}
+
 function Get-AccessedFile{
     <#
     .SYNOPSIS
@@ -2284,14 +2350,13 @@ function Get-OnlineComputer{
     return $onlineComputers
 }
 
-###
 function Get-OUComputer{
     <#
     .SYNOPSIS
     Gets computers from a specific organizational unit in Active Directory.
     
     .DESCRIPTION
-    Gets a computer AD objects for each computer in an AD organizaitional unit. 
+    Gets computer AD objects for each computer in an AD organizaitional unit. 
     
     .PARAMETER OrganizationalUnit
     Sets the scope of the function to the provided organizational unit.
@@ -2392,10 +2457,10 @@ function Get-OUUser{
 function Get-SubDirectorySize{
     <#
     .SYNOPSIS
-    Gets sub directory names and sizes.
+    Gets directory names and sizes.
 
     .DESCRIPTION
-    Returns a list of directories and their sizes from the submitted path.
+    Gets a list of directories and their sizes located at the submitted path.
 
     .PARAMETER Path
     Path to the directory to be searched.
@@ -2581,6 +2646,8 @@ function Get-UserLastLogonTime{
         return $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
     }
 }
+
+###
 
 function Move-Computer{
     <#
@@ -2851,73 +2918,6 @@ function Remove-User{
     }
 }
 
-function Reset-UserPassword{
-    <#
-    .SYNOPSIS
-    This function triggers an AD user account to require a password change at the next log in.
-    
-    .DESCRIPTION
-    This function requires the AD user accounts passed to it to require the user to create a new password at the their next login. 
-    If the account's 'PasswordNeverExpires' tag is set to true, then it is not affected by this function.
-    
-    .PARAMETER Name
-    This is the SamAccountName of the user you want to require a new password for.
-    
-    .INPUTS
-    Can take AD user objects as input.
-    
-    .OUTPUTS
-    AD user objects that have been tagged for creating a new password on log in.
-    
-    .NOTES
-
-    .EXAMPLE 
-    Reset-UserPassword -Name 'billy'
-
-    Requires the AD account with the SamAccountID of 'billy' to create a new password on next login.
-    
-    .EXAMPLE
-    Get-ADUser -Filter * | Reset-UserPassword
-
-    Requires all users in AD to create a new password on next login.
-
-    .Example
-    Get-OUUser -OrganizationalUnit 'Users' | Reset-UserPassword
-
-    Requires all users in the 'Users' OU to create a new password when they log in next. Get-OUUser
-    is a function from the PSSystemAdministrator module.
-    
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benponline
-    github.com/benponline
-    twitter.com/benponline
-    paypal.me/teknically
-    #>
-
-    [cmdletbinding()]#Does not take objects from the pipeline
-    param(
-        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
-        [Alias("Name")]
-        [string]$SamAccountName
-    )
-
-    begin{
-        $userList = @()
-    }
-
-    process{
-        $user = Get-ADUser $SamAccountName
-        Set-ADUser -Identity $user -ChangePasswordAtLogon $true
-        $userList += $user
-    }
-
-    end{
-        return $userList | Sort-Object -Property Name
-    }
-    
-}
-
 function Set-ComputerIP{
     <#
     .SYNOPSIS
@@ -3020,6 +3020,73 @@ function Set-ComputerIP{
     }
 }
 
+function Set-UserChangePassword{
+    <#
+    .SYNOPSIS
+    This function triggers an AD user account to require a password change at the next log in.
+    
+    .DESCRIPTION
+    This function requires the AD user accounts passed to it to require the user to create a new password at the their next login. 
+    If the account's 'PasswordNeverExpires' tag is set to true, then it is not affected by this function.
+    
+    .PARAMETER Name
+    This is the SamAccountName of the user you want to require a new password for.
+    
+    .INPUTS
+    Can take AD user objects as input.
+    
+    .OUTPUTS
+    AD user objects that have been tagged for creating a new password on log in.
+    
+    .NOTES
+
+    .EXAMPLE 
+    Reset-UserPassword -Name 'billy'
+
+    Requires the AD account with the SamAccountID of 'billy' to create a new password on next login.
+    
+    .EXAMPLE
+    Get-ADUser -Filter * | Reset-UserPassword
+
+    Requires all users in AD to create a new password on next login.
+
+    .Example
+    Get-OUUser -OrganizationalUnit 'Users' | Reset-UserPassword
+
+    Requires all users in the 'Users' OU to create a new password when they log in next. Get-OUUser
+    is a function from the PSSystemAdministrator module.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]#Does not take objects from the pipeline
+    param(
+        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
+        [Alias("Name")]
+        [string]$SamAccountName
+    )
+
+    begin{
+        $userList = @()
+    }
+
+    process{
+        $user = Get-ADUser $SamAccountName
+        Set-ADUser -Identity $user -ChangePasswordAtLogon $true
+        $userList += $user
+    }
+
+    end{
+        return $userList | Sort-Object -Property Name
+    }
+    
+}
+
 function Start-Computer{
     <#
     .SYNOPSIS
@@ -3091,71 +3158,4 @@ function Start-Computer{
     end{
         $UdpClient.Close()
     }
-}
-
-###
-function Enable-WakeOnLan{
-    <#
-    .SYNOPSIS
-    Configures a computer allow wake on lan.
-    
-    .DESCRIPTION
-    Configures a computer's ethernet network adapter to respond to wake on lan commands. This allow the computer to be turned on while it is shut down. 
-    
-    .PARAMETER Name
-    Target computer's host name.
-
-    .INPUTS
-    Computer AD objects
-
-    .OUTPUTS
-    None.
-
-    .NOTES
-    This function needs to be run against a computer before you can be sure that the Start-Computer function in the PSSystemAdministrator modile will work.
-
-    .EXAMPLE
-    Enable-WakeOnLan -Name 'Computer1'
-
-    Sets the network adapter on 'Computer1' to respond to WOL commands and boot from a shutdown state.
-
-    .EXAMPLE
-    'Computer1','Computer2' | Enable-WakeOnLan
-
-    Sets the network adapters on 'Computer1' and 'Computer2' to respond to WOL commands and boot from a shutdown state.
-
-    .EXAMPLE
-    Get-OUComputer -OrganizationalUnit 'Department X' | Enable-WakeOnLan
-
-    Sets the network adapters on all computers in the 'Department X' OU to respond to WOL commands and boot from a shutdown state.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benponline
-    github.com/benponline
-    twitter.com/benponline
-    paypal.me/teknically
-    Based on: https://docs.microsoft.com/en-us/powershell/module/netadapter/enable-netadapterpowermanagement
-    #>
-
-    [CmdletBinding()]
-    param(
-        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias("ComputerName")]
-        [string]$Name
-    )
-
-    begin{
-        $domainController = (Get-ADDomainController).Name
-        $scopeID = (Get-DhcpServerv4Scope -ComputerName $domainController).ScopeID
-    }
-
-    process{
-        $cimSession = New-CimSession -ComputerName $Name
-        $computerMAC = (Get-DhcpServerv4Lease -ComputerName $domainController -ScopeId $scopeID | Where-Object -Property hostname -match $Name).clientid
-        $adapterName = (Get-NetAdapter -CimSession $cimSession | Where-Object -Property MacAddress -match $computerMAC).Name
-        Enable-NetAdapterPowerManagement -CimSession $cimSession -Name $adapterName -WakeOnMagicPacket
-    }
-
-    end{}
 }
