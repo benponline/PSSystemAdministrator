@@ -4,17 +4,12 @@ This module contains functions useful for administrating a Windows Active Direct
 This module is written for PowerShell Core and tested with Windows 10 machines, but should be mostly compatible with PowerShell 5 and Windows 7. I am actively developing this module alongside my work as a system administrator. I use this module every day.
 
 ## Installation
-<ol>
-  <li>Download the PSSystemAdministrator.psm1 file.</li>
-  <li>Open the PowerShell modules folder on your computer.</br>
-  <ul>
-    <li>For PowerShell Core it is located here: \Documents\PowerShell\Modules</li>
-    <li>For PowerShell 5 it is located here: \Documents\WindowsPowerShell\Modules</li>
-  </ul>
-  </li>
-  <li>Create a folder named “PSSystemAdministrator”.</li>
-  <li>Place the PSSystemAdministrator.psm1 file in the new folder.</li>
-  <li>Open your version of PowerShell and run the following command: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned</li>
-  <li>This will allow PowerShell to read the contents of the module.</li>
-  <li>Open a new PowerShell session and you are good to go.</li>
-</ol>
+1. Download the PSSystemAdministrator.psm1 file.
+2. Open the PowerShell modules folder on your computer.
+- For PowerShell Core it is located here: \Documents\PowerShell\Modules
+- For PowerShell 5 it is located here: \Documents\WindowsPowerShell\Modules
+3. Create a folder named “PSSystemAdministrator”.
+4. Place the PSSystemAdministrator.psm1 file in the new folder.
+5. Open your version of PowerShell and run the following command: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned`
+6. This will allow PowerShell to read the contents of the module.
+7. Open a new PowerShell session and you are good to go.
