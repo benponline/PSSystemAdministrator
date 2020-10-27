@@ -10,6 +10,7 @@ This module is written for PowerShell Core and tested with Windows 10 machines, 
    - For PowerShell 5 it is located here: \Documents\WindowsPowerShell\Modules
 3. Create a folder named “PSSystemAdministrator”.
 4. Place the PSSystemAdministrator.psm1 file in the new folder.
-5. Open your version of PowerShell and run the following command: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned`
+5. Open your version of PowerShell and run the following command: 
+`Set-ExecutionPolicy -ExecutionPolicy RemoteSigned`
 6. This will allow PowerShell to read the contents of the module.
 7. Open a new PowerShell session and you are good to go.
