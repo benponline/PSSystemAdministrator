@@ -13,7 +13,7 @@ paypal.me/teknically
 function Disable-Computer{
     <#
     .SYNOPSIS
-    Disables a computer or group of computers.
+    Disables a computer.
 
     .DESCRIPTION
     Disables a computer or group of computers by passing host names or computer AD objects to this function. 
@@ -80,7 +80,7 @@ function Disable-Computer{
 function Disable-User{
     <#
     .SYNOPSIS
-    Disables a user or group of users.
+    User Disables a user.
 
     .DESCRIPTION
     Disables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
@@ -146,7 +146,7 @@ function Disable-User{
 function Enable-WakeOnLan{
     <#
     .SYNOPSIS
-    Configures a computer allow wake on lan.
+    Configures a computer to allow wake on lan.
     
     .DESCRIPTION
     Configures a computer's ethernet network adapter to respond to wake on lan commands. This allow the computer to be turned on while it is shut down. 
@@ -212,7 +212,7 @@ function Enable-WakeOnLan{
 function Get-AccessedFile{
     <#
     .SYNOPSIS
-    Gets all files in a directory that have been accessed recently.
+    Gets all files in a directory that have been accessed in the last 24 hours.
     
     .DESCRIPTION
     Gets all files in a directory recursively that have been accessed less than a day ago. Directory and days in the past can be adjusted.
@@ -334,7 +334,7 @@ function Get-ActiveComputer{
 function Get-ActiveFile{
     <#
     .SYNOPSIS
-    Gets all files in a directory that have been written to recently.
+    Gets all files in a directory that have been written in the last 24 hours.
     
     .DESCRIPTION
     Gets all files in a directory recursively that have been written to going back one day. Path and days back can be adjusted.
@@ -396,7 +396,7 @@ function Get-ActiveFile{
 function Get-ActiveUser{
     <#
     .SYNOPSIS
-    Gets a list of all users in Active Directory that have logged onto the domain in the last 30 days.
+    Gets a list of all users that have logged on in the last 30 days.
 
     .DESCRIPTION
     Gets a list of all users in active directory that have logged on in the last 30 days. Days and Organizational Unit can be adjusted.
@@ -518,7 +518,7 @@ function Get-ChildItemLastAccessTime{
 function Get-ChildItemLastWriteTime{
     <#
     .SYNOPSIS
-    This function gathers all files in a directory and returns information including last write time.
+    Gets all files in a directory and returns information including last write time.
     
     .DESCRIPTION
     This function gathers all files in a directory recursively. Returns file name, last write time, size in MB, and full name.
@@ -575,7 +575,7 @@ function Get-ChildItemLastWriteTime{
 function Get-ComputerCurrentUser{
     <#
     .SYNOPSIS
-    Gets the currently logged in user on a computer.
+    Gets the current user logged onto a computer.
 
     .DESCRIPTION
     Gets the currently logged in user on a computer or computers. 
@@ -645,7 +645,7 @@ function Get-ComputerCurrentUser{
 function Get-ComputerDriveInformation{
     <#
     .SYNOPSIS
-    Gets information about the drives on a computer or computers.
+    Gets information about the drives on a computer.
 
     .DESCRIPTION
     Returns information about the drives on a computer or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
@@ -798,7 +798,7 @@ function Get-ComputerFailedLogonEvent{
 function Get-ComputerInformation{
     <#
     .SYNOPSIS
-    Gets infomation about a computer or computers.
+    Gets general information about a computer.
 
     .DESCRIPTION
     This function gathers information about a computer or computers. By default it gathers info from the local host.
@@ -952,7 +952,7 @@ function Get-ComputerIPAddress{
 function Get-ComputerLastBootUpTime{
     <#
     .SYNOPSIS
-    Gets the last time a computer or computers has booted up.
+    Gets the last time a computer booted up.
 
     .DESCRIPTION
     Gets the name and last time a computer or computers booted up. By default targets localhost.
@@ -1021,7 +1021,7 @@ function Get-ComputerLastBootUpTime{
 function Get-ComputerLastLogonTime{
     <#
     .SYNOPSIS
-    Gets the last time a computer, or group of computers, logged onto the domain.
+    Gets the last time a computer logged onto the domain.
 
     .DESCRIPTION
     Gets the last time a computer or group of computers logged onto the domain. By default gets the last logon time for the local computer.
@@ -1296,7 +1296,7 @@ function Get-ComputerModel{
 function Get-ComputerOS{
     <#
     .SYNOPSIS
-    Get the operating system name of a computer or computers.
+    Gets the operating system name of a computer.
 
     .DESCRIPTION
     Gets the Windows operating system of the local host or remote computer. Does not return build number or any other detailed info.
@@ -1364,7 +1364,7 @@ function Get-ComputerOS{
 function Get-ComputerPhysicalDiskInformation{
     <#
     .SYNOPSIS
-    Gets the health status of the physical disks of a computer or computers.
+    Gets information about the physical disks of a computer.
 
     .DESCRIPTION
     Returns the health status of the physical disks of the local computer, remote computer, group of computers, or computers in an organizational unit.
@@ -1498,7 +1498,7 @@ function Get-ComputerProcessor{
 function Get-ComputerShareFolder{
     <#
     .SYNOPSIS
-    This function returns all of the share folders on a computer.
+    Gets all of the share folders on a computer.
     
     .DESCRIPTION
     This function returns all of the share folders on a computer or remote computer.
@@ -1692,7 +1692,7 @@ function Get-ComputerSoftware{
 function Get-ComputerSystemEvent{
     <#
     .SYNOPSIS
-    Gets system errors from a computer or computers.
+    Gets system events from a computer.
 
     .DESCRIPTION
     Gets system errors from computers. By default returns errors from local computer. Can return errors from remote computer(s). Default number of errors returned is 5, but is adjustable.
@@ -1767,7 +1767,7 @@ function Get-ComputerSystemEvent{
 function Get-CredentialExportToXML{
     <#
     .SYNOPSIS
-    This function gets credentials from the user and exports them to location provided by the user.
+    Gets credentials from the user and exports them to location provided by the user.
 
     .DESCRIPTION
     This function promps the user for a user name and password. It encrypts the password and saves it all to an XML file at the path provided to the function. You can then import these credentials in other functions and scripts that require credentials without having to hard code them in.
@@ -1878,7 +1878,7 @@ function Get-DirectorySize{
 function Get-DisabledComputer{
     <#
     .SYNOPSIS
-    Gets a list of all computers in AD that are currently disabled.
+    Gets a list of all computers that are disabled.
 
     .DESCRIPTION
     Gets a list of computers from AD that are disabled with information including name, enabled status, DNSHostName, and DistinguishedName.
@@ -1932,7 +1932,7 @@ function Get-DisabledComputer{
 function Get-DisabledUser{
     <#
     .SYNOPSIS
-    Gets a list of all users in AD that are currently disabled. 
+    Gets a list of all users that are disabled.  
 
     .DESCRIPTION
     Returns a list of users from AD that are disabled with information including name, enabled, and user principal name. Function can be limited in scope to a specific organizational unit.
@@ -1983,7 +1983,7 @@ function Get-DisabledUser{
 function Get-InactiveComputer{
     <#
     .SYNOPSIS
-    Gets computers from Active Directory that have not logged onto the domain for more than 30 days.
+    Gets computers that have not logged onto the domain for more than 30 days.
 
     .DESCRIPTION
     Gets computers from Active Directory that have not logged onto the domain for more than 30 days. The default amount of days is 30. Can be limited to a specific organizational unit.
@@ -2042,7 +2042,7 @@ function Get-InactiveComputer{
 function Get-InactiveFile{
     <#
     .SYNOPSIS
-    Gets all files in a directory that have not been accessed recently.
+    Gets all files in a directory that have not been accessed in the last 24 hours.
     
     .DESCRIPTION
     Gets all files in a directory recursively that have not been access recently. Returns file name, last access time, size in MB, and full name.
@@ -2105,7 +2105,7 @@ function Get-InactiveFile{
 function Get-InactiveUser{
     <#
     .SYNOPSIS
-    Gets a list of all the users in AD that have logged on for a period of time.
+    Gets a list of all users that have not logged on to the domain for 30 days.
 
     .DESCRIPTION
     Gets a list of users in active directory that have been inactive for a number of days. The default number of days is 30. Function can also be focused on a specific OU.
@@ -2169,7 +2169,7 @@ function Get-InactiveUser{
 function Get-LargeFile{
     <#
     .SYNOPSIS
-    Gets files larger than 500 MB.
+    Gets files larger than 500 MB from a directory.
  
     .DESCRIPTION
     Gets files from a directory recursively that are larger than 500 MB. Directory and file size can be set.
@@ -2231,7 +2231,7 @@ function Get-LargeFile{
 function Get-OfflineComputer{
     <#
     .SYNOPSIS
-    Gets all computers in Active Directory that are offline. 
+    Gets all computers that are offline.  
 
     .DESCRIPTION
     Gets all computers in Active Directory that are offline with information including name, DNS host name, and distinguished name. By default searches the whole AD. Can be limited to a specific organizational unit.
@@ -2353,7 +2353,7 @@ function Get-OnlineComputer{
 function Get-OUComputer{
     <#
     .SYNOPSIS
-    Gets computers from a specific organizational unit in Active Directory.
+    Gets computers from a specific organizational unit.
     
     .DESCRIPTION
     Gets computer AD objects for each computer in an AD organizaitional unit. 
@@ -2405,7 +2405,7 @@ function Get-OUComputer{
 function Get-OUUser{
     <#
     .SYNOPSIS
-    Gets users from a specific organizational unit in Active Directory.
+    Gets users from a specific organizational unit.
     
     .DESCRIPTION
     Gets user AD objects for each user in an AD organizaitional unit. 
@@ -2510,10 +2510,10 @@ function Get-SubDirectorySize{
     }
 }
 
-function Get-UserActiveLogon{ #add message to host when computer can't be reached.
+function Get-UserActiveLogon{
     <#
     .SYNOPSIS
-    Finds all computers where a specific user, or users, is logged in.
+    Gets all computers where a user is logged in.
 
     .DESCRIPTION
     Searches domain computers and returns a list of computers where a specific user is logged in. 
@@ -2591,7 +2591,7 @@ function Get-UserActiveLogon{ #add message to host when computer can't be reache
 function Get-UserLastLogonTime{
     <#
     .SYNOPSIS
-    Gets the last time a user, or group of users, logged onto the domain.
+    Gets the last time a user logged onto the domain.
 
     .DESCRIPTION
     Returns the last time a user or group of users logged onto the domain.
@@ -2796,7 +2796,7 @@ function Move-User{
 function Remove-Computer{
     <#
     .SYNOPSIS
-    Removes a computer from AD.
+    Removes a computer from Active Directory.
 
     .DESCRIPTION
     Remove a computer or computers from AD. Also returns a list of computers that have been removed.
@@ -2859,7 +2859,7 @@ function Remove-Computer{
 function Remove-User{
     <#
     .SYNOPSIS
-    Removes a user from AD.
+    Removes a user from Active Directory.
 
     .DESCRIPTION
     Removes a user or users from AD and returns a list of users that were removed.
@@ -2921,7 +2921,7 @@ function Remove-User{
 function Set-ComputerIP{
     <#
     .SYNOPSIS
-    Sets the IP address of a domain computer.
+    Sets the IP address of a computer.
 
     .DESCRIPTION
     This function will set the IP address, subnet, DNS, and default gateway of a domain computer. The IP addresss is user provided and all the other information is
@@ -3023,7 +3023,7 @@ function Set-ComputerIP{
 function Set-UserChangePassword{
     <#
     .SYNOPSIS
-    This function triggers an AD user account to require a password change at the next log in.
+    Sets user account to require a password change at the next log on.
     
     .DESCRIPTION
     This function requires the AD user accounts passed to it to require the user to create a new password at the their next login. 
