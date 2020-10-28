@@ -1,8 +1,9 @@
 <#
 PSSystemAdministrator
 
-Meant to be used in a Windows Domain with one DHCP Server Scope.
+Meant to be used in a Windows Domain.
 
+By:
 Ben Peterson
 linkedin.com/in/benponline
 github.com/benponline
@@ -2646,8 +2647,6 @@ function Get-UserLastLogonTime{
         return $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
     }
 }
-
-###
 
 function Move-Computer{
     <#
