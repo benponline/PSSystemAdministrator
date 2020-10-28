@@ -61,7 +61,7 @@ This module is written for PowerShell Core and tested with Windows 10 machines, 
 
 `Get-ComputerSoftware` Gets all of the installed software on a computer.
 
-`Get-ComputerSystemEvent` Gets system errors from a computer.
+`Get-ComputerSystemEvent` Gets system events from a computer.
 
 `Get-CredentialExportToXML` Gets credentials from the user and exports them to location provided by the user.
 
