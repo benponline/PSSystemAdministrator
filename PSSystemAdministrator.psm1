@@ -1,7 +1,7 @@
 <#
 PSSystemAdministrator
 
-Ment to be used in a Windows Domain with one DHCP Server Scope.
+Meant to be used in a Windows Domain with one DHCP Server Scope.
 
 Ben Peterson
 linkedin.com/in/benponline
@@ -396,7 +396,7 @@ function Get-ActiveFile{
 function Get-ActiveUser{
     <#
     .SYNOPSIS
-    Gets a list of all users in Active Directory that have logged onto the domain within a number of days.
+    Gets a list of all users in Active Directory that have logged onto the domain in the last 30 days.
 
     .DESCRIPTION
     Gets a list of all users in active directory that have logged on in the last 30 days. Days and Organizational Unit can be adjusted.
@@ -801,7 +801,7 @@ function Get-ComputerInformation{
     Gets infomation about a computer or computers.
 
     .DESCRIPTION
-    This function gathers infomation about a computer or computers. By default it gathers info from the local host.
+    This function gathers information about a computer or computers. By default it gathers info from the local host.
 
     .PARAMETER Name
     Specifies which computer's information is gathered.
@@ -1168,7 +1168,7 @@ function Get-ComputerMemory{
     Gets the memory in GB of a computer or group of computers. 
 
     .PARAMETER Name
-    The memory in GB of the computer with this name will be returned. By defualt it is the local computers.
+    Target comuputer's host name. By defualt it is the local computers.
 
     .INPUTS
     Takes an array of computer names or AD computer objects over the pipeline.
@@ -1504,7 +1504,7 @@ function Get-ComputerShareFolder{
     This function returns all of the share folders on a computer or remote computer.
     
     .PARAMETER Name
-    This is the computer that the function will search for share folders.
+    Target computer's host name.
     
     .INPUTS
     Can accept AD computer objects from the pipeline.
@@ -1770,7 +1770,7 @@ function Get-CredentialExportToXML{
     This function gets credentials from the user and exports them to location provided by the user.
 
     .DESCRIPTION
-    This function promps the user for a user name and password. It encryps the password and saves it all to an XML file at the path provided to the function. You can then import these credentials in other functions and scripts that require credentials without having to hard code them in.
+    This function promps the user for a user name and password. It encrypts the password and saves it all to an XML file at the path provided to the function. You can then import these credentials in other functions and scripts that require credentials without having to hard code them in.
     
     .PARAMETER FileName
     The name that will be given to the file containing the credentials. Do not include file extention.
@@ -1847,7 +1847,7 @@ function Get-DirectorySize{
     paypal.me/teknically
 
     .Link
-    Source: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
+    Based on: https://www.gngrninja.com/script-ninja/2016/5/24/powershell-calculating-folder-sizes
     #>
 
     [CmdletBinding()]
@@ -2051,7 +2051,7 @@ function Get-InactiveFile{
     Function will gather all files recursively from this directory.
 
     .PARAMETER Days
-    Function will return only files that have not been accessed for over this many days. By default is set to 0 and function returns all files.
+    Function will return only files that have not been accessed for over this many days. By default is set to 1 and function returns all files.
 
     .INPUTS
     You can pipe multiple paths to this function.
