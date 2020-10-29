@@ -2783,6 +2783,7 @@ function Move-User{
     process{
         $user = Get-ADUser -Identity $Name
         $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+        Start-Sleep -Seconds 1
         $user = Get-ADUser -Identity $Name
         $movedUsers += $user
     }
