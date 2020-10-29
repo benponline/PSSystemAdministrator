@@ -2901,7 +2901,7 @@ function Remove-User{
     [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [string]$SamAccountName = $env:USERNAME
+        [string]$SamAccountName
     )
 
     begin{
@@ -2909,7 +2909,7 @@ function Remove-User{
     }
 
     process{
-        $users += Get-ADUser $Name
+        $users += Get-ADUser $SamAccountName
     }
 
     end{
