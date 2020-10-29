@@ -322,11 +322,11 @@ function Get-ActiveComputer{
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter * | 
             Get-ComputerLastLogonTime | 
-            Where-Object -Property LastLogon -GT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogonTime -GT ((Get-Date).AddDays(($Days * -1)))
     }else{
         $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
             Get-ComputerLastLogonTime |
-            Where-Object -Property LastLogon -GT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogonTime -GT ((Get-Date).AddDays(($Days * -1)))
     }
 
     return $computers | Sort-Object -Property Name
