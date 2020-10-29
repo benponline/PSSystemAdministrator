@@ -2711,6 +2711,7 @@ function Move-Computer{
     process{
         $computer = Get-ADComputer -Identity $Name
         $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+        Start-Sleep -Seconds 1
         $computer = Get-ADComputer -Identity $Name
         $movedComputers += $computer
     }
@@ -2839,7 +2840,7 @@ function Remove-Computer{
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
+        [string]$Name
     )
 
     begin{
