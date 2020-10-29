@@ -1514,6 +1514,7 @@ function Get-ComputerShareFolder{
     PS objects with the computer name, share folder name, path to the folder, and status of the folder.
     
     .NOTES
+    Requires administrative privileges to work on local machine.
 
     .EXAMPLE
     Get-ComputerShareFolder -Name 'Computer1'
@@ -1894,8 +1895,7 @@ function Get-DisabledComputer{
     PS objects with information including Name, Enabled status, DNSHostName, and DistinguishedName.
 
     .NOTES
-    Firewalls must be configured to allow ping requests.
-
+    
     .EXAMPLE
     Get-DisabledComputer
 
@@ -1978,7 +1978,7 @@ function Get-DisabledUser{
         $disabledUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit | Where-Object -Property Enabled -Match False
     }
 
-    return $disabledUsers | Select-Object -Property Name,Enabled,UserPrincipalName | Sort-Object -Property Name
+    return $disabledUsers | Select-Object -Property SamAccountName,Name,Enabled,UserPrincipalName | Sort-Object -Property SamAccountName
 }
 
 function Get-InactiveComputer{
