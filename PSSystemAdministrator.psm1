@@ -2943,6 +2943,8 @@ function Set-ComputerIP{
     .NOTES
     This function attempts to change the IP settings on the remote computer using PowerShell commands. If that fails it will use netsh.
 
+    Due to the nature of how this function connects to the remote computer, after changing the IP settings the function will say that the connection has been broken. This is a sign that the IP changes have worked.
+
     .EXAMPLE
     Set-ComputerIP -ComputerName "Computer2" -IPAddress 10.10.10.10
 
