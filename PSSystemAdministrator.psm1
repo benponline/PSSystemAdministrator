@@ -1,7 +1,7 @@
 <#
-PSSystemAdministrator
+PSSystemAdministrator v1.0.0
 
-Meant to be used in a Windows Domain.
+Meant to be used in a Windows Domain by a domain administrator.
 
 By:
 Ben Peterson
