@@ -1070,16 +1070,40 @@ function Get-ComputerLastLogonTime{
 
     begin{
         $lastLogonList = @()
+
+        #When looking for AD computer LastLogon we need to check all domain controllers because this information is not synced between them.
+        $domainControllers = (Get-ADDomainController -Filter *).Name
     }
 
     process{
-        $lastLogonList += Get-ADComputer $Name | 
-            Get-ADObject -Properties lastlogon | 
-            Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogonTime";e={([datetime]::fromfiletime($_.lastlogon))}}
+        $dcCount = $domainControllers.Count
+        
+        if($dcCount -eq 1){
+            $lastLogonList += Get-ADComputer $Name | 
+                Get-ADObject -Properties LastLogon | 
+                Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+        }else{
+            $lastLogonTime = Get-ADComputer $Name -Server $domainControllers[0] | 
+                Get-ADObject -Properties LastLogon | 
+                Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+            
+            for($i = 1; $i -LT $dcCount; $i++){
+                $nextlogonTime = Get-ADComputer $Name -Server $domainControllers[$i] | 
+                    Get-ADObject -Properties LastLogon | 
+                    Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+
+
+                if($nextlogonTime.LastLogon -GT $lastLogonTime.LastLogon){
+                    $lastLogonTime = $nextlogonTime
+                }
+            }
+            
+            $lastLogonList += $lastLogonTime
+        }
     }
 
     end{
-        return $lastLogonList | Select-Object -Property Name,LastLogonTime | Sort-Object -Property Name
+        return $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
     }
 }
 
@@ -2030,11 +2054,11 @@ function Get-InactiveComputer{
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter * | 
             Get-ComputerLastLogonTime | 
-            Where-Object -Property LastLogonTime -LT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
     }else{
         $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
             Get-ComputerLastLogonTime |
-            Where-Object -Property LastLogonTime -LT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
     }
 
     return $computers | Sort-Object -Property Name
@@ -2635,12 +2659,36 @@ function Get-UserLastLogonTime{
 
     begin{
         $lastLogonList = @()
+
+        #When looking for AD User LastLogon we need to check all domain controllers because this information is not synced between them.
+        $domainControllers = (Get-ADDomainController -Filter *).Name
     }
 
     process{
-        $lastLogonList += Get-ADuser $SamAccountName | 
-            Get-ADObject -Properties lastlogon | 
-            Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}
+        $dcCount = $domainControllers.Count
+        
+        if($dcCount -eq 1){
+            $lastLogonList += Get-ADuser $SamAccountName | 
+                Get-ADObject -Properties LastLogon | 
+                Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+        }else{
+            $lastLogonTime = Get-ADuser $SamAccountName -Server $domainControllers[0] | 
+                Get-ADObject -Properties LastLogon | 
+                Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+            
+            for($i = 1; $i -LT $dcCount; $i++){
+                $nextlogonTime = Get-ADuser $SamAccountName -Server $domainControllers[$i] | 
+                    Get-ADObject -Properties LastLogon | 
+                    Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+
+
+                if($nextlogonTime.LastLogon -GT $lastLogonTime.LastLogon){
+                    $lastLogonTime = $nextlogonTime
+                }
+            }
+            
+            $lastLogonList += $lastLogonTime
+        }
     }
 
     end{
