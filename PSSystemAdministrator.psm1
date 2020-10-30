@@ -2301,6 +2301,9 @@ function Get-OnlineComputer{
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
 
+    .PARAMETER PingTimeoutMS
+    The time in milliseconds to wait for each server to respond to the ping. Default is 100.
+
     .INPUTS
     None.
 
@@ -2329,26 +2332,36 @@ function Get-OnlineComputer{
     #>
 
     [CmdletBinding()]
-    Param(
-        [string]$OrganizationalUnit = ""
+    Param (
+        [string]$OrganizationalUnit = "",
+        [int]$PingTimeoutMS = 100
     )
 
-    if($OrganizationalUnit -eq ""){
-        $computers = Get-ADComputer -Filter *
-    }else{
-        $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit
+    begin {
+        if ($OrganizationalUnit -eq "") {
+            $computers = Get-ADComputer -Filter *
+        } else {
+            $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit
+        }
+        $pingTasks = New-Object 'System.Collections.Generic.Dictionary[string, System.Threading.Tasks.Task]'
     }
 
-    $onlineComputers = @()
-    
-    foreach($computer in $computers){
-        if(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet){
-            $onlineComputers += $computer
+    process {
+        foreach ($computer in $computers) {
+            $ping = New-Object -TypeName 'System.Net.NetworkInformation.Ping'
+            $pingTasks.Add($computer.Name, $ping.SendPingAsync($computer.Name, $PingTimeoutMS))
         }
     }
-    
-    #$onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
-    return $onlineComputers
+
+    end {
+        while ($pingTasks.Values.IsCompleted -contains $false) {
+            Start-Sleep -Milliseconds $PingTimeoutMS
+        }
+
+        $computers | Where-Object {
+            $pingTasks[$_.Name].Result.Status -eq 0
+        }
+    }
 }
 
 function Get-OUComputer{
