@@ -629,12 +629,25 @@ function Get-ComputerCurrentUser{
 
     begin{
         $computerUserList = @()
+        $domain = (Get-ADDomain).Name
     }
 
     process{
-        $computerUserList += [PSCustomObject]@{
-            Name = $Name;
-            CurrentUser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
+        $computerUsers = Invoke-Command -ComputerName $Name -ScriptBlock {Get-Process -IncludeUserName |
+            Select-Object -Property UserName |
+            Sort-Object -Property UserName -Unique}
+            
+        foreach($user in $computerUsers){
+            if($null -ne $user.UserName){
+                $userString = $user.UserName.ToString() -split "\\"
+
+                if($userString[0] -eq $domain -and $userString[1] -ne $env:USERNAME){
+                    $computerUserList += [PSCustomObject]@{
+                        ComputerName = $Name;
+                        UserName = $userString[1]
+                    }
+                }
+            } 
         }
     }
 
@@ -2594,7 +2607,19 @@ function Get-UserActiveLogon{
     }
 
     process{
+        foreach($computer in $computers){
+            $currentUsers = (Get-ComputerCurrentUser -Name $computer).CurrentUser
 
+            if(!$null -eq $currentUser){
+                $currentUser = $currentUser.split('\')[-1]
+
+                if($SamAccountName -eq $currentUser){
+                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
+                }
+            }
+        }
+
+        <#
         foreach($computer in $computers){
             $currentUser = (Get-ComputerCurrentUser -Name $computer).CurrentUser
 
@@ -2606,6 +2631,7 @@ function Get-UserActiveLogon{
                 }
             }
         }
+        #>
     }
 
     end{
