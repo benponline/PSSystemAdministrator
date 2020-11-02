@@ -53,7 +53,7 @@ function Disable-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('ComputerName')]
@@ -66,7 +66,7 @@ function Disable-Computer{
 
     process{
         $computer = Get-ADComputer $Name
-        $computer | Disable-ADAccount
+        $computer | Disable-ADAccount -WhatIf
 
         #Updates computer object to show disabled status.
         $computer = Get-ADComputer $Name
@@ -74,7 +74,7 @@ function Disable-Computer{
     }
 
     end{
-        return $disabledComputers | Sort-Object -Property Name
+        return $disabledComputers
     }
 }
 
@@ -120,7 +120,7 @@ function Disable-User{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [string]$SamAccountName
@@ -188,7 +188,7 @@ function Enable-WakeOnLan{
     Based on: https://docs.microsoft.com/en-us/powershell/module/netadapter/enable-netadapterpowermanagement
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("ComputerName")]
@@ -269,7 +269,7 @@ function Get-AccessedFile{
     }
 
     end{
-        return $files | Sort-Object -Property LastAccessTime
+        return $files
     }
 }
 
@@ -329,7 +329,7 @@ function Get-ActiveComputer{
             Where-Object -Property LastLogonTime -GT ((Get-Date).AddDays(($Days * -1)))
     }
 
-    return $computers | Sort-Object -Property Name
+    return $computers
 }
 
 function Get-ActiveFile{
@@ -390,7 +390,7 @@ function Get-ActiveFile{
     }
 
     end{
-        return $files | Sort-Object -Property LastWriteTime
+        return $files
     }
 }
 
@@ -456,7 +456,7 @@ function Get-ActiveUser{
             Where-Object -Property LastLogon -GT ((Get-Date).AddDays($Days * -1))
     }
 
-    return $users | Sort-Object -Property SamAccountName
+    return $users
 }
 
 function Get-ChildItemLastAccessTime{
@@ -512,7 +512,7 @@ function Get-ChildItemLastAccessTime{
     }
 
     end{
-        return $files | Sort-Object -Property LastAccessTime
+        return $files
     }
 }
 
@@ -569,7 +569,7 @@ function Get-ChildItemLastWriteTime{
     }
 
     end{
-        return $files | Sort-Object -Property LastWriteTime
+        return $files
     }
 }
 
@@ -719,8 +719,8 @@ function Get-ComputerDriveInformation{
     }
 
     end{
-        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 #| Where-Object -Property VolumeName -NotMatch "Recovery"
-        return $driveInformationList | Select-Object -Property Computer,DeviceID,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
+        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0
+        return $driveInformationList
     }  
 }
 
@@ -892,7 +892,7 @@ function Get-ComputerInformation{
     }
 
     end{
-        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,CDriveGB,CurrentUser,IPAddress,LastBootupTime,LastLogon | Sort-Object -Property Name
+        return $computerInfoList
     }
 }
 
@@ -1016,7 +1016,7 @@ function Get-ComputerLastBootUpTime{
     }
 
     end{
-        return $lastBootUpTimeList | Select-Object -Property Name,LastBootUpTime | Sort-Object -Property Name
+        return $lastBootUpTimeList
     }
 }
 
@@ -1104,7 +1104,7 @@ function Get-ComputerLastLogonTime{
     }
 
     end{
-        return $lastLogonList | Select-Object -Property Name,LastLogon | Sort-Object -Property Name
+        return $lastLogonList
     }
 }
 
@@ -1455,7 +1455,7 @@ function Get-ComputerPhysicalDiskInformation{
     }
 
     end{
-        return $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB | Sort-Object -Property ComputerName
+        return $physicalDiskList
     }
 }
 
@@ -1591,7 +1591,7 @@ function Get-ComputerShareFolder{
     }
 
     end{
-        return $computerShareList | Sort-Object -Property Name
+        return $computerShareList
     }
 }
 
@@ -1711,7 +1711,7 @@ function Get-ComputerSoftware{
     end{
         $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
         $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
-        $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
+        $masterKeys = $masterKeys | Where-Object $woFilter | Select-Object -Property $props
         return $masterKeys
     }
 }
@@ -1953,7 +1953,7 @@ function Get-DisabledComputer{
             Where-Object -Property Enabled -EQ $False
     }
 
-    return $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
+    return $disabledComputers
 }
 
 function Get-DisabledUser{
@@ -2004,7 +2004,7 @@ function Get-DisabledUser{
         $disabledUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit | Where-Object -Property Enabled -EQ $False
     }
 
-    return $disabledUsers | Select-Object -Property SamAccountName,Name,Enabled,UserPrincipalName | Sort-Object -Property SamAccountName
+    return $disabledUsers
 }
 
 function Get-InactiveComputer{
@@ -2063,7 +2063,7 @@ function Get-InactiveComputer{
             Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
     }
 
-    return $computers | Sort-Object -Property Name
+    return $computers
 }
 
 function Get-InactiveFile{
@@ -2125,7 +2125,7 @@ function Get-InactiveFile{
     }
 
     end{
-        return $files | Sort-Object -Property LastWriteTime
+        return $files
     }
 }
 
@@ -2190,7 +2190,7 @@ function Get-InactiveUser{
             Where-Object -Property LastLogon -LT ((Get-Date).AddDays($Days * -1))
     }
 
-    return $users | Sort-Object -Property SamAccountName
+    return $users
 }
 
 function Get-LargeFile{
@@ -2251,7 +2251,7 @@ function Get-LargeFile{
 
     end{
         $largeFiles = $largeFiles | Select-Object -Property Name,@{n="SizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
-        return $largeFiles | Sort-Object -Property Name
+        return $largeFiles
     }
 }
 
@@ -2313,7 +2313,7 @@ function Get-OfflineComputer{
         }
     }
     
-    return $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
+    return $offlineComputers
 }
 
 function Get-OnlineComputer{
@@ -2369,13 +2369,12 @@ function Get-OnlineComputer{
     
     foreach($computer in $computers){
         if(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet){
-            #$onlineComputers += $computer
-            $computer
+            $onlineComputers += $computer
         }
     }
     
-    #$onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
-    #return $onlineComputers
+    $onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
+    return $onlineComputers
 }
 
 function Get-OUComputer{
@@ -2590,9 +2589,9 @@ function Get-UserActiveLogon{
         $computerList = @()
 
         if($OrganizationalUnit -eq ""){
-            $computers = (Get-ADComputer -Filter *).Name | Sort-Object
+            $computers = (Get-ADComputer -Filter *).Name
         }else{
-            $computers = (Get-OUComputer -OrganizationalUnit $OrganizationalUnit).Name | Sort-Object
+            $computers = (Get-OUComputer -OrganizationalUnit $OrganizationalUnit).Name
         }
     }
 
@@ -2690,7 +2689,7 @@ function Get-UserLastLogonTime{
     }
 
     end{
-        return $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
+        return $lastLogonList
     }
 }
 
@@ -2739,7 +2738,7 @@ function Move-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
@@ -2756,10 +2755,13 @@ function Move-Computer{
 
     process{
         $computer = Get-ADComputer -Identity $Name
-        $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-        Start-Sleep -Seconds 1
-        $computer = Get-ADComputer -Identity $Name
-        $movedComputers += $computer
+
+        #if($PSCmdlet.ShouldProcess($computer.Name)){
+            $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+            Start-Sleep -Seconds 1
+            $computer = Get-ADComputer -Identity $Name
+            $movedComputers += $computer
+        #}
     }
 
     end{
@@ -2812,7 +2814,7 @@ function Move-User{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("SamAccountName")]
@@ -2836,7 +2838,7 @@ function Move-User{
     }
 
     end{
-        return $movedUsers | Sort-Object -Property SamAccountName
+        return $movedUsers
     }
 }
 
@@ -2882,7 +2884,7 @@ function Remove-Computer{
     paypal.me/teknically
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
@@ -2899,7 +2901,7 @@ function Remove-Computer{
 
     end{
         $computers | Remove-ADComputer
-        return $computers | Sort-Object -Property Name
+        return $computers
     }
 }
 
@@ -2945,7 +2947,7 @@ function Remove-User{
     paypal.me/teknically
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName
@@ -2961,7 +2963,7 @@ function Remove-User{
 
     end{
         $users | Remove-ADUser
-        return $users | Sort-Object -Property SamAccountName
+        return $users
     }
 }
 
@@ -3006,7 +3008,7 @@ function Set-ComputerIP{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory=$true)]
         [string]$ComputerName,
@@ -3117,7 +3119,7 @@ function Set-UserChangePassword{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
         [Alias("Name")]
@@ -3135,7 +3137,7 @@ function Set-UserChangePassword{
     }
 
     end{
-        return $userList | Sort-Object -Property Name
+        return $userList
     }
     
 }
@@ -3184,7 +3186,7 @@ function Start-Computer{
     Based on: https://gallery.technet.microsoft.com/scriptcenter/Send-WOL-packet-using-0638be7b/view/Discussions#content 
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("ComputerName")]
