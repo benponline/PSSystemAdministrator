@@ -140,7 +140,7 @@ function Disable-User{
     }
 
     end{
-        return $disabledUsers | Sort-Object -Property SamAccountName
+        return $disabledUsers
     }
 }
 
@@ -629,25 +629,20 @@ function Get-ComputerCurrentUser{
 
     begin{
         $computerUserList = @()
-        $domain = (Get-ADDomain).Name
     }
 
     process{
-        $computerUsers = Invoke-Command -ComputerName $Name -ScriptBlock {Get-Process -IncludeUserName |
-            Select-Object -Property UserName |
-            Sort-Object -Property UserName -Unique}
-            
-        foreach($user in $computerUsers){
-            if($null -ne $user.UserName){
-                $userString = $user.UserName.ToString() -split "\\"
+        $currentUser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem).UserName
 
-                if($userString[0] -eq $domain -and $userString[1] -ne $env:USERNAME){
-                    $computerUserList += [PSCustomObject]@{
-                        ComputerName = $Name;
-                        UserName = $userString[1]
-                    }
-                }
-            } 
+        if(!$null -eq $currentUser){
+            $currentUser = $currentUser.split('\')[-1]
+        }else{
+            $currentUser = ""
+        }
+
+        $computerUserList += [PSCustomObject]@{
+            ComputerName = $Name;
+            UserName = $currentUser
         }
     }
 
@@ -877,7 +872,7 @@ function Get-ComputerInformation{
             "CurrentUser" = "";
             "IPAddress" = "";
             "LastBootupTime" = "";
-            "LastLogonTime" = ""
+            "LastLogon" = ""
         }
 
         if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
@@ -888,16 +883,16 @@ function Get-ComputerInformation{
             $computerInfo.Processor = (Get-ComputerProcessor -Name $Name).Processor
             $computerInfo.MemoryGB = (Get-ComputerMemory -Name $Name).MemoryGB
             $computerInfo.CDriveGB = (Get-ComputerDriveInformation -Name $Name | Where-Object -Property DeviceID -Match 'C').SizeGB
-            $computerInfo.CurrentUser = (Get-ComputerCurrentUser -Name $Name).CurrentUser
+            $computerInfo.CurrentUser = (Get-ComputerCurrentUser -Name $Name).UserName
             $computerInfo.IPAddress = (Get-ComputerIPAddress -Name $Name).IPAddress
             $computerInfo.LastBootupTime = (Get-ComputerLastBootUpTime -Name $Name).LastBootupTime
-            $computerInfo.LastLogonTime = (Get-ComputerLastLogonTime -Name $Name).LastLogonTime
+            $computerInfo.LastLogon = (Get-ComputerLastLogonTime -Name $Name).LastLogon
             $computerInfoList += $computerInfo
         }
     }
 
     end{
-        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,CDriveGB,CurrentUser,IPAddress,LastBootupTime,LastLogonTime | Sort-Object -Property Name
+        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,CDriveGB,CurrentUser,IPAddress,LastBootupTime,LastLogon | Sort-Object -Property Name
     }
 }
 
@@ -945,16 +940,9 @@ function Get-ComputerIPAddress{
     }
 
     process{
-
-        if($Name -eq $env:COMPUTERNAME){
-            $ipAddress = (Get-NetIPAddress | Where-Object {$_.PrefixOrigin -eq 'dhcp'}).IPAddress
-        }else{
-            $ipAddress = (Test-Connection -TargetName $Name -Count 1).Address.IPAddressToString
-        }
-
         $computerIPList += [PSCustomObject]@{
             Name = $Name;
-            IPAddress = $ipAddress 
+            IPAddress = (Resolve-DnsName -Type A -Name $Name).IPAddress
         }
     }
 
@@ -1023,7 +1011,7 @@ function Get-ComputerLastBootUpTime{
     }
 
     process{
-        $lastBootUpTimeList += Get-CimInstance -ComputerName $Name -Class win32_operatingsystem -Property LastBootUpTime | 
+        $lastBootUpTimeList += Get-CimInstance -ComputerName $Name -Class Win32_OperatingSystem -Property LastBootUpTime | 
             Select-Object -Property @{n='Name';e={$_.pscomputername}},LastBootUpTime
     }
 
@@ -1869,6 +1857,7 @@ function Get-DirectorySize{
     Returns object with directory and size in GB.
 
     .NOTES
+    Command needs to be run as an administrator to ensure all files are checked.
 
     .EXAMPLE
     Get-DirectorySize -Path 'C:\Users'
@@ -1901,7 +1890,7 @@ function Get-DirectorySize{
     }
 
     process{
-        $directorySize = (Get-ChildItem -Path $Path -File -Recurse | Measure-Object -Sum Length).sum
+        $directorySize = (Get-ChildItem -Path $Path -File -Recurse -Force | Measure-Object -Sum Length).sum
 
         $directorySizes += [PSCustomObject]@{
             Directory = $Path;
@@ -1958,10 +1947,10 @@ function Get-DisabledComputer{
     )
     
     if($OrganizationalUnit -eq ""){
-        $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
+        $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -EQ $False
     }else{
         $disabledComputers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
-            Where-Object -Property Enabled -Match False
+            Where-Object -Property Enabled -EQ $False
     }
 
     return $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
@@ -2010,9 +1999,9 @@ function Get-DisabledUser{
     )
 
     if($OrganizationalUnit -eq ""){
-        $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
+        $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -EQ $False
     }else{
-        $disabledUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit | Where-Object -Property Enabled -Match False
+        $disabledUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit | Where-Object -Property Enabled -EQ $False
     }
 
     return $disabledUsers | Select-Object -Property SamAccountName,Name,Enabled,UserPrincipalName | Sort-Object -Property SamAccountName
@@ -2257,7 +2246,7 @@ function Get-LargeFile{
     }
 
     process{
-        $largeFiles += Get-ChildItem -Path $Path -File -Recurse | Where-Object -Property Length -GT ($Megabytes * 1000000)
+        $largeFiles += Get-ChildItem -Path $Path -File -Recurse -Force | Where-Object -Property Length -GT ($Megabytes * 1000000)
     }
 
     end{
@@ -2380,12 +2369,13 @@ function Get-OnlineComputer{
     
     foreach($computer in $computers){
         if(Test-Connection -ComputerName ($computer.name) -Count 1 -Quiet){
-            $onlineComputers += $computer
+            #$onlineComputers += $computer
+            $computer
         }
     }
     
     #$onlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName
-    return $onlineComputers
+    #return $onlineComputers
 }
 
 function Get-OUComputer{
@@ -2536,7 +2526,7 @@ function Get-SubDirectorySize{
     }
 
     process{
-        $directories = Get-ChildItem -Path $Path -Directory
+        $directories = Get-ChildItem -Path $Path -Directory -Force
 
         foreach($dir in $directories){
             $directorySizes += Get-DirectorySize -Path $dir.FullName
@@ -2608,30 +2598,12 @@ function Get-UserActiveLogon{
 
     process{
         foreach($computer in $computers){
-            $currentUsers = (Get-ComputerCurrentUser -Name $computer).CurrentUser
+            $currentUser = (Get-ComputerCurrentUser -Name $computer).UserName
 
-            if(!$null -eq $currentUser){
-                $currentUser = $currentUser.split('\')[-1]
-
-                if($SamAccountName -eq $currentUser){
-                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
-                }
+            if($SamAccountName -eq $currentUser){
+                $computerList += New-Object -TypeName PSObject -Property @{"UserName"="$currentUser";"Computer"="$computer"}
             }
         }
-
-        <#
-        foreach($computer in $computers){
-            $currentUser = (Get-ComputerCurrentUser -Name $computer).CurrentUser
-
-            if(!$null -eq $currentUser){
-                $currentUser = $currentUser.split('\')[-1]
-
-                if($SamAccountName -eq $currentUser){
-                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
-                }
-            }
-        }
-        #>
     }
 
     end{
@@ -3017,6 +2989,8 @@ function Set-ComputerIP{
     .NOTES
     This function attempts to change the IP settings on the remote computer using PowerShell commands. If that fails it will use netsh.
 
+    This function only works on a computer that is set to use DHCP. Does not work on computers with a static IP address.
+
     Due to the nature of how this function connects to the remote computer, after changing the IP settings the function will say that the connection has been broken. This is a sign that the IP changes have worked.
 
     .EXAMPLE
@@ -3040,9 +3014,11 @@ function Set-ComputerIP{
         [Parameter(Mandatory=$true)]
         [string]$IPAddress
     )
-            
+
+    Write-Host "Setting $ComputerName's IP address to $IPAddress. Connection to $ComputerName will be lost when the new IP address is active."
+    
     #Self adapter
-    $SelfIPAddress = (Test-Connection -ComputerName $env:COMPUTERNAME -Count 1 -IPv4).Address.IPAddressToString
+    $SelfIPAddress = (Resolve-DnsName -Type A -Name $env:COMPUTERNAME).IPAddress
     $SelfIPInterfaceIndex = (Get-NetIPAddress | Where-Object -Property IPAddress -eq $SelfIPAddress).InterfaceIndex
 
     #Subnetmask / Prefixlength
@@ -3053,7 +3029,7 @@ function Set-ComputerIP{
 
     #DNS
     $SelfDNS = (Get-DnsClientServerAddress -InterfaceIndex $SelfIPInterfaceIndex -AddressFamily IPv4).ServerAddresses
-    $TargetIPAddress = (Test-Connection -ComputerName $ComputerName -Count 1 -IPv4).Address.IPAddressToString
+    $TargetIPAddress = (Resolve-DnsName -Type A -Name $ComputerName).IPAddress
 
     try{
         #Target interface index
@@ -3141,7 +3117,7 @@ function Set-UserChangePassword{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]#Does not take objects from the pipeline
+    [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
         [Alias("Name")]
