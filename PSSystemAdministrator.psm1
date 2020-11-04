@@ -66,9 +66,10 @@ function Disable-Computer{
 
     process{
         $computer = Get-ADComputer $Name
-        $computer | Disable-ADAccount -WhatIf
+        $computer | Disable-ADAccount
 
         #Updates computer object to show disabled status.
+        Start-Sleep -Seconds 1
         $computer = Get-ADComputer $Name
         $disabledComputers += $computer
     }
@@ -135,6 +136,7 @@ function Disable-User{
         $user | Disable-ADAccount
 
         #Gets updated AD user object to pass back to the host.
+        Start-Sleep -Seconds 1
         $user = Get-ADUser $SamAccountName
         $disabledUsers += $user
     }
@@ -322,11 +324,11 @@ function Get-ActiveComputer{
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter * | 
             Get-ComputerLastLogonTime | 
-            Where-Object -Property LastLogonTime -GT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogon -GT ((Get-Date).AddDays(($Days * -1)))
     }else{
         $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
             Get-ComputerLastLogonTime |
-            Where-Object -Property LastLogonTime -GT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogon -GT ((Get-Date).AddDays(($Days * -1)))
     }
 
     return $computers
@@ -795,7 +797,7 @@ function Get-ComputerFailedLogonEvent{
             $failedLoginList += Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date} | 
                 Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,Message
         }catch{
-
+            Write-Host "Unable to connect to $Name."
         }
     }
 
@@ -859,7 +861,7 @@ function Get-ComputerInformation{
     )
 
     begin{
-        $computerInfoList = @()
+        $computerInfoList = [System.Collections.Generic.List[psobject]]::new()
     }
 
     process{
@@ -876,7 +878,6 @@ function Get-ComputerInformation{
         }
 
         if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
-
             $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
             $computerInfo.Name = $Name
             $computerInfo.Model = (Get-ComputerModel -Name $Name).Model
@@ -887,7 +888,7 @@ function Get-ComputerInformation{
             $computerInfo.IPAddress = (Get-ComputerIPAddress -Name $Name).IPAddress
             $computerInfo.LastBootupTime = (Get-ComputerLastBootUpTime -Name $Name).LastBootupTime
             $computerInfo.LastLogon = (Get-ComputerLastLogonTime -Name $Name).LastLogon
-            $computerInfoList += $computerInfo
+            $computerInfoList.Add($computerInfo)
         }
     }
 
@@ -1604,7 +1605,7 @@ function Get-ComputerSoftware{
     This function gathers all of the installed software on a computer or group of computers. By default gathers from the local host.
 
     .PARAMETER Name
-    Host name of target computer. 
+    Host name of target computer.
 
     .INPUTS
     You can pipe host names or computer AD objects input to this function.
@@ -1652,7 +1653,7 @@ function Get-ComputerSoftware{
     )
 
     begin{
-        $masterKeys = @()
+        $masterKeys = [System.Collections.Generic.List[psobject]]::new()
     }
 
     process{
@@ -1671,7 +1672,7 @@ function Get-ComputerSoftware{
                 foreach ($subName in $regKey.GetSubkeyNames()){
                 
                     foreach($sub in $regKey.OpenSubkey($subName)){
-                        $masterKeys += (New-Object PSObject -Property @{
+                        $masterKeys.Add((New-Object PSObject -Property @{
                             "ComputerName" = $Name;
                             "Name" = $sub.getvalue("displayname");
                             "SystemComponent" = $sub.getvalue("systemcomponent");
@@ -1679,7 +1680,7 @@ function Get-ComputerSoftware{
                             "Version" = $sub.getvalue("DisplayVersion");
                             "UninstallCommand" = $sub.getvalue("UninstallString");
                             "InstallDate" = $sub.getvalue("InstallDate");
-                            "RegPath" = $sub.ToString()})
+                            "RegPath" = $sub.ToString()}))
                     }
                 }
             }
@@ -1692,7 +1693,7 @@ function Get-ComputerSoftware{
                     foreach($subName in $regKey.getsubkeynames()){
 
                         foreach ($sub in $regKey.opensubkey($subName)){
-                            $masterKeys += (New-Object PSObject -Property @{
+                            $masterKeys.Add((New-Object PSObject -Property @{
                                 "ComputerName" = $Name;
                                 "Name" = $sub.getvalue("displayname");
                                 "SystemComponent" = $sub.getvalue("systemcomponent");
@@ -1700,7 +1701,7 @@ function Get-ComputerSoftware{
                                 "Version" = $sub.getvalue("DisplayVersion");
                                 "UninstallCommand" = $sub.getvalue("UninstallString");
                                 "InstallDate" = $sub.getvalue("InstallDate");
-                                "RegPath" = $sub.ToString()})
+                                "RegPath" = $sub.ToString()}))
                         }
                     }
                 }
@@ -1778,12 +1779,15 @@ function Get-ComputerSystemEvent{
     )
 
     begin{
-        $errorLog = @()
+        $errorLog = [System.Collections.Generic.List[psobject]]::new()
     }
 
     process{
-        $errorLog += Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | 
-            Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
+        $errors = Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
+
+        foreach($error in $errors){
+            $errorLog.Add($error)
+        }
     }
 
     end{
@@ -2593,19 +2597,27 @@ function Get-UserActiveLogon{
         }else{
             $computers = (Get-OUComputer -OrganizationalUnit $OrganizationalUnit).Name
         }
+
+        foreach ($computer in $computers){
+            $computerList += [PSCustomObject]@{
+                Computer = $computer;
+                UserName = ""
+            }
+        }
     }
 
     process{
-        foreach($computer in $computers){
-            $currentUser = (Get-ComputerCurrentUser -Name $computer).UserName
-
-            if($SamAccountName -eq $currentUser){
-                $computerList += New-Object -TypeName PSObject -Property @{"UserName"="$currentUser";"Computer"="$computer"}
+        $computerList | ForEach-Object -Parallel {
+            $currentUser = (Get-ComputerCurrentUser -Name $_.Computer).UserName
+            
+            if($using:SamAccountName -eq $currentUser){
+                $_.UserName = $currentUser
             }
         }
     }
 
     end{
+        $computerList = $computerList | Where-Object -Property UserName -NE ""
         return $computerList
     }
 }
@@ -2755,13 +2767,12 @@ function Move-Computer{
 
     process{
         $computer = Get-ADComputer -Identity $Name
+        $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
 
-        #if($PSCmdlet.ShouldProcess($computer.Name)){
-            $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-            Start-Sleep -Seconds 1
-            $computer = Get-ADComputer -Identity $Name
-            $movedComputers += $computer
-        #}
+        #Update AD computer object to show new location
+        Start-Sleep -Seconds 1
+        $computer = Get-ADComputer -Identity $Name
+        $movedComputers += $computer
     }
 
     end{
@@ -2832,6 +2843,8 @@ function Move-User{
     process{
         $user = Get-ADUser -Identity $Name
         $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+        #Get updated AD user location
         Start-Sleep -Seconds 1
         $user = Get-ADUser -Identity $Name
         $movedUsers += $user
@@ -3008,7 +3021,7 @@ function Set-ComputerIP{
     paypal.me/teknically
     #>
 
-    [cmdletbinding(SupportsShouldProcess)]
+    [cmdletbinding()]
     param(
         [Parameter(Mandatory=$true)]
         [string]$ComputerName,
@@ -3162,6 +3175,8 @@ function Start-Computer{
     .NOTES
     Run Enable-WakeOnLan, a function in the PSSystemAdministrator module, on computers that you want to start using this function. This will ensure Start-Computer will work on them.
 
+    May not work on computers with manually set static IP addresses. DHCP reservations should work.
+
     .EXAMPLE
     Start-Computer -Name SERVER1
 
@@ -3186,7 +3201,7 @@ function Start-Computer{
     Based on: https://gallery.technet.microsoft.com/scriptcenter/Send-WOL-packet-using-0638be7b/view/Discussions#content 
     #>
 
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding()]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("ComputerName")]
