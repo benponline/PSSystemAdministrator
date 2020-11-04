@@ -1745,22 +1745,22 @@ function Get-ComputerSystemEvent{
     .EXAMPLE
     Get-ComputerSystemEvent
 
-    This cmdlet returns the last 5 system errors from localhost.
+    This cmdlet returns the last 5 system events from localhost.
 
     .EXAMPLE
-    Get-ComputerError -ComputerName Server -Newest 2
+    Get-ComputerSystemEvent -Name Server -Newest 2
 
-    This cmdlet returns the last 2 system errors from server.
-
-    .EXAMPLE
-    "computer1","computer2" | Get-ComputerError
-
-    This cmdlet returns newest 5 system errors from "computer1" and "computer2".
+    This cmdlet returns the last 2 system events from server.
 
     .EXAMPLE
-    Get-ADComputer Computer1 | Get-ComputerError
+    "computer1","computer2" | Get-ComputerSystemEvent
 
-    This cmdlet returns the last 5 system errors from Computer1.
+    This cmdlet returns newest 5 system events from "computer1" and "computer2".
+
+    .EXAMPLE
+    Get-ADComputer Computer1 | Get-ComputerSystemEvent
+
+    This cmdlet returns the last 5 system events from Computer1.
 
     .LINK
     By Ben Peterson
@@ -1779,19 +1779,19 @@ function Get-ComputerSystemEvent{
     )
 
     begin{
-        $errorLog = [System.Collections.Generic.List[psobject]]::new()
+        $eventLog = [System.Collections.Generic.List[psobject]]::new()
     }
 
     process{
-        $errors = Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
+        $events = Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
 
-        foreach($error in $errors){
-            $errorLog.Add($error)
+        foreach($event in $events){
+            $eventLog.Add($event)
         }
     }
 
     end{
-        return $errorLog
+        return $eventLog
     }
 }
 
