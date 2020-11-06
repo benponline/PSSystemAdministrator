@@ -53,7 +53,7 @@ function Disable-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('ComputerName')]
@@ -69,12 +69,13 @@ function Disable-Computer{
         $computer | Disable-ADAccount
 
         #Updates computer object to show disabled status.
+        Start-Sleep -Seconds 1
         $computer = Get-ADComputer $Name
         $disabledComputers += $computer
     }
 
     end{
-        return $disabledComputers | Sort-Object -Property Name
+        return $disabledComputers
     }
 }
 
@@ -120,7 +121,7 @@ function Disable-User{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [string]$SamAccountName
@@ -135,12 +136,13 @@ function Disable-User{
         $user | Disable-ADAccount
 
         #Gets updated AD user object to pass back to the host.
+        Start-Sleep -Seconds 1
         $user = Get-ADUser $SamAccountName
         $disabledUsers += $user
     }
 
     end{
-        return $disabledUsers | Sort-Object -Property SamAccountName
+        return $disabledUsers
     }
 }
 
@@ -188,7 +190,7 @@ function Enable-WakeOnLan{
     Based on: https://docs.microsoft.com/en-us/powershell/module/netadapter/enable-netadapterpowermanagement
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("ComputerName")]
@@ -269,7 +271,7 @@ function Get-AccessedFile{
     }
 
     end{
-        return $files | Sort-Object -Property LastAccessTime
+        return $files
     }
 }
 
@@ -322,14 +324,14 @@ function Get-ActiveComputer{
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter * | 
             Get-ComputerLastLogonTime | 
-            Where-Object -Property LastLogonTime -GT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogon -GT ((Get-Date).AddDays(($Days * -1)))
     }else{
         $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
             Get-ComputerLastLogonTime |
-            Where-Object -Property LastLogonTime -GT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogon -GT ((Get-Date).AddDays(($Days * -1)))
     }
 
-    return $computers | Sort-Object -Property Name
+    return $computers
 }
 
 function Get-ActiveFile{
@@ -390,7 +392,7 @@ function Get-ActiveFile{
     }
 
     end{
-        return $files | Sort-Object -Property LastWriteTime
+        return $files
     }
 }
 
@@ -456,7 +458,7 @@ function Get-ActiveUser{
             Where-Object -Property LastLogon -GT ((Get-Date).AddDays($Days * -1))
     }
 
-    return $users | Sort-Object -Property SamAccountName
+    return $users
 }
 
 function Get-ChildItemLastAccessTime{
@@ -512,7 +514,7 @@ function Get-ChildItemLastAccessTime{
     }
 
     end{
-        return $files | Sort-Object -Property LastAccessTime
+        return $files
     }
 }
 
@@ -569,7 +571,7 @@ function Get-ChildItemLastWriteTime{
     }
 
     end{
-        return $files | Sort-Object -Property LastWriteTime
+        return $files
     }
 }
 
@@ -632,9 +634,17 @@ function Get-ComputerCurrentUser{
     }
 
     process{
+        $currentUser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem).UserName
+
+        if(!$null -eq $currentUser){
+            $currentUser = $currentUser.split('\')[-1]
+        }else{
+            $currentUser = ""
+        }
+
         $computerUserList += [PSCustomObject]@{
-            Name = $Name;
-            CurrentUser = (Get-CimInstance -ComputerName $Name -ClassName Win32_ComputerSystem -Property UserName).UserName
+            ComputerName = $Name;
+            UserName = $currentUser
         }
     }
 
@@ -711,8 +721,8 @@ function Get-ComputerDriveInformation{
     }
 
     end{
-        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0 #| Where-Object -Property VolumeName -NotMatch "Recovery"
-        return $driveInformationList | Select-Object -Property Computer,DeviceID,VolumeName,SizeGB,FreeGB,Under20Percent | Sort-Object -Property Computer
+        $driveInformationList = $driveInformationList | Where-Object -Property SizeGB -NE 0
+        return $driveInformationList
     }  
 }
 
@@ -787,7 +797,7 @@ function Get-ComputerFailedLogonEvent{
             $failedLoginList += Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date} | 
                 Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,Message
         }catch{
-
+            Write-Host "Unable to connect to $Name."
         }
     }
 
@@ -851,7 +861,7 @@ function Get-ComputerInformation{
     )
 
     begin{
-        $computerInfoList = @()
+        $computerInfoList = [System.Collections.Generic.List[psobject]]::new()
     }
 
     process{
@@ -864,27 +874,26 @@ function Get-ComputerInformation{
             "CurrentUser" = "";
             "IPAddress" = "";
             "LastBootupTime" = "";
-            "LastLogonTime" = ""
+            "LastLogon" = ""
         }
 
         if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
-
             $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
             $computerInfo.Name = $Name
             $computerInfo.Model = (Get-ComputerModel -Name $Name).Model
             $computerInfo.Processor = (Get-ComputerProcessor -Name $Name).Processor
             $computerInfo.MemoryGB = (Get-ComputerMemory -Name $Name).MemoryGB
             $computerInfo.CDriveGB = (Get-ComputerDriveInformation -Name $Name | Where-Object -Property DeviceID -Match 'C').SizeGB
-            $computerInfo.CurrentUser = (Get-ComputerCurrentUser -Name $Name).CurrentUser
+            $computerInfo.CurrentUser = (Get-ComputerCurrentUser -Name $Name).UserName
             $computerInfo.IPAddress = (Get-ComputerIPAddress -Name $Name).IPAddress
             $computerInfo.LastBootupTime = (Get-ComputerLastBootUpTime -Name $Name).LastBootupTime
-            $computerInfo.LastLogonTime = (Get-ComputerLastLogonTime -Name $Name).LastLogonTime
-            $computerInfoList += $computerInfo
+            $computerInfo.LastLogon = (Get-ComputerLastLogonTime -Name $Name).LastLogon
+            $computerInfoList.Add($computerInfo)
         }
     }
 
     end{
-        return $computerInfoList | Select-Object -Property Name,Model,Processor,MemoryGB,CDriveGB,CurrentUser,IPAddress,LastBootupTime,LastLogonTime | Sort-Object -Property Name
+        return $computerInfoList
     }
 }
 
@@ -932,16 +941,9 @@ function Get-ComputerIPAddress{
     }
 
     process{
-
-        if($Name -eq $env:COMPUTERNAME){
-            $ipAddress = (Get-NetIPAddress | Where-Object {$_.PrefixOrigin -eq 'dhcp'}).IPAddress
-        }else{
-            $ipAddress = (Test-Connection -TargetName $Name -Count 1).Address.IPAddressToString
-        }
-
         $computerIPList += [PSCustomObject]@{
             Name = $Name;
-            IPAddress = $ipAddress 
+            IPAddress = (Resolve-DnsName -Type A -Name $Name).IPAddress
         }
     }
 
@@ -1010,12 +1012,12 @@ function Get-ComputerLastBootUpTime{
     }
 
     process{
-        $lastBootUpTimeList += Get-CimInstance -ComputerName $Name -Class win32_operatingsystem -Property LastBootUpTime | 
+        $lastBootUpTimeList += Get-CimInstance -ComputerName $Name -Class Win32_OperatingSystem -Property LastBootUpTime | 
             Select-Object -Property @{n='Name';e={$_.pscomputername}},LastBootUpTime
     }
 
     end{
-        return $lastBootUpTimeList | Select-Object -Property Name,LastBootUpTime | Sort-Object -Property Name
+        return $lastBootUpTimeList
     }
 }
 
@@ -1070,16 +1072,40 @@ function Get-ComputerLastLogonTime{
 
     begin{
         $lastLogonList = @()
+
+        #When looking for AD computer LastLogon we need to check all domain controllers because this information is not synced between them.
+        $domainControllers = (Get-ADDomainController -Filter *).Name
     }
 
     process{
-        $lastLogonList += Get-ADComputer $Name | 
-            Get-ADObject -Properties lastlogon | 
-            Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogonTime";e={([datetime]::fromfiletime($_.lastlogon))}}
+        $dcCount = $domainControllers.Count
+        
+        if($dcCount -eq 1){
+            $lastLogonList += Get-ADComputer $Name | 
+                Get-ADObject -Properties LastLogon | 
+                Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+        }else{
+            $lastLogonTime = Get-ADComputer $Name -Server $domainControllers[0] | 
+                Get-ADObject -Properties LastLogon | 
+                Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+            
+            for($i = 1; $i -LT $dcCount; $i++){
+                $nextlogonTime = Get-ADComputer $Name -Server $domainControllers[$i] | 
+                    Get-ADObject -Properties LastLogon | 
+                    Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+
+
+                if($nextlogonTime.LastLogon -GT $lastLogonTime.LastLogon){
+                    $lastLogonTime = $nextlogonTime
+                }
+            }
+            
+            $lastLogonList += $lastLogonTime
+        }
     }
 
     end{
-        return $lastLogonList | Select-Object -Property Name,LastLogonTime | Sort-Object -Property Name
+        return $lastLogonList
     }
 }
 
@@ -1430,7 +1456,7 @@ function Get-ComputerPhysicalDiskInformation{
     }
 
     end{
-        return $physicalDiskList | Select-Object -Property ComputerName,FriendlyName,MediaType,OperationalStatus,HealthStatus,SizeGB | Sort-Object -Property ComputerName
+        return $physicalDiskList
     }
 }
 
@@ -1566,7 +1592,7 @@ function Get-ComputerShareFolder{
     }
 
     end{
-        return $computerShareList | Sort-Object -Property Name
+        return $computerShareList
     }
 }
 
@@ -1579,7 +1605,7 @@ function Get-ComputerSoftware{
     This function gathers all of the installed software on a computer or group of computers. By default gathers from the local host.
 
     .PARAMETER Name
-    Host name of target computer. 
+    Host name of target computer.
 
     .INPUTS
     You can pipe host names or computer AD objects input to this function.
@@ -1627,7 +1653,7 @@ function Get-ComputerSoftware{
     )
 
     begin{
-        $masterKeys = @()
+        $masterKeys = [System.Collections.Generic.List[psobject]]::new()
     }
 
     process{
@@ -1646,7 +1672,7 @@ function Get-ComputerSoftware{
                 foreach ($subName in $regKey.GetSubkeyNames()){
                 
                     foreach($sub in $regKey.OpenSubkey($subName)){
-                        $masterKeys += (New-Object PSObject -Property @{
+                        $masterKeys.Add((New-Object PSObject -Property @{
                             "ComputerName" = $Name;
                             "Name" = $sub.getvalue("displayname");
                             "SystemComponent" = $sub.getvalue("systemcomponent");
@@ -1654,7 +1680,7 @@ function Get-ComputerSoftware{
                             "Version" = $sub.getvalue("DisplayVersion");
                             "UninstallCommand" = $sub.getvalue("UninstallString");
                             "InstallDate" = $sub.getvalue("InstallDate");
-                            "RegPath" = $sub.ToString()})
+                            "RegPath" = $sub.ToString()}))
                     }
                 }
             }
@@ -1667,7 +1693,7 @@ function Get-ComputerSoftware{
                     foreach($subName in $regKey.getsubkeynames()){
 
                         foreach ($sub in $regKey.opensubkey($subName)){
-                            $masterKeys += (New-Object PSObject -Property @{
+                            $masterKeys.Add((New-Object PSObject -Property @{
                                 "ComputerName" = $Name;
                                 "Name" = $sub.getvalue("displayname");
                                 "SystemComponent" = $sub.getvalue("systemcomponent");
@@ -1675,7 +1701,7 @@ function Get-ComputerSoftware{
                                 "Version" = $sub.getvalue("DisplayVersion");
                                 "UninstallCommand" = $sub.getvalue("UninstallString");
                                 "InstallDate" = $sub.getvalue("InstallDate");
-                                "RegPath" = $sub.ToString()})
+                                "RegPath" = $sub.ToString()}))
                         }
                     }
                 }
@@ -1686,7 +1712,7 @@ function Get-ComputerSoftware{
     end{
         $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
         $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
-        $masterKeys = ($masterKeys | Where-Object $woFilter | Select-Object -Property $props | Sort-Object -Property ComputerName)
+        $masterKeys = $masterKeys | Where-Object $woFilter | Select-Object -Property $props
         return $masterKeys
     }
 }
@@ -1719,22 +1745,22 @@ function Get-ComputerSystemEvent{
     .EXAMPLE
     Get-ComputerSystemEvent
 
-    This cmdlet returns the last 5 system errors from localhost.
+    This cmdlet returns the last 5 system events from localhost.
 
     .EXAMPLE
-    Get-ComputerError -ComputerName Server -Newest 2
+    Get-ComputerSystemEvent -Name Server -Newest 2
 
-    This cmdlet returns the last 2 system errors from server.
-
-    .EXAMPLE
-    "computer1","computer2" | Get-ComputerError
-
-    This cmdlet returns newest 5 system errors from "computer1" and "computer2".
+    This cmdlet returns the last 2 system events from server.
 
     .EXAMPLE
-    Get-ADComputer Computer1 | Get-ComputerError
+    "computer1","computer2" | Get-ComputerSystemEvent
 
-    This cmdlet returns the last 5 system errors from Computer1.
+    This cmdlet returns newest 5 system events from "computer1" and "computer2".
+
+    .EXAMPLE
+    Get-ADComputer Computer1 | Get-ComputerSystemEvent
+
+    This cmdlet returns the last 5 system events from Computer1.
 
     .LINK
     By Ben Peterson
@@ -1753,16 +1779,19 @@ function Get-ComputerSystemEvent{
     )
 
     begin{
-        $errorLog = @()
+        $eventLog = [System.Collections.Generic.List[psobject]]::new()
     }
 
     process{
-        $errorLog += Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | 
-            Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
+        $events = Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
+
+        foreach($event in $events){
+            $eventLog.Add($event)
+        }
     }
 
     end{
-        return $errorLog
+        return $eventLog
     }
 }
 
@@ -1832,6 +1861,7 @@ function Get-DirectorySize{
     Returns object with directory and size in GB.
 
     .NOTES
+    Command needs to be run as an administrator to ensure all files are checked.
 
     .EXAMPLE
     Get-DirectorySize -Path 'C:\Users'
@@ -1864,7 +1894,7 @@ function Get-DirectorySize{
     }
 
     process{
-        $directorySize = (Get-ChildItem -Path $Path -File -Recurse | Measure-Object -Sum Length).sum
+        $directorySize = (Get-ChildItem -Path $Path -File -Recurse -Force | Measure-Object -Sum Length).sum
 
         $directorySizes += [PSCustomObject]@{
             Directory = $Path;
@@ -1921,13 +1951,13 @@ function Get-DisabledComputer{
     )
     
     if($OrganizationalUnit -eq ""){
-        $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -Match False
+        $disabledComputers = Get-ADComputer -Filter * | Where-Object -Property Enabled -EQ $False
     }else{
         $disabledComputers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
-            Where-Object -Property Enabled -Match False
+            Where-Object -Property Enabled -EQ $False
     }
 
-    return $disabledComputers | Select-Object -Property Name,Enabled,DNSHostName,DistinguishedName | Sort-Object -Property Name
+    return $disabledComputers
 }
 
 function Get-DisabledUser{
@@ -1973,12 +2003,12 @@ function Get-DisabledUser{
     )
 
     if($OrganizationalUnit -eq ""){
-        $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -Match False
+        $disabledUsers = Get-ADUser -Filter * | Where-Object -Property Enabled -EQ $False
     }else{
-        $disabledUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit | Where-Object -Property Enabled -Match False
+        $disabledUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit | Where-Object -Property Enabled -EQ $False
     }
 
-    return $disabledUsers | Select-Object -Property SamAccountName,Name,Enabled,UserPrincipalName | Sort-Object -Property SamAccountName
+    return $disabledUsers
 }
 
 function Get-InactiveComputer{
@@ -2030,14 +2060,14 @@ function Get-InactiveComputer{
     if($OrganizationalUnit -eq ""){
         $computers = Get-ADComputer -Filter * | 
             Get-ComputerLastLogonTime | 
-            Where-Object -Property LastLogonTime -LT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
     }else{
         $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit | 
             Get-ComputerLastLogonTime |
-            Where-Object -Property LastLogonTime -LT ((Get-Date).AddDays(($Days * -1)))
+            Where-Object -Property LastLogon -LT ((Get-Date).AddDays(($Days * -1)))
     }
 
-    return $computers | Sort-Object -Property Name
+    return $computers
 }
 
 function Get-InactiveFile{
@@ -2099,7 +2129,7 @@ function Get-InactiveFile{
     }
 
     end{
-        return $files | Sort-Object -Property LastWriteTime
+        return $files
     }
 }
 
@@ -2164,7 +2194,7 @@ function Get-InactiveUser{
             Where-Object -Property LastLogon -LT ((Get-Date).AddDays($Days * -1))
     }
 
-    return $users | Sort-Object -Property SamAccountName
+    return $users
 }
 
 function Get-LargeFile{
@@ -2220,12 +2250,12 @@ function Get-LargeFile{
     }
 
     process{
-        $largeFiles += Get-ChildItem -Path $Path -File -Recurse | Where-Object -Property Length -GT ($Megabytes * 1000000)
+        $largeFiles += Get-ChildItem -Path $Path -File -Recurse -Force | Where-Object -Property Length -GT ($Megabytes * 1000000)
     }
 
     end{
         $largeFiles = $largeFiles | Select-Object -Property Name,@{n="SizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
-        return $largeFiles | Sort-Object -Property Name
+        return $largeFiles
     }
 }
 
@@ -2287,7 +2317,7 @@ function Get-OfflineComputer{
         }
     }
     
-    return $offlineComputers | Select-Object -Property Name,DNSHostName,DistinguishedName | Sort-Object -Property Name
+    return $offlineComputers
 }
 
 function Get-OnlineComputer{
@@ -2512,7 +2542,7 @@ function Get-SubDirectorySize{
     }
 
     process{
-        $directories = Get-ChildItem -Path $Path -Directory
+        $directories = Get-ChildItem -Path $Path -Directory -Force
 
         foreach($dir in $directories){
             $directorySizes += Get-DirectorySize -Path $dir.FullName
@@ -2576,28 +2606,31 @@ function Get-UserActiveLogon{
         $computerList = @()
 
         if($OrganizationalUnit -eq ""){
-            $computers = (Get-ADComputer -Filter *).Name | Sort-Object
+            $computers = (Get-ADComputer -Filter *).Name
         }else{
-            $computers = (Get-OUComputer -OrganizationalUnit $OrganizationalUnit).Name | Sort-Object
+            $computers = (Get-OUComputer -OrganizationalUnit $OrganizationalUnit).Name
+        }
+
+        foreach ($computer in $computers){
+            $computerList += [PSCustomObject]@{
+                Computer = $computer;
+                UserName = ""
+            }
         }
     }
 
     process{
-
-        foreach($computer in $computers){
-            $currentUser = (Get-ComputerCurrentUser -Name $computer).CurrentUser
-
-            if(!$null -eq $currentUser){
-                $currentUser = $currentUser.split('\')[-1]
-
-                if($SamAccountName -eq $currentUser){
-                    $computerList += New-Object -TypeName PSObject -Property @{"User"="$currentUser";"Computer"="$computer"}
-                }
+        $computerList | ForEach-Object -Parallel {
+            $currentUser = (Get-ComputerCurrentUser -Name $_.Computer).UserName
+            
+            if($using:SamAccountName -eq $currentUser){
+                $_.UserName = $currentUser
             }
         }
     }
 
     end{
+        $computerList = $computerList | Where-Object -Property UserName -NE ""
         return $computerList
     }
 }
@@ -2648,16 +2681,40 @@ function Get-UserLastLogonTime{
 
     begin{
         $lastLogonList = @()
+
+        #When looking for AD User LastLogon we need to check all domain controllers because this information is not synced between them.
+        $domainControllers = (Get-ADDomainController -Filter *).Name
     }
 
     process{
-        $lastLogonList += Get-ADuser $SamAccountName | 
-            Get-ADObject -Properties lastlogon | 
-            Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.lastlogon))}}
+        $dcCount = $domainControllers.Count
+        
+        if($dcCount -eq 1){
+            $lastLogonList += Get-ADuser $SamAccountName | 
+                Get-ADObject -Properties LastLogon | 
+                Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+        }else{
+            $lastLogonTime = Get-ADuser $SamAccountName -Server $domainControllers[0] | 
+                Get-ADObject -Properties LastLogon | 
+                Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+            
+            for($i = 1; $i -LT $dcCount; $i++){
+                $nextlogonTime = Get-ADuser $SamAccountName -Server $domainControllers[$i] | 
+                    Get-ADObject -Properties LastLogon | 
+                    Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
+
+
+                if($nextlogonTime.LastLogon -GT $lastLogonTime.LastLogon){
+                    $lastLogonTime = $nextlogonTime
+                }
+            }
+            
+            $lastLogonList += $lastLogonTime
+        }
     }
 
     end{
-        return $lastLogonList | Select-Object -Property SamAccountName,LastLogon | Sort-Object -Property SamAccountName
+        return $lastLogonList
     }
 }
 
@@ -2706,7 +2763,7 @@ function Move-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
@@ -2724,6 +2781,8 @@ function Move-Computer{
     process{
         $computer = Get-ADComputer -Identity $Name
         $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+        #Update AD computer object to show new location
         Start-Sleep -Seconds 1
         $computer = Get-ADComputer -Identity $Name
         $movedComputers += $computer
@@ -2779,7 +2838,7 @@ function Move-User{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("SamAccountName")]
@@ -2797,13 +2856,15 @@ function Move-User{
     process{
         $user = Get-ADUser -Identity $Name
         $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+
+        #Get updated AD user location
         Start-Sleep -Seconds 1
         $user = Get-ADUser -Identity $Name
         $movedUsers += $user
     }
 
     end{
-        return $movedUsers | Sort-Object -Property SamAccountName
+        return $movedUsers
     }
 }
 
@@ -2849,7 +2910,7 @@ function Remove-Computer{
     paypal.me/teknically
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
@@ -2866,7 +2927,7 @@ function Remove-Computer{
 
     end{
         $computers | Remove-ADComputer
-        return $computers | Sort-Object -Property Name
+        return $computers
     }
 }
 
@@ -2912,7 +2973,7 @@ function Remove-User{
     paypal.me/teknically
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName
@@ -2928,7 +2989,7 @@ function Remove-User{
 
     end{
         $users | Remove-ADUser
-        return $users | Sort-Object -Property SamAccountName
+        return $users
     }
 }
 
@@ -2956,6 +3017,8 @@ function Set-ComputerIP{
     .NOTES
     This function attempts to change the IP settings on the remote computer using PowerShell commands. If that fails it will use netsh.
 
+    This function only works on a computer that is set to use DHCP. Does not work on computers with a static IP address.
+
     Due to the nature of how this function connects to the remote computer, after changing the IP settings the function will say that the connection has been broken. This is a sign that the IP changes have worked.
 
     .EXAMPLE
@@ -2979,9 +3042,11 @@ function Set-ComputerIP{
         [Parameter(Mandatory=$true)]
         [string]$IPAddress
     )
-            
+
+    Write-Host "Setting $ComputerName's IP address to $IPAddress. Connection to $ComputerName will be lost when the new IP address is active."
+    
     #Self adapter
-    $SelfIPAddress = (Test-Connection -ComputerName $env:COMPUTERNAME -Count 1 -IPv4).Address.IPAddressToString
+    $SelfIPAddress = (Resolve-DnsName -Type A -Name $env:COMPUTERNAME).IPAddress
     $SelfIPInterfaceIndex = (Get-NetIPAddress | Where-Object -Property IPAddress -eq $SelfIPAddress).InterfaceIndex
 
     #Subnetmask / Prefixlength
@@ -2992,7 +3057,7 @@ function Set-ComputerIP{
 
     #DNS
     $SelfDNS = (Get-DnsClientServerAddress -InterfaceIndex $SelfIPInterfaceIndex -AddressFamily IPv4).ServerAddresses
-    $TargetIPAddress = (Test-Connection -ComputerName $ComputerName -Count 1 -IPv4).Address.IPAddressToString
+    $TargetIPAddress = (Resolve-DnsName -Type A -Name $ComputerName).IPAddress
 
     try{
         #Target interface index
@@ -3080,7 +3145,7 @@ function Set-UserChangePassword{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]#Does not take objects from the pipeline
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
         [Alias("Name")]
@@ -3098,7 +3163,7 @@ function Set-UserChangePassword{
     }
 
     end{
-        return $userList | Sort-Object -Property Name
+        return $userList
     }
     
 }
@@ -3122,6 +3187,8 @@ function Start-Computer{
 
     .NOTES
     Run Enable-WakeOnLan, a function in the PSSystemAdministrator module, on computers that you want to start using this function. This will ensure Start-Computer will work on them.
+
+    May not work on computers with manually set static IP addresses. DHCP reservations should work.
 
     .EXAMPLE
     Start-Computer -Name SERVER1
