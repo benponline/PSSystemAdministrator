@@ -3091,8 +3091,7 @@ function Set-ComputerIP{
         }
         
         Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS1" static primary}
-        #Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set dnsservers name="$TargetIPInterfaceAlias" address="$SelfDNS1" static primary}
-        
+            
         if($SelfDNS.count -gt 1){
             Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip add dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS2"}
         }
