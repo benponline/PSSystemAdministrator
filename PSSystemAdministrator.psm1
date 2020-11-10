@@ -11,7 +11,9 @@ twitter.com/benponline
 paypal.me/teknically
 
 Notes:
-Channge Set-ComputerIP to use https://docs.microsoft.com/en-us/powershell/module/dhcpserver/add-dhcpserverv4reservation?view=win10-ps 
+Set-ComputerIP - Adjust to use https://docs.microsoft.com/en-us/powershell/module/dhcpserver/add-dhcpserverv4reservation?view=win10-ps
+Get-LockedUserAccount - Create. Include why it was locked.
+
 #>
 
 function Disable-Computer{
