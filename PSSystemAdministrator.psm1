@@ -9,6 +9,9 @@ linkedin.com/in/benponline
 github.com/benponline
 twitter.com/benponline
 paypal.me/teknically
+
+Notes:
+Set-ComputerIP using https://docs.microsoft.com/en-us/powershell/module/dhcpserver/add-dhcpserverv4reservation?view=win10-ps 
 #>
 
 function Disable-Computer{
