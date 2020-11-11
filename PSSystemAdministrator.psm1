@@ -793,26 +793,21 @@ function Get-ComputerFailedLogonEvent{
     )
 
     begin{
-        $Names = [System.Collections.ArrayList]@()
-        #$failedLogonList = [System.Collections.ArrayList]@()
-        $failedLogonList = @()
+        $failedLoginList = @()
         $date = (Get-Date).AddDays($DaysBack * -1)
     }
 
     process{
-        $Names.Add($Name)
+        try{
+            $failedLoginList += Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date} | 
+                Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,Message
+        }catch{
+            Write-Host "Unable to connect to $Name."
+        }
     }
 
     end{
-        $Names | ForEach-Object -Parallel {
-            $a = Get-WinEvent -ComputerName $_ -FilterHashtable @{LogName='Security';ID=4625; StartTime=$Using:date} | 
-                Select-Object -Property @{n='Name';e={$_}},TimeCreated,Id,Message
-
-            #$using:failedLogonList.Add($a)
-            $Using:failedLogonList += $a
-        }
-
-        return $failedLogonList
+        return $failedLoginList
     }
 }
 
