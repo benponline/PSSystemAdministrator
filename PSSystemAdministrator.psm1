@@ -793,21 +793,40 @@ function Get-ComputerFailedLogonEvent{
     )
 
     begin{
-        $failedLoginList = @()
+        $failedLogonList = @()
         $date = (Get-Date).AddDays($DaysBack * -1)
+
+        $logonTypeDictionary = @{
+            '2' = 'Interactive'
+            '3' = 'Network'
+            '4' = 'Batch'
+            '5' = 'Service'
+            '7' = 'Unlock'
+            '8' = 'Networkcleartext'
+            '9' = 'NewCredentials'
+            '10' = 'RemoteInteractive'
+            '11' = 'CachedInteractive'
+        }
     }
 
     process{
-        try{
-            $failedLoginList += Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date} 
-                #| Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,Message
-        }catch{
-            Write-Host "Unable to connect to $Name."
+        $failedLogonsRaw = Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date}
+            
+        for ($i = 0; $i -lt $failedLogonsRaw.Count; $i++) {
+            $logonTypeNumber = $failedLogonsRaw[$i].Properties[10].Value
+
+            $failedLogonList += [PSCustomObject]@{
+                Computer = $Name;
+                Account = $failedLogonsRaw[$i].Properties[5].Value;
+                AccountDomain = $failedLogonsRaw[$i].Properties[6].Value;
+                LogonType = $logonTypeDictionary["$logonTypeNumber"];
+                TimeCreated = $failedLogonsRaw[$i].TimeCreated
+            }
         }
     }
 
     end{
-        return $failedLoginList
+        return $failedLogonList
     }
 }
 
