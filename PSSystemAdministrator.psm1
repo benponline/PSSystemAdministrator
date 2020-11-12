@@ -799,8 +799,8 @@ function Get-ComputerFailedLogonEvent{
 
     process{
         try{
-            $failedLoginList += Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date} | 
-                Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,Message
+            $failedLoginList += Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date} 
+                #| Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,Message
         }catch{
             Write-Host "Unable to connect to $Name."
         }
