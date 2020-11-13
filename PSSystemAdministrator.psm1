@@ -782,6 +782,7 @@ function Get-ComputerFailedLogonEvent{
     github.com/benponline
     twitter.com/benponline
     paypal.me/teknically
+    Made with help from: https://theposhwolf.com/howtos/Get-ADUserBadPasswords
     #>
 
     [CmdletBinding()]
