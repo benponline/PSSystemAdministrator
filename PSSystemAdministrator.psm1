@@ -2284,6 +2284,136 @@ function Get-LargeFile{
     }
 }
 
+function Get-LockedOutUser{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    https://social.technet.microsoft.com/wiki/contents/articles/52327.windows-track-down-an-account-lockout-source-and-the-reason-with-powershell.aspx
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [string]$OrganizationalUnit = ""
+    )
+    
+    $lockedOutUsers = @()
+    $lockedOutUsersFiltered = @()
+    $lockedOutUsersRaw = Search-ADAccount -LockedOut
+    
+    if($OrganizationalUnit -ne ""){
+        $ouUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit
+
+        foreach($user in $ouUsers){
+            foreach($lockedOutUser in $lockedOutUsersRaw){
+                if($user.SamAccountName -eq $lockedOutUser.SamAccountName){
+                    $lockedOutUsersFiltered += $lockedOutUser
+                }
+            }
+        }
+    }else{
+        $lockedOutUsersFiltered = $lockedOutUsersRaw
+    }
+
+    $lockedOutUsers = $lockedOutUsersFiltered | Select-Object -Property SamAccountName,Enabled,LastLogonDate,LockedOut,Name
+
+    return $lockedOutUsers    
+}
+
+function Get-LockedOutUserEvent{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER OrganizationalUnit
+    Focuses the function on a specific AD organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    https://social.technet.microsoft.com/wiki/contents/articles/52327.windows-track-down-an-account-lockout-source-and-the-reason-with-powershell.aspx
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [string]$OrganizationalUnit = "",
+        [int]$DaysBack = 1
+    )
+
+    $lockedOutUsers = @()
+    $lockedOutUsersRaw = @()
+    $lockedOutUsersFiltered = @()
+    $domainControllers = (Get-ADDomainController -Filter *).Name
+    $eventAge = (Get-Date).AddDays(-1 * $DaysBack)
+
+    if($OrganizationalUnit -eq ""){
+        foreach ($dc in $domainControllers){
+            $lockedOutUsersFiltered += Get-WinEvent -ComputerName $dc -FilterHashtable @{LogName = 'Security'; ID = 4740} | 
+                Where-Object -Property TimeCreated -GT $eventAge
+        }
+    }else{
+        foreach ($dc in $domainControllers){
+            $lockedOutUsersRaw += Get-WinEvent -ComputerName $dc -FilterHashtable @{LogName = 'Security'; ID = 4740} | 
+                Where-Object -Property TimeCreated -GT $eventAge
+        }
+
+        $ouUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit
+
+        foreach ($user in $ouUsers){
+            foreach($lockedOutUser in $lockedOutUsersRaw){
+                if($user.SamAccountName -eq $lockedOutUser.Properties[0].Value){
+                    $lockedOutUsersFiltered += $lockedOutUser
+                }
+            }            
+        }
+    }
+
+    foreach($user in $lockedOutUsersFiltered){
+        $lockedOutUsers += [PSCustomObject]@{
+            TimeCreated = $user.TimeCreated
+            Id = $user.Id
+            User = $user.Properties[0].Value
+            Source = $user.Properties[1].Value
+            DomainController = $user.Properties[4].Value
+            Domain = $user.Properties[5].Value
+        }
+    }
+
+    return $lockedOutUsers    
+}
+
 function Get-OfflineComputer{
     <#
     .SYNOPSIS
