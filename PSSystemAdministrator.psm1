@@ -2287,20 +2287,31 @@ function Get-LargeFile{
 function Get-LockedOutUser{
     <#
     .SYNOPSIS
+    Gets locked out users from Active Directory.
 
     .DESCRIPTION
+    Gets all locked users accounts in Active Directory. Function can be limited to a single organizational unit.
 
     .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
+    Only returns user AD objects from this organizational unit.
 
     .INPUTS
     None.
 
     .OUTPUTS
+    User AD objects.
 
     .NOTES
 
     .EXAMPLE
+    Get-LockedOutUser
+
+    Gets all locked out users in AD.
+
+    .EXAMPLE
+    Get-LockedOutUser -OrganizationalUnit 'Department X Users'
+
+    Gets all locked out users in the 'Department X Users' organizational unit.
 
     .LINK
     By Ben Peterson
@@ -2308,7 +2319,7 @@ function Get-LockedOutUser{
     github.com/benponline
     twitter.com/benponline
     paypal.me/teknically
-    https://social.technet.microsoft.com/wiki/contents/articles/52327.windows-track-down-an-account-lockout-source-and-the-reason-with-powershell.aspx
+    Used information from: https://social.technet.microsoft.com/wiki/contents/articles/52327.windows-track-down-an-account-lockout-source-and-the-reason-with-powershell.aspx
     #>
 
     [CmdletBinding()]
@@ -2318,7 +2329,7 @@ function Get-LockedOutUser{
     
     $lockedOutUsers = @()
     $lockedOutUsersFiltered = @()
-    $lockedOutUsersRaw = Search-ADAccount -LockedOut
+    $lockedOutUsersRaw = Search-ADAccount -LockedOut -UsersOnly
     
     if($OrganizationalUnit -ne ""){
         $ouUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit
@@ -2334,7 +2345,7 @@ function Get-LockedOutUser{
         $lockedOutUsersFiltered = $lockedOutUsersRaw
     }
 
-    $lockedOutUsers = $lockedOutUsersFiltered | Select-Object -Property SamAccountName,Enabled,LastLogonDate,LockedOut,Name
+    $lockedOutUsers = $lockedOutUsersFiltered
 
     return $lockedOutUsers    
 }
@@ -2342,20 +2353,38 @@ function Get-LockedOutUser{
 function Get-LockedOutUserEvent{
     <#
     .SYNOPSIS
+    Gets events about user accounts getting locked in Active Directory.
 
     .DESCRIPTION
+    Gets events about user account getting locked in Active Directory from all domain contollers.
 
     .PARAMETER OrganizationalUnit
-    Focuses the function on a specific AD organizational unit.
+    Only gets lockout events for users in this OU.
 
     .INPUTS
     None.
 
     .OUTPUTS
+    PowerShell objects with the following properties: 
+        TimeCreated - Date time the event was recorded
+        Id - Event ID
+        User - SamAccountName
+        Source - Computer where the lockout occured
+        DomainController - Domain controller that recorded the event
+        Domain - Domain that the user belongs to. Can be a domain or local machine
 
     .NOTES
+    There my be duplicate results returned if the event has been recorded on multiple domain controllers.
 
     .EXAMPLE
+    Get-LockedOutUserEvent
+
+    Gets all events for user account lockouts from all domain controllers.
+
+    .EXAMPLE
+    Get-LockedOutUserEvent -OrganizationalUnit 'Department X Users'
+
+    Gets all events for user account lockouts for users in the 'Department X Users' OU from all domain controllers.
 
     .LINK
     By Ben Peterson
