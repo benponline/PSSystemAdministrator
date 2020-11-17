@@ -813,7 +813,7 @@ function Get-ComputerFailedLogonEvent{
     process{
         $failedLogonsRaw = Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date}
             
-        for ($i = 0; $i -lt $failedLogonsRaw.Count; $i++) {
+        for($i = 0; $i -lt $failedLogonsRaw.Count; $i++){
             $logonTypeNumber = $failedLogonsRaw[$i].Properties[10].Value
 
             $failedLogonList += [PSCustomObject]@{
