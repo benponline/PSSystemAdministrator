@@ -922,6 +922,98 @@ function Get-ComputerInformation{
     }
 }
 
+function Get-ComputerInformationP{
+    <#
+    .SYNOPSIS
+    Gets general information about a computer.
+
+    .DESCRIPTION
+    This function gathers information about a computer or computers. By default it gathers info from the local host.
+
+    .PARAMETER Name
+    Specifies which computer's information is gathered.
+
+    .INPUTS
+    You can pipe host names or AD computer objects.
+
+    .OUTPUTS
+    Returns an object with computer Name, Model, Processor, MemoryGB, CDriveGB, CurrentUser, IPAddress, LastBootupTime, and LastLogonTime.
+
+    .NOTES
+    Compatible for Windows 7 and newer.
+
+    Only returns information from computers running Windows 10 or Windows Server 2012 or higher.
+
+    Will not return information on computers that are offline.
+
+    .EXAMPLE
+    Get-ComputerInformation
+
+    Returns computer information for the local host.
+
+    .EXAMPLE
+    Get-ComputerInformation -Name "Server1"
+
+    Returns computer information for Server1.
+
+    .EXAMPLE
+    Get-ADComputer -filter * | Get-ComputerInformation
+
+    Returns computer information on all AD computers. 
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$True)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $computers = [System.Collections.Generic.List[string]]::new()        
+        $computerInfoList = [System.Collections.Generic.List[psobject]]::new()
+        #$computerInfoList = @()
+    }
+
+    process{
+        $computers.Add($Name)
+    }
+
+    end{
+        $computers | ForEach-Object -Parallel {
+            if(Test-Connection -ComputerName $_ -Count 1 -Quiet){
+                New-Object -TypeName PSObject -Property @{
+                Name = $_;
+                Model = (Get-ComputerModel -Name $_).Model;
+                Processor = (Get-ComputerProcessor -Name $_).Processor;
+                MemoryGB = (Get-ComputerMemory -Name $_).MemoryGB;
+                CDriveGB = (Get-ComputerDriveInformation -Name $_ | Where-Object -Property DeviceID -Match 'C').SizeGB;
+                CurrentUser = (Get-ComputerCurrentUser -Name $_).UserName;
+                IPAddress = (Get-ComputerIPAddress -Name $_).IPAddress;
+                LastBootupTime = (Get-ComputerLastBootUpTime -Name $_).LastBootupTime;
+                LastLogon = "" #(Get-ComputerLastLogonTime -Name $_).LastLogon
+                }
+            }
+        } | ForEach-Object {$computerInfoList.Add($_)}
+        
+        #Get-ComputerLastLogonTime did not work consistantly inside of Foreach-Object.
+        foreach($computer in $computerInfoList){
+            if(Test-Connection -ComputerName $computer.Name -Count 1 -Quiet){
+                $computer.LastLogon = (Get-ComputerLastLogonTime -Name $computer.Name).LastLogon
+            }
+        }
+
+        return $computerInfoList
+    }
+}
+
 function Get-ComputerIPAddress{
     <#
     .SYNOPSIS
@@ -1113,7 +1205,7 @@ function Get-ComputerLastLogonTime{
             $lastLogonTime = Get-ADComputer $Name -Server $domainControllers[0] | 
                 Get-ADObject -Properties LastLogon | 
                 Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
-            
+                
             for($i = 1; $i -LT $dcCount; $i++){
                 $nextlogonTime = Get-ADComputer $Name -Server $domainControllers[$i] | 
                     Get-ADObject -Properties LastLogon | 
