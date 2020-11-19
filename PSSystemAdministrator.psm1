@@ -888,7 +888,6 @@ function Get-ComputerInformation{
     begin{
         $computers = [System.Collections.Generic.List[string]]::new()        
         $computerInfoList = [System.Collections.Generic.List[psobject]]::new()
-        #$computerInfoList = @()
     }
 
     process{
@@ -907,7 +906,7 @@ function Get-ComputerInformation{
                 CurrentUser = (Get-ComputerCurrentUser -Name $_).UserName;
                 IPAddress = (Get-ComputerIPAddress -Name $_).IPAddress;
                 LastBootupTime = (Get-ComputerLastBootUpTime -Name $_).LastBootupTime;
-                LastLogon = "" #(Get-ComputerLastLogonTime -Name $_).LastLogon
+                LastLogon = ""
                 }
             }
         } | ForEach-Object {$computerInfoList.Add($_)}
@@ -1600,24 +1599,104 @@ function Get-ComputerShareFolder{
     )
 
     begin{
-        $computerShareList = @()
+        $computerShareList = [System.Collections.Generic.List[psobject]]::new()
+        $computers = [System.Collections.Generic.List[string]]::new()
     }
 
     process{
-        $computerShares = Get-FileShare -CimSession $Name
-        
-        foreach($rawShare in $computerShares){
-
-            $computerShareList += [PSCustomObject]@{
-                Name = $Name;
-                ShareName = $rawShare.Name;
-                Path = $rawShare.VolumeRelativePath;
-                Status = $rawShare.OperationalStatus
-            }
-        }
+        $computers.Add($Name)
     }
 
     end{
+        foreach($computer in $computers){
+            $computerShares = Get-FileShare -CimSession $computer
+            
+            foreach($rawShare in $computerShares){
+
+                $computerShareList += [PSCustomObject]@{
+                    Name = $rawShare.PSComputerName;
+                    ShareName = $rawShare.Name;
+                    Path = $rawShare.VolumeRelativePath;
+                    Status = $rawShare.OperationalStatus
+                }
+            }
+        }
+
+        return $computerShareList
+    }
+}
+
+function Get-ComputerShareFolderP{
+    <#
+    .SYNOPSIS
+    Gets all of the share folders on a computer.
+    
+    .DESCRIPTION
+    This function returns all of the share folders on a computer or remote computer.
+    
+    .PARAMETER Name
+    Target computer's host name.
+    
+    .INPUTS
+    Can accept AD computer objects from the pipeline.
+    
+    .OUTPUTS
+    PS objects with the computer name, share folder name, path to the folder, and status of the folder.
+    
+    .NOTES
+    Requires administrative privileges to work on local machine.
+
+    .EXAMPLE
+    Get-ComputerShareFolder -Name 'Computer1'
+
+    Returns all of the share folders from 'Computer1'.
+    
+    .EXAMPLE
+    Get-ADComputer -filter * | Get-ComputerShareFolder
+
+    Returns the share folders from all computers in AD.
+
+    .EXAMPLE
+    Get-OUComputer -OrganizationalUnit 'Workstations' | Get-ComputerShareFolder
+
+    Returns the share folders from all computers in the 'Workstations' OU. Get-OUComputer 
+    is a function from the PSSystemAdministrator module.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+    
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        #$computerShareList = @()
+        $computerShareList = [System.Collections.Generic.List[psobject]]::new()
+        $computers = [System.Collections.Generic.List[string]]::new()
+    }
+
+    process{
+        $computers.Add($Name)
+    }
+
+    end{
+        $computers | ForEach-Object -Parallel {
+            Get-FileShare -CimSession $_ | 
+                Select-Object -Property `
+                @{n = "ComputerName"; e = {$_.PSComputerName}}, 
+                @{n = "Name"; e = {$_.Name}},
+                @{n = "Path"; e = {$_.VolumeRelativePath}},
+                @{n = "Status"; e = {$_.OperationalStatus}}
+        } | ForEach-Object { $computerShareList.Add($_) }
+
         return $computerShareList
     }
 }
