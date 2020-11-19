@@ -1688,7 +1688,7 @@ function Get-ComputerSoftware{
         $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
         $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
 
-        if((Test-Connection -ComputerName $Name -Count 1)){
+        if((Test-Connection -ComputerName $Name -Count 1 -Quiet)){
             $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$Name)
             $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$Name)
 
@@ -1736,6 +1736,139 @@ function Get-ComputerSoftware{
     }
 
     end{
+        $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
+        $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
+        $masterKeys = $masterKeys | Where-Object $woFilter | Select-Object -Property $props
+        return $masterKeys
+    }
+}
+
+function Get-ComputerSoftwareP{
+    <#
+    .SYNOPSIS
+    Gets all of the installed software on a computer or computers.
+
+    .DESCRIPTION
+    This function gathers all of the installed software on a computer or group of computers. By default gathers from the local host.
+
+    .PARAMETER Name
+    Host name of target computer.
+
+    .INPUTS
+    You can pipe host names or computer AD objects input to this function.
+
+    .OUTPUTS
+    Returns PS objects containing ComputerName, Name, Version, Installdate, UninstallCommand, and RegPath.
+
+    .NOTES
+    Compatible with Windows 7 and newer.
+
+    Requires remote registry service running on remote machines.
+
+    .EXAMPLE
+    Get-ComputerSoftware
+
+    This cmdlet returns all installed software on the local host.
+
+    .EXAMPLE
+    Get-ComputerSoftware -ComputerName “Computer”
+
+    This cmdlet returns all the software installed on "Computer".
+
+    .EXAMPLE
+    Get-ADComputer -Filter * | Get-ComputerSoftware
+
+    This cmdlet returns the installed software on all computers on the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+
+    .LINK
+    Based on code from:
+    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [Alias('ComputerName')]
+        [string]$Name = $env:COMPUTERNAME
+    )
+
+    begin{
+        $masterKeys = [System.Collections.Generic.List[psobject]]::new()
+        $computers = [System.Collections.Generic.List[string]]::new()
+
+        $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+        $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
+        $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+        $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
+    }
+
+    process{
+        $computers.Add($Name)
+    }
+
+    end{
+        $computers | ForEach-Object -Parallel {
+            if((Test-Connection -ComputerName $_ -Count 1 -Quiet)){
+                $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($using:lmReg,$_)
+
+                foreach($key in $using:lmKeys){
+                    $regKey = $remoteLMRegKey.OpenSubkey($key)
+                    
+                    foreach ($subName in $regKey.GetSubkeyNames()){
+                    
+                        foreach($sub in $regKey.OpenSubkey($subName)){
+                            New-Object PSObject -Property @{
+                                "ComputerName" = $_;
+                                "Name" = $sub.getvalue("displayname");
+                                "SystemComponent" = $sub.getvalue("systemcomponent");
+                                "ParentKeyName" = $sub.getvalue("parentkeyname");
+                                "Version" = $sub.getvalue("DisplayVersion");
+                                "UninstallCommand" = $sub.getvalue("UninstallString");
+                                "InstallDate" = $sub.getvalue("InstallDate");
+                                "RegPath" = $sub.ToString()
+                            }
+                        }
+                    }
+                }
+            }
+        } | ForEach-Object {$masterKeys.Add($_)}
+
+        $computers | ForEach-Object -Parallel {
+            if(Test-Connection -ComputerName $_ -Count 1 -Quiet){
+                $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($using:cuReg,$_)
+
+                foreach ($key in $using:cuKeys){
+                    $regKey = $remoteCURegKey.OpenSubkey($key)
+
+                    if($null -ne $regKey){
+
+                        foreach($subName in $regKey.getsubkeynames()){
+
+                            foreach ($sub in $regKey.opensubkey($subName)){
+                                New-Object PSObject -Property @{
+                                    "ComputerName" = $_;
+                                    "Name" = $sub.getvalue("displayname");
+                                    "SystemComponent" = $sub.getvalue("systemcomponent");
+                                    "ParentKeyName" = $sub.getvalue("parentkeyname");
+                                    "Version" = $sub.getvalue("DisplayVersion");
+                                    "UninstallCommand" = $sub.getvalue("UninstallString");
+                                    "InstallDate" = $sub.getvalue("InstallDate");
+                                    "RegPath" = $sub.ToString()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } | ForEach-Object {$masterKeys.Add($_)}
+
         $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
         $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
         $masterKeys = $masterKeys | Where-Object $woFilter | Select-Object -Property $props
