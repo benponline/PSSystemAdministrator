@@ -9,6 +9,11 @@ linkedin.com/in/benponline
 github.com/benponline
 twitter.com/benponline
 paypal.me/teknically
+
+Notes:
+Set-ComputerIP - Adjust to use https://docs.microsoft.com/en-us/powershell/module/dhcpserver/add-dhcpserverv4reservation?view=win10-ps
+Get-LockedUserAccount - Create. Include why it was locked.
+
 #>
 
 function Disable-Computer{
@@ -777,6 +782,7 @@ function Get-ComputerFailedLogonEvent{
     github.com/benponline
     twitter.com/benponline
     paypal.me/teknically
+    Made with help from: https://theposhwolf.com/howtos/Get-ADUserBadPasswords
     #>
 
     [CmdletBinding()]
@@ -788,21 +794,40 @@ function Get-ComputerFailedLogonEvent{
     )
 
     begin{
-        $failedLoginList = @()
+        $failedLogonList = @()
         $date = (Get-Date).AddDays($DaysBack * -1)
+
+        $logonTypeDictionary = @{
+            '2' = 'Interactive'
+            '3' = 'Network'
+            '4' = 'Batch'
+            '5' = 'Service'
+            '7' = 'Unlock'
+            '8' = 'Networkcleartext'
+            '9' = 'NewCredentials'
+            '10' = 'RemoteInteractive'
+            '11' = 'CachedInteractive'
+        }
     }
 
     process{
-        try{
-            $failedLoginList += Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date} | 
-                Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,Message
-        }catch{
-            Write-Host "Unable to connect to $Name."
+        $failedLogonsRaw = Get-WinEvent -ComputerName $Name -FilterHashtable @{LogName='Security';ID=4625; StartTime=$date}
+            
+        for($i = 0; $i -lt $failedLogonsRaw.Count; $i++){
+            $logonTypeNumber = $failedLogonsRaw[$i].Properties[10].Value
+
+            $failedLogonList += [PSCustomObject]@{
+                Computer = $Name;
+                Account = $failedLogonsRaw[$i].Properties[5].Value;
+                AccountDomain = $failedLogonsRaw[$i].Properties[6].Value;
+                LogonType = $logonTypeDictionary["$logonTypeNumber"];
+                TimeCreated = $failedLogonsRaw[$i].TimeCreated
+            }
         }
     }
 
     end{
-        return $failedLoginList
+        return $failedLogonList
     }
 }
 
@@ -861,38 +886,38 @@ function Get-ComputerInformation{
     )
 
     begin{
+        $computers = [System.Collections.Generic.List[string]]::new()        
         $computerInfoList = [System.Collections.Generic.List[psobject]]::new()
     }
 
     process{
-        $computerObjectProperties = @{
-            "Name" = "";
-            "Model" = "";
-            "Processor" = "";
-            "MemoryGB" = "";
-            "CDriveGB" = "";
-            "CurrentUser" = "";
-            "IPAddress" = "";
-            "LastBootupTime" = "";
-            "LastLogon" = ""
-        }
-
-        if(Test-Connection -ComputerName $Name -Count 1 -Quiet){
-            $computerInfo = New-Object -TypeName PSObject -Property $computerObjectProperties
-            $computerInfo.Name = $Name
-            $computerInfo.Model = (Get-ComputerModel -Name $Name).Model
-            $computerInfo.Processor = (Get-ComputerProcessor -Name $Name).Processor
-            $computerInfo.MemoryGB = (Get-ComputerMemory -Name $Name).MemoryGB
-            $computerInfo.CDriveGB = (Get-ComputerDriveInformation -Name $Name | Where-Object -Property DeviceID -Match 'C').SizeGB
-            $computerInfo.CurrentUser = (Get-ComputerCurrentUser -Name $Name).UserName
-            $computerInfo.IPAddress = (Get-ComputerIPAddress -Name $Name).IPAddress
-            $computerInfo.LastBootupTime = (Get-ComputerLastBootUpTime -Name $Name).LastBootupTime
-            $computerInfo.LastLogon = (Get-ComputerLastLogonTime -Name $Name).LastLogon
-            $computerInfoList.Add($computerInfo)
-        }
+        $computers.Add($Name)
     }
 
     end{
+        $computers | ForEach-Object -Parallel {
+            if(Test-Connection -ComputerName $_ -Count 1 -Quiet){
+                New-Object -TypeName PSObject -Property @{
+                Name = $_;
+                Model = (Get-ComputerModel -Name $_).Model;
+                Processor = (Get-ComputerProcessor -Name $_).Processor;
+                MemoryGB = (Get-ComputerMemory -Name $_).MemoryGB;
+                CDriveGB = (Get-ComputerDriveInformation -Name $_ | Where-Object -Property DeviceID -Match 'C').SizeGB;
+                CurrentUser = (Get-ComputerCurrentUser -Name $_).UserName;
+                IPAddress = (Get-ComputerIPAddress -Name $_).IPAddress;
+                LastBootupTime = (Get-ComputerLastBootUpTime -Name $_).LastBootupTime;
+                LastLogon = ""
+                }
+            }
+        } | ForEach-Object {$computerInfoList.Add($_)}
+        
+        #Get-ComputerLastLogonTime did not work consistantly inside of Foreach-Object.
+        foreach($computer in $computerInfoList){
+            if(Test-Connection -ComputerName $computer.Name -Count 1 -Quiet){
+                $computer.LastLogon = (Get-ComputerLastLogonTime -Name $computer.Name).LastLogon
+            }
+        }
+
         return $computerInfoList
     }
 }
@@ -1088,7 +1113,7 @@ function Get-ComputerLastLogonTime{
             $lastLogonTime = Get-ADComputer $Name -Server $domainControllers[0] | 
                 Get-ADObject -Properties LastLogon | 
                 Select-Object -Property @{n="Name";e={$Name}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
-            
+                
             for($i = 1; $i -LT $dcCount; $i++){
                 $nextlogonTime = Get-ADComputer $Name -Server $domainControllers[$i] | 
                     Get-ADObject -Properties LastLogon | 
@@ -1574,24 +1599,25 @@ function Get-ComputerShareFolder{
     )
 
     begin{
-        $computerShareList = @()
+        #$computerShareList = @()
+        $computerShareList = [System.Collections.Generic.List[psobject]]::new()
+        $computers = [System.Collections.Generic.List[string]]::new()
     }
 
     process{
-        $computerShares = Get-FileShare -CimSession $Name
-        
-        foreach($rawShare in $computerShares){
-
-            $computerShareList += [PSCustomObject]@{
-                Name = $Name;
-                ShareName = $rawShare.Name;
-                Path = $rawShare.VolumeRelativePath;
-                Status = $rawShare.OperationalStatus
-            }
-        }
+        $computers.Add($Name)
     }
 
     end{
+        $computers | ForEach-Object -Parallel {
+            Get-FileShare -CimSession $_ | 
+                Select-Object -Property `
+                @{n = "ComputerName"; e = {$_.PSComputerName}}, 
+                @{n = "Name"; e = {$_.Name}},
+                @{n = "Path"; e = {$_.VolumeRelativePath}},
+                @{n = "Status"; e = {$_.OperationalStatus}}
+        } | ForEach-Object { $computerShareList.Add($_) }
+
         return $computerShareList
     }
 }
@@ -1654,62 +1680,74 @@ function Get-ComputerSoftware{
 
     begin{
         $masterKeys = [System.Collections.Generic.List[psobject]]::new()
-    }
+        $computers = [System.Collections.Generic.List[string]]::new()
 
-    process{
         $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
         $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
         $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
         $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
+    }
 
-        if((Test-Connection -ComputerName $Name -Count 1)){
-            $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$Name)
-            $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$Name)
+    process{
+        $computers.Add($Name)
+    }
 
-            foreach($key in $lmKeys){
-                $regKey = $remoteLMRegKey.OpenSubkey($key)
-                
-                foreach ($subName in $regKey.GetSubkeyNames()){
-                
-                    foreach($sub in $regKey.OpenSubkey($subName)){
-                        $masterKeys.Add((New-Object PSObject -Property @{
-                            "ComputerName" = $Name;
-                            "Name" = $sub.getvalue("displayname");
-                            "SystemComponent" = $sub.getvalue("systemcomponent");
-                            "ParentKeyName" = $sub.getvalue("parentkeyname");
-                            "Version" = $sub.getvalue("DisplayVersion");
-                            "UninstallCommand" = $sub.getvalue("UninstallString");
-                            "InstallDate" = $sub.getvalue("InstallDate");
-                            "RegPath" = $sub.ToString()}))
-                    }
-                }
-            }
+    end{
+        $computers | ForEach-Object -Parallel {
+            if((Test-Connection -ComputerName $_ -Count 1 -Quiet)){
+                $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($using:lmReg,$_)
 
-            foreach ($key in $cuKeys){
-                $regKey = $remoteCURegKey.OpenSubkey($key)
-
-                if($null -ne $regKey){
-
-                    foreach($subName in $regKey.getsubkeynames()){
-
-                        foreach ($sub in $regKey.opensubkey($subName)){
-                            $masterKeys.Add((New-Object PSObject -Property @{
-                                "ComputerName" = $Name;
+                foreach($key in $using:lmKeys){
+                    $regKey = $remoteLMRegKey.OpenSubkey($key)
+                    
+                    foreach ($subName in $regKey.GetSubkeyNames()){
+                    
+                        foreach($sub in $regKey.OpenSubkey($subName)){
+                            New-Object PSObject -Property @{
+                                "ComputerName" = $_;
                                 "Name" = $sub.getvalue("displayname");
                                 "SystemComponent" = $sub.getvalue("systemcomponent");
                                 "ParentKeyName" = $sub.getvalue("parentkeyname");
                                 "Version" = $sub.getvalue("DisplayVersion");
                                 "UninstallCommand" = $sub.getvalue("UninstallString");
                                 "InstallDate" = $sub.getvalue("InstallDate");
-                                "RegPath" = $sub.ToString()}))
+                                "RegPath" = $sub.ToString()
+                            }
                         }
                     }
                 }
             }
-        }
-    }
+        } | ForEach-Object {$masterKeys.Add($_)}
 
-    end{
+        $computers | ForEach-Object -Parallel {
+            if(Test-Connection -ComputerName $_ -Count 1 -Quiet){
+                $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($using:cuReg,$_)
+
+                foreach ($key in $using:cuKeys){
+                    $regKey = $remoteCURegKey.OpenSubkey($key)
+
+                    if($null -ne $regKey){
+
+                        foreach($subName in $regKey.getsubkeynames()){
+
+                            foreach ($sub in $regKey.opensubkey($subName)){
+                                New-Object PSObject -Property @{
+                                    "ComputerName" = $_;
+                                    "Name" = $sub.getvalue("displayname");
+                                    "SystemComponent" = $sub.getvalue("systemcomponent");
+                                    "ParentKeyName" = $sub.getvalue("parentkeyname");
+                                    "Version" = $sub.getvalue("DisplayVersion");
+                                    "UninstallCommand" = $sub.getvalue("UninstallString");
+                                    "InstallDate" = $sub.getvalue("InstallDate");
+                                    "RegPath" = $sub.ToString()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } | ForEach-Object {$masterKeys.Add($_)}
+
         $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
         $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
         $masterKeys = $masterKeys | Where-Object $woFilter | Select-Object -Property $props
@@ -1780,17 +1818,19 @@ function Get-ComputerSystemEvent{
 
     begin{
         $eventLog = [System.Collections.Generic.List[psobject]]::new()
+        $computers = [System.Collections.Generic.List[string]]::new()
     }
 
     process{
-        $events = Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
-
-        foreach($event in $events){
-            $eventLog.Add($event)
-        }
+        $computers.Add($Name)        
     }
 
     end{
+        $computers | ForEach-Object -Parallel {
+            Get-WinEvent -LogName System -ComputerName $_ -MaxEvents $using:Newest | 
+            Select-Object -Property MachineName,TimeCreated,Id,LevelDisplayName,Message
+        } | ForEach-Object { $eventLog.Add($_) }
+
         return $eventLog
     }
 }
@@ -2257,6 +2297,165 @@ function Get-LargeFile{
         $largeFiles = $largeFiles | Select-Object -Property Name,@{n="SizeMB";e={[math]::round(($_.Length / 1MB),1)}},FullName
         return $largeFiles
     }
+}
+
+function Get-LockedOutUser{
+    <#
+    .SYNOPSIS
+    Gets locked out users from Active Directory.
+
+    .DESCRIPTION
+    Gets all locked users accounts in Active Directory. Function can be limited to a single organizational unit.
+
+    .PARAMETER OrganizationalUnit
+    Only returns user AD objects from this organizational unit.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    User AD objects.
+
+    .NOTES
+
+    .EXAMPLE
+    Get-LockedOutUser
+
+    Gets all locked out users in AD.
+
+    .EXAMPLE
+    Get-LockedOutUser -OrganizationalUnit 'Department X Users'
+
+    Gets all locked out users in the 'Department X Users' organizational unit.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    Used information from: https://social.technet.microsoft.com/wiki/contents/articles/52327.windows-track-down-an-account-lockout-source-and-the-reason-with-powershell.aspx
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [string]$OrganizationalUnit = ""
+    )
+    
+    $lockedOutUsers = @()
+    $lockedOutUsersFiltered = @()
+    $lockedOutUsersRaw = Search-ADAccount -LockedOut -UsersOnly
+    
+    if($OrganizationalUnit -ne ""){
+        $ouUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit
+
+        foreach($user in $ouUsers){
+            foreach($lockedOutUser in $lockedOutUsersRaw){
+                if($user.SamAccountName -eq $lockedOutUser.SamAccountName){
+                    $lockedOutUsersFiltered += $lockedOutUser
+                }
+            }
+        }
+    }else{
+        $lockedOutUsersFiltered = $lockedOutUsersRaw
+    }
+
+    $lockedOutUsers = $lockedOutUsersFiltered
+
+    return $lockedOutUsers    
+}
+
+function Get-LockedOutUserEvent{
+    <#
+    .SYNOPSIS
+    Gets events about user accounts getting locked in Active Directory.
+
+    .DESCRIPTION
+    Gets events about user account getting locked in Active Directory from all domain contollers.
+
+    .PARAMETER OrganizationalUnit
+    Only gets lockout events for users in this OU.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    PowerShell objects with the following properties: 
+        TimeCreated - Date time the event was recorded
+        Id - Event ID
+        User - SamAccountName
+        Source - Computer where the lockout occured
+        DomainController - Domain controller that recorded the event
+        Domain - Domain that the user belongs to. Can be a domain or local machine
+
+    .NOTES
+    There my be duplicate results returned if the event has been recorded on multiple domain controllers.
+
+    .EXAMPLE
+    Get-LockedOutUserEvent
+
+    Gets all events for user account lockouts from all domain controllers.
+
+    .EXAMPLE
+    Get-LockedOutUserEvent -OrganizationalUnit 'Department X Users'
+
+    Gets all events for user account lockouts for users in the 'Department X Users' OU from all domain controllers.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    https://social.technet.microsoft.com/wiki/contents/articles/52327.windows-track-down-an-account-lockout-source-and-the-reason-with-powershell.aspx
+    #>
+
+    [CmdletBinding()]
+    Param(
+        [string]$OrganizationalUnit = "",
+        [int]$DaysBack = 1
+    )
+
+    $lockedOutUsers = @()
+    $lockedOutUsersRaw = @()
+    $lockedOutUsersFiltered = @()
+    $domainControllers = (Get-ADDomainController -Filter *).Name
+    $eventAge = (Get-Date).AddDays(-1 * $DaysBack)
+
+    if($OrganizationalUnit -eq ""){
+        foreach ($dc in $domainControllers){
+            $lockedOutUsersFiltered += Get-WinEvent -ComputerName $dc -FilterHashtable @{LogName = 'Security'; ID = 4740} | 
+                Where-Object -Property TimeCreated -GT $eventAge
+        }
+    }else{
+        foreach ($dc in $domainControllers){
+            $lockedOutUsersRaw += Get-WinEvent -ComputerName $dc -FilterHashtable @{LogName = 'Security'; ID = 4740} | 
+                Where-Object -Property TimeCreated -GT $eventAge
+        }
+
+        $ouUsers = Get-OUUser -OrganizationalUnit $OrganizationalUnit
+
+        foreach ($user in $ouUsers){
+            foreach($lockedOutUser in $lockedOutUsersRaw){
+                if($user.SamAccountName -eq $lockedOutUser.Properties[0].Value){
+                    $lockedOutUsersFiltered += $lockedOutUser
+                }
+            }            
+        }
+    }
+
+    foreach($user in $lockedOutUsersFiltered){
+        $lockedOutUsers += [PSCustomObject]@{
+            TimeCreated = $user.TimeCreated
+            Id = $user.Id
+            User = $user.Properties[0].Value
+            Source = $user.Properties[1].Value
+            DomainController = $user.Properties[4].Value
+            Domain = $user.Properties[5].Value
+        }
+    }
+
+    return $lockedOutUsers    
 }
 
 function Get-OfflineComputer{
@@ -3091,8 +3290,7 @@ function Set-ComputerIP{
         }
         
         Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS1" static primary}
-        #Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set dnsservers name="$TargetIPInterfaceAlias" address="$SelfDNS1" static primary}
-        
+            
         if($SelfDNS.count -gt 1){
             Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip add dnsservers name="$using:TargetIPInterfaceAlias" address="$using:SelfDNS2"}
         }
