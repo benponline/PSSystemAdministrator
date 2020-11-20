@@ -1680,127 +1680,6 @@ function Get-ComputerSoftware{
 
     begin{
         $masterKeys = [System.Collections.Generic.List[psobject]]::new()
-    }
-
-    process{
-        $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-        $lmReg = [Microsoft.Win32.RegistryHive]::LocalMachine
-        $cuKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall"
-        $cuReg = [Microsoft.Win32.RegistryHive]::CurrentUser
-
-        if((Test-Connection -ComputerName $Name -Count 1 -Quiet)){
-            $remoteCURegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($cuReg,$Name)
-            $remoteLMRegKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey($lmReg,$Name)
-
-            foreach($key in $lmKeys){
-                $regKey = $remoteLMRegKey.OpenSubkey($key)
-                
-                foreach ($subName in $regKey.GetSubkeyNames()){
-                
-                    foreach($sub in $regKey.OpenSubkey($subName)){
-                        $masterKeys.Add((New-Object PSObject -Property @{
-                            "ComputerName" = $Name;
-                            "Name" = $sub.getvalue("displayname");
-                            "SystemComponent" = $sub.getvalue("systemcomponent");
-                            "ParentKeyName" = $sub.getvalue("parentkeyname");
-                            "Version" = $sub.getvalue("DisplayVersion");
-                            "UninstallCommand" = $sub.getvalue("UninstallString");
-                            "InstallDate" = $sub.getvalue("InstallDate");
-                            "RegPath" = $sub.ToString()}))
-                    }
-                }
-            }
-
-            foreach ($key in $cuKeys){
-                $regKey = $remoteCURegKey.OpenSubkey($key)
-
-                if($null -ne $regKey){
-
-                    foreach($subName in $regKey.getsubkeynames()){
-
-                        foreach ($sub in $regKey.opensubkey($subName)){
-                            $masterKeys.Add((New-Object PSObject -Property @{
-                                "ComputerName" = $Name;
-                                "Name" = $sub.getvalue("displayname");
-                                "SystemComponent" = $sub.getvalue("systemcomponent");
-                                "ParentKeyName" = $sub.getvalue("parentkeyname");
-                                "Version" = $sub.getvalue("DisplayVersion");
-                                "UninstallCommand" = $sub.getvalue("UninstallString");
-                                "InstallDate" = $sub.getvalue("InstallDate");
-                                "RegPath" = $sub.ToString()}))
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    end{
-        $woFilter = {$null -ne $_.name -AND $_.SystemComponent -ne "1" -AND $null -eq $_.ParentKeyName}
-        $props = 'ComputerName','Name','Version','Installdate','UninstallCommand','RegPath'
-        $masterKeys = $masterKeys | Where-Object $woFilter | Select-Object -Property $props
-        return $masterKeys
-    }
-}
-
-function Get-ComputerSoftwareP{
-    <#
-    .SYNOPSIS
-    Gets all of the installed software on a computer or computers.
-
-    .DESCRIPTION
-    This function gathers all of the installed software on a computer or group of computers. By default gathers from the local host.
-
-    .PARAMETER Name
-    Host name of target computer.
-
-    .INPUTS
-    You can pipe host names or computer AD objects input to this function.
-
-    .OUTPUTS
-    Returns PS objects containing ComputerName, Name, Version, Installdate, UninstallCommand, and RegPath.
-
-    .NOTES
-    Compatible with Windows 7 and newer.
-
-    Requires remote registry service running on remote machines.
-
-    .EXAMPLE
-    Get-ComputerSoftware
-
-    This cmdlet returns all installed software on the local host.
-
-    .EXAMPLE
-    Get-ComputerSoftware -ComputerName “Computer”
-
-    This cmdlet returns all the software installed on "Computer".
-
-    .EXAMPLE
-    Get-ADComputer -Filter * | Get-ComputerSoftware
-
-    This cmdlet returns the installed software on all computers on the domain.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benponline
-    github.com/benponline
-    twitter.com/benponline
-    paypal.me/teknically
-
-    .LINK
-    Based on code from:
-    https://community.spiceworks.com/scripts/show/2170-get-a-list-of-installed-software-from-a-remote-computer-fast-as-lightning
-    #>
-
-    [cmdletbinding()]
-    param(
-        [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
-        [string]$Name = $env:COMPUTERNAME
-    )
-
-    begin{
-        $masterKeys = [System.Collections.Generic.List[psobject]]::new()
         $computers = [System.Collections.Generic.List[string]]::new()
 
         $lmKeys = "Software\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
@@ -1939,17 +1818,19 @@ function Get-ComputerSystemEvent{
 
     begin{
         $eventLog = [System.Collections.Generic.List[psobject]]::new()
+        $computers = [System.Collections.Generic.List[string]]::new()
     }
 
     process{
-        $events = Get-WinEvent -LogName System -ComputerName $Name -MaxEvents $Newest | Select-Object -Property @{n='Name';e={$Name}},TimeCreated,Id,LevelDisplayName,Message
-
-        foreach($event in $events){
-            $eventLog.Add($event)
-        }
+        $computers.Add($Name)        
     }
 
     end{
+        $computers | ForEach-Object -Parallel {
+            Get-WinEvent -LogName System -ComputerName $_ -MaxEvents $using:Newest | 
+            Select-Object -Property MachineName,TimeCreated,Id,LevelDisplayName,Message
+        } | ForEach-Object { $eventLog.Add($_) }
+
         return $eventLog
     }
 }
