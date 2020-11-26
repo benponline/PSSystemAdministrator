@@ -10,8 +10,6 @@ paypal.me/teknically
 
 Notes:
 Set-ComputerIP - Adjust to use https://docs.microsoft.com/en-us/powershell/module/dhcpserver/add-dhcpserverv4reservation?view=win10-ps
-Get-LockedUserAccount - Create. Include why it was locked.
-
 #>
 
 function Disable-Computer{
@@ -56,7 +54,7 @@ function Disable-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding(SupportsShouldProcess)]
+    [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('ComputerName')]
@@ -124,7 +122,7 @@ function Disable-User{
     paypal.me/teknically
     #>
 
-    [cmdletbinding(SupportsShouldProcess)]
+    [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [string]$SamAccountName
@@ -2960,7 +2958,7 @@ function Move-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding(SupportsShouldProcess)]
+    [cmdletbinding()]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
@@ -3035,7 +3033,7 @@ function Move-User{
     paypal.me/teknically
     #>
 
-    [cmdletbinding(SupportsShouldProcess)]
+    [cmdletbinding()]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("SamAccountName")]
@@ -3107,7 +3105,7 @@ function Remove-Computer{
     paypal.me/teknically
     #>
 
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
@@ -3170,7 +3168,7 @@ function Remove-User{
     paypal.me/teknically
     #>
 
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding()]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName
@@ -3341,7 +3339,7 @@ function Set-UserChangePassword{
     paypal.me/teknically
     #>
 
-    [cmdletbinding(SupportsShouldProcess)]
+    [cmdletbinding()]
     param(
         [parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,Mandatory=$true)]
         [Alias("Name")]
