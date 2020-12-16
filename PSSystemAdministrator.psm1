@@ -2885,7 +2885,7 @@ function Get-UserLastLogonTime{
         $dcCount = $domainControllers.Count
         
         if($dcCount -eq 1){
-            $lastLogonList += Get-ADuser $SamAccountName | 
+            $lastLogonList += Get-ADUser $SamAccountName | 
                 Get-ADObject -Properties LastLogon | 
                 Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
         }else{
