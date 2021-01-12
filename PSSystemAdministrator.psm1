@@ -10,6 +10,7 @@ paypal.me/teknically
 
 Notes:
 Set-ComputerIP - Adjust to use https://docs.microsoft.com/en-us/powershell/module/dhcpserver/add-dhcpserverv4reservation?view=win10-ps
+Test-NetworkSpeed - https://community.spiceworks.com/scripts/show/2502-network-bandwidth-test-test-networkspeed-ps1 
 #>
 
 function Disable-Computer{
