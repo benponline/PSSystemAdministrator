@@ -3134,7 +3134,7 @@ function Remove-User{
     Removes a user from Active Directory.
 
     .DESCRIPTION
-    Removes a user or users from AD and returns a list of users that were removed.
+    Removes a user or users from AD and returns a list of users that were removed. This function will not ask to confirm the deletion of accounts.
 
     .PARAMETER SamAccountName
     User that will be removed.
@@ -3185,7 +3185,7 @@ function Remove-User{
     }
 
     end{
-        $users | Remove-ADUser
+        $users | Remove-ADUser -Confirm:$false
         return $users
     }
 }
