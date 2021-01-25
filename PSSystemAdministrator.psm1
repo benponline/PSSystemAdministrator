@@ -28,6 +28,12 @@ function Disable-Computer{
     .INPUTS
     Computer AD objects can be passed to this function from the pipeline.
 
+    Or
+
+    PS objects with one of the following properties:
+        [string]Name            Host name of target computer
+        [string]ComputerName    Host name of target computer
+
     .OUTPUTS
     An array of computer AD objects. One for each computer that this function disables.
 
