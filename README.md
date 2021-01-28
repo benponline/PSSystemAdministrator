@@ -7,7 +7,6 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 1. Download the PSSystemAdministrator.psm1 file.
 2. Open the PowerShell modules folder on your computer.
    - For PowerShell Core it is located here: \Documents\PowerShell\Modules
-   - For PowerShell 5 it is located here: \Documents\WindowsPowerShell\Modules
 3. Create a folder named “PSSystemAdministrator”.
 4. Place the PSSystemAdministrator.psm1 file in the new folder.
 5. Open your version of PowerShell and run the following command: 
