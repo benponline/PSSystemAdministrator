@@ -1,5 +1,5 @@
 <#
-Meant to be used in a Windows Domain by a domain administrator.
+This module is meant to be used in a Windows Domain by a domain administrator.
 
 By:
 Ben Peterson
@@ -7,11 +7,6 @@ linkedin.com/in/benponline
 github.com/benponline
 twitter.com/benponline
 paypal.me/teknically
-
-Notes:
-Set-ComputerIP - Adjust to use https://docs.microsoft.com/en-us/powershell/module/dhcpserver/add-dhcpserverv4reservation?view=win10-ps
-Test-NetworkSpeed - https://community.spiceworks.com/scripts/show/2502-network-bandwidth-test-test-networkspeed-ps1
-Unlock-User
 #>
 
 function Disable-Computer{
