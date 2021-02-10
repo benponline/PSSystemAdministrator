@@ -3185,7 +3185,7 @@ function Remove-User{
     }
 }
 
-function Set-ComputerIP{
+function Set-ComputerIPAddress{
     <#
     .SYNOPSIS
     Sets the IP address of a computer.
@@ -3214,7 +3214,7 @@ function Set-ComputerIP{
     Due to the nature of how this function connects to the remote computer, after changing the IP settings the function will say that the connection has been broken. This is a sign that the IP changes have worked.
 
     .EXAMPLE
-    Set-ComputerIP -ComputerName "Computer2" -IPAddress 10.10.10.10
+    Set-ComputerIPAddress -ComputerName "Computer2" -IPAddress 10.10.10.10
 
     Sets Computer2's IP address to 10.10.10.10 and copies over DNS, subnet, and default gateway information from the host computer.
 
@@ -3290,6 +3290,65 @@ function Set-ComputerIP{
 
         Invoke-Command -ComputerName $ComputerName -ScriptBlock {netsh interface ip set address $using:TargetIPInterfaceAlias static $using:IPAddress $using:SubnetMask $using:SelfDefaultGateway}
     }
+}
+
+function Set-ComputerIPAddress2{
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER ComputerName
+
+    .PARAMETER IPAddress
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ComputerName,
+
+        [Parameter(Mandatory=$true)]
+        [string]$IPAddress
+    )
+
+    # Add logic to catch duplicate host names and IPs.
+    $dhcpServers = (Get-DhcpServerInDC).DnsName
+    $scopeIds = (Get-DhcpServerv4Scope -ComputerName $dhcpServers[0]).ScopeId
+    $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServers[0] -ScopeId $scopeIds[0] -AllLeases
+    $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
+    $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
+    $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeIds[0] -ComputerName $dhcpServers[0]
+
+    $isUsed = $false
+
+    foreach($r in $reservations){
+        if($r.Name -EQ $hostName){
+            $isUsed = $true
+        }
+    }
+################## here
+    if($isUsed -EQ $true){
+        Write-Host "Computer already has a reservation in DHCP. Remove it to add on with this function"
+    }else{
+        Set-DhcpServerv4Reservation -ScopeId $scopeIds[0] -IPAddress $IPAddress -ClientId $clientId
+    }
+
 }
 
 function Set-UserChangePassword{
