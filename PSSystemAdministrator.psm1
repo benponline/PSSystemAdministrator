@@ -12,20 +12,25 @@ paypal.me/teknically
 function Add-DHCPReservation{
     <#
     .SYNOPSIS
+    Adds a reservation in DHCP for a computer.
 
     .DESCRIPTION
-    When the IP lease on the target computer expires it will get the new address. To force the change, you need to renew the IP address on the computer.
+    This function adds an IP address reservation for a computer in the first DHCP server is contacts and triggers that server to replicate its settings to all failover partners.
 
     .PARAMETER ComputerName
+    Name of the computer that will get a reservation in DHCP.
 
     .PARAMETER IPAddress
+    IP address of the reservation made in DHCP.
 
     .INPUTS
+    None.
 
     .OUTPUTS
+    None.
 
     .NOTES
-    If you have multiple DHCP servers you need to set up failover replication between them. This function will attempt to replicate the reservation is creates to all DHCP servers.
+    If you have multiple DHCP servers you need to set up failover replication between them for reservarions to be added to all DHCP servers. This function will attempt to replicate the reservation is creates to all DHCP servers. When the IP lease on the target computer expires it will get the new address. To force the change, you need to renew the IP address on the computer.
 
     .EXAMPLE
 
@@ -46,6 +51,7 @@ function Add-DHCPReservation{
         [string]$IPAddress
     )
 
+    # Add reservations to each DHCP server?
     $dhcpServers = (Get-DhcpServerInDC).DnsName
     $dhcpServer = $dhcpServers[0].split(".")[0]
     $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
@@ -56,10 +62,10 @@ function Add-DHCPReservation{
 
     # Check for reservations that already contain the host name or ip address passed to the funciton.
     $isUsed = $false
-
     foreach($r in $reservations){
         if($r.Name -EQ $hostName -or $r.IPAddress -EQ $IPAddress){
             $isUsed = $true
+            break
         }
     }
 
@@ -110,23 +116,23 @@ function Remove-DHCPReservation{
     $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServer -ScopeId $scopeId -AllLeases
     $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
     $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
-    $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer | Out-Null
+    $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer
 
-
+    # Check if there is a reservation for the computer.
     $isReserved = $false
-
-    # Test does not get correct result.
     foreach($r in $reservations){
         if($r.Name -EQ $hostName){
             $isReserved = $true
+            break
         }
     }
 
     if($isReserved -EQ $true){
+        Write-Host "Removing reservation for $ComputerName."
         Remove-DhcpServerv4Reservation -ScopeId $scopeId -ClientId $clientId -ComputerName $dhcpServer
-        Invoke-DhcpServerv4FailoverReplication -ScopeId $scopeId -ComputerName $dhcpServer -Force        
+        Invoke-DhcpServerv4FailoverReplication -ScopeId $scopeId -ComputerName $dhcpServer -Force | Out-Null    
     }else{
-        Write-Host "Computer already has a reservation in DHCP. Remove it to bofore using this function."
+        Write-Host "There is no DHCP reservation for that computer."
     }
 }
 
