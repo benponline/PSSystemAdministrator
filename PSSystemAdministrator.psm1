@@ -15,7 +15,7 @@ function Add-DHCPReservation{
     Adds a reservation in DHCP for a computer.
 
     .DESCRIPTION
-    This function adds an IP address reservation for a computer in the first DHCP server is contacts and triggers that server to replicate its settings to all failover partners.
+    This function adds an IPv4 reservation for a computer in all DHCP servers in a domain.
 
     .PARAMETER ComputerName
     Name of the computer that will get a reservation in DHCP.
@@ -30,9 +30,22 @@ function Add-DHCPReservation{
     None.
 
     .NOTES
-    If you have multiple DHCP servers you need to set up failover replication between them for reservarions to be added to all DHCP servers. This function will attempt to replicate the reservation is creates to all DHCP servers. When the IP lease on the target computer expires it will get the new address. To force the change, you need to renew the IP address on the computer.
+    This function is meant to be used in a domain with one DHCP scope.
+
+    This function will attempt to add the reservation to each DHCP server in the domain.
+
+    The target computer will not get the new address immediately if it does not already use that IP. 
+    
+    You can create a reservation with an IP that is currently leased to another computer. You will need to manually trigger an IP change in the computer currently holding the IP, then in the computer getting the new reservation. The computer in the reservation will then be using the assigned IP.
+    
+    You can allow the DHCP servers to naturally renew their leases over time. Eventually the computer will get the IP assigned to it in the reservation.
+
+    If a reservation with the computer or IP address passed to the function already exists, then the function will stop and notify you which DHCP server it is located on. 
 
     .EXAMPLE
+    Add-DHCPReservation -ComputerName "Computer1" -IPAddress 10.10.10.123
+
+    This will create a reservation in all available DHCP servers in a domain for the computer name passed to it for the IP address passed to it.
 
     .LINK
     By Ben Peterson
@@ -85,21 +98,29 @@ function Add-DHCPReservation{
 function Remove-DHCPReservation{
     <#
     .SYNOPSIS
+    Removes a reservation for a computer in DHCP.
 
     .DESCRIPTION
-    When the IP lease on the target computer expires it will get the new address. To force the change, you need to renew the IP address on the computer.
+    This function removes an IPv4 reservation for a computer in all DHCP servers in a domain.
 
     .PARAMETER ComputerName
-
-    .PARAMETER IPAddress
+    Host name of the computer in the reservation that will be removed.
 
     .INPUTS
+    None.
 
     .OUTPUTS
+    None.
 
     .NOTES
+    This function is meant to be used in a domain with one DHCP scope.
+
+    This function will attempt to remove the reservation in each available DHCP server. If it is unable to reach every DHCP server, then the reservation will remain on that server if it exists there.
 
     .EXAMPLE
+    Remove-DHCPReservation -ComputerName "Computer1"
+
+    Removes any reservations for "Computer1" in all available DHCP servers in the domain.
 
     .LINK
     By Ben Peterson
@@ -136,9 +157,6 @@ function Remove-DHCPReservation{
 
         if($isReserved -EQ $true){
             Remove-DhcpServerv4Reservation -ScopeId $scopeId -ClientId $clientId -ComputerName $dhcpServer
-            Write-Host "Removed reservation for $ComputerName on $dhcpServer."
-        }else{
-            Write-Host "There is no DHCP reservation for $ComputerName on $dhcpServer."
         }
     }
 }
