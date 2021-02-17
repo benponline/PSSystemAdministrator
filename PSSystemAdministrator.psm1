@@ -95,72 +95,6 @@ function Add-DHCPReservation{
     }
 }
 
-function Remove-DHCPReservation{
-    <#
-    .SYNOPSIS
-    Removes a reservation for a computer in DHCP.
-
-    .DESCRIPTION
-    This function removes an IPv4 reservation for a computer in all DHCP servers in a domain.
-
-    .PARAMETER ComputerName
-    Host name of the computer in the reservation that will be removed.
-
-    .INPUTS
-    None.
-
-    .OUTPUTS
-    None.
-
-    .NOTES
-    This function is meant to be used in a domain with one DHCP scope.
-
-    This function will attempt to remove the reservation in each available DHCP server. If it is unable to reach every DHCP server, then the reservation will remain on that server if it exists there.
-
-    .EXAMPLE
-    Remove-DHCPReservation -ComputerName "Computer1"
-
-    Removes any reservations for "Computer1" in all available DHCP servers in the domain.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benponline
-    github.com/benponline
-    twitter.com/benponline
-    paypal.me/teknically
-    #>
-
-    [cmdletbinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$ComputerName
-    )
-
-    $dhcpServers = (Get-DhcpServerInDC).DnsName
-    $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
-
-    foreach($server in $dhcpServers){
-        $dhcpServer = $server.split(".")[0]
-        $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
-        $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServer -ScopeId $scopeId -AllLeases
-        $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
-        $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer
-
-        # Check if there is a reservation for the computer.
-        $isReserved = $false
-        foreach($r in $reservations){
-            if($r.Name -EQ $hostName){
-                $isReserved = $true
-                break
-            }
-        }
-
-        if($isReserved -EQ $true){
-            Remove-DhcpServerv4Reservation -ScopeId $scopeId -ClientId $clientId -ComputerName $dhcpServer
-        }
-    }
-}
-
 function Disable-Computer{
     <#
     .SYNOPSIS
@@ -3272,6 +3206,72 @@ function Remove-Computer{
     end{
         $computers | Remove-ADComputer
         return $computers
+    }
+}
+
+function Remove-DHCPReservation{
+    <#
+    .SYNOPSIS
+    Removes a reservation for a computer in DHCP.
+
+    .DESCRIPTION
+    This function removes an IPv4 reservation for a computer in all DHCP servers in a domain.
+
+    .PARAMETER ComputerName
+    Host name of the computer in the reservation that will be removed.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+    This function is meant to be used in a domain with one DHCP scope.
+
+    This function will attempt to remove the reservation in each available DHCP server. If it is unable to reach every DHCP server, then the reservation will remain on that server if it exists there.
+
+    .EXAMPLE
+    Remove-DHCPReservation -ComputerName "Computer1"
+
+    Removes any reservations for "Computer1" in all available DHCP servers in the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ComputerName
+    )
+
+    $dhcpServers = (Get-DhcpServerInDC).DnsName
+    $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
+
+    foreach($server in $dhcpServers){
+        $dhcpServer = $server.split(".")[0]
+        $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
+        $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServer -ScopeId $scopeId -AllLeases
+        $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
+        $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer
+
+        # Check if there is a reservation for the computer.
+        $isReserved = $false
+        foreach($r in $reservations){
+            if($r.Name -EQ $hostName){
+                $isReserved = $true
+                break
+            }
+        }
+
+        if($isReserved -EQ $true){
+            Remove-DhcpServerv4Reservation -ScopeId $scopeId -ClientId $clientId -ComputerName $dhcpServer
+        }
     }
 }
 
