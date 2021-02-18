@@ -1,5 +1,5 @@
 <#
-Meant to be used in a Windows Domain by a domain administrator.
+This module is meant to be used in a Windows Domain by a domain administrator.
 
 By:
 Ben Peterson
@@ -7,10 +7,93 @@ linkedin.com/in/benponline
 github.com/benponline
 twitter.com/benponline
 paypal.me/teknically
-
-Notes:
-Set-ComputerIP - Adjust to use https://docs.microsoft.com/en-us/powershell/module/dhcpserver/add-dhcpserverv4reservation?view=win10-ps
 #>
+
+function Add-DHCPReservation{
+    <#
+    .SYNOPSIS
+    Adds a reservation in DHCP for a computer.
+
+    .DESCRIPTION
+    This function adds an IPv4 reservation for a computer in all DHCP servers in a domain.
+
+    .PARAMETER ComputerName
+    Name of the computer that will get a reservation in DHCP.
+
+    .PARAMETER IPAddress
+    IP address of the reservation made in DHCP.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+    This function is meant to be used in a domain with one DHCP scope.
+
+    This function will attempt to add the reservation to each DHCP server in the domain.
+
+    The target computer will not get the new address immediately if it does not already use that IP. 
+    
+    You can create a reservation with an IP that is currently leased to another computer. You will need to manually trigger an IP change in the computer currently holding the IP, then in the computer getting the new reservation. The computer in the reservation will then be using the assigned IP.
+    
+    You can allow the DHCP servers to naturally renew their leases over time. Eventually the computer will get the IP assigned to it in the reservation.
+
+    If a reservation with the computer or IP address passed to the function already exists, then the function will stop and notify you which DHCP server it is located on. 
+
+    .EXAMPLE
+    Add-DHCPReservation -ComputerName "Computer1" -IPAddress 10.10.10.123
+
+    This will create a reservation in all available DHCP servers in a domain for the computer name passed to it for the IP address passed to it.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ComputerName,
+
+        [Parameter(Mandatory=$true)]
+        [string]$IPAddress
+    )
+
+    $dhcpServers = (Get-DhcpServerInDC).DnsName
+    $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
+
+    foreach($server in $dhcpServers){
+        $dhcpServer = $server.split(".")[0]
+        $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
+        $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer
+
+        # Check for reservations that already contain the host name or ip address passed to the funciton.
+        foreach($r in $reservations){
+            if($r.Name -EQ $hostName){
+                return "The computer $hostName already has a reservation on $dhcpServer"
+            }
+
+            if($r.IPAddress -EQ $IPAddress){
+                return "The IP address $IPAddress already has a reservation on $dhcpServer"
+            }
+
+        }
+    }
+
+    foreach($server in $dhcpServers){
+        $dhcpServer = $server.split(".")[0]
+        $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
+        $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServer -ScopeId $scopeId -AllLeases
+        $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
+
+        Add-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer -IPAddress $IPAddress -ClientId $clientId
+    }
+}
 
 function Disable-Computer{
     <#
@@ -2885,7 +2968,7 @@ function Get-UserLastLogonTime{
         $dcCount = $domainControllers.Count
         
         if($dcCount -eq 1){
-            $lastLogonList += Get-ADuser $SamAccountName | 
+            $lastLogonList += Get-ADUser $SamAccountName | 
                 Get-ADObject -Properties LastLogon | 
                 Select-Object -Property @{n="SamAccountName";e={$SamAccountName}},@{n="LastLogon";e={([datetime]::fromfiletime($_.LastLogon))}}
         }else{
@@ -3126,13 +3209,79 @@ function Remove-Computer{
     }
 }
 
+function Remove-DHCPReservation{
+    <#
+    .SYNOPSIS
+    Removes a reservation for a computer in DHCP.
+
+    .DESCRIPTION
+    This function removes an IPv4 reservation for a computer in all DHCP servers in a domain.
+
+    .PARAMETER ComputerName
+    Host name of the computer in the reservation that will be removed.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+    This function is meant to be used in a domain with one DHCP scope.
+
+    This function will attempt to remove the reservation in each available DHCP server. If it is unable to reach every DHCP server, then the reservation will remain on that server if it exists there.
+
+    .EXAMPLE
+    Remove-DHCPReservation -ComputerName "Computer1"
+
+    Removes any reservations for "Computer1" in all available DHCP servers in the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ComputerName
+    )
+
+    $dhcpServers = (Get-DhcpServerInDC).DnsName
+    $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
+
+    foreach($server in $dhcpServers){
+        $dhcpServer = $server.split(".")[0]
+        $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
+        $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServer -ScopeId $scopeId -AllLeases
+        $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
+        $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer
+
+        # Check if there is a reservation for the computer.
+        $isReserved = $false
+        foreach($r in $reservations){
+            if($r.Name -EQ $hostName){
+                $isReserved = $true
+                break
+            }
+        }
+
+        if($isReserved -EQ $true){
+            Remove-DhcpServerv4Reservation -ScopeId $scopeId -ClientId $clientId -ComputerName $dhcpServer
+        }
+    }
+}
+
 function Remove-User{
     <#
     .SYNOPSIS
     Removes a user from Active Directory.
 
     .DESCRIPTION
-    Removes a user or users from AD and returns a list of users that were removed.
+    Removes a user or users from AD and returns a list of users that were removed. This function will not ask to confirm the deletion of accounts.
 
     .PARAMETER SamAccountName
     User that will be removed.
@@ -3183,12 +3332,12 @@ function Remove-User{
     }
 
     end{
-        $users | Remove-ADUser
+        $users | Remove-ADUser -Confirm:$false
         return $users
     }
 }
 
-function Set-ComputerIP{
+function Set-ComputerIPAddress{
     <#
     .SYNOPSIS
     Sets the IP address of a computer.
@@ -3217,7 +3366,7 @@ function Set-ComputerIP{
     Due to the nature of how this function connects to the remote computer, after changing the IP settings the function will say that the connection has been broken. This is a sign that the IP changes have worked.
 
     .EXAMPLE
-    Set-ComputerIP -ComputerName "Computer2" -IPAddress 10.10.10.10
+    Set-ComputerIPAddress -ComputerName "Computer2" -IPAddress 10.10.10.10
 
     Sets Computer2's IP address to 10.10.10.10 and copies over DNS, subnet, and default gateway information from the host computer.
 
@@ -3434,5 +3583,114 @@ function Start-Computer{
     
     end{
         $UdpClient.Close()
+    }
+}
+
+function Test-NetworkSpeed{
+    <#
+    .SYNOPSIS
+    Tests the network speed between the machine running this function and a remote machine.
+        
+    .DESCRIPTION
+    This function measures the network speed, in MB per second, between the machine running this function and a remote machine. It does this by creating a text file in the directory the module is located and copying it to a remote directory supplied by the user.
+    
+    The user must provide a directory to test the speed to. The user can adjust the size of the file in MB. The function will copy the file over to the destination directory 5 times and calculate the average MB per second. The user can adjust the number of tests.
+        
+    .PARAMETER DestinationDirectory
+    The function will test the speed between the local machine and this location.
+  
+    .PARAMETER Count
+    The number of times the speed will be tested before calculating the average MB per second.
+
+    .PARAMETER FileSizeMB
+    The size of the file that will be used to test the network speed.
+    
+    .INPUTS
+    PS objects with a property named "FullName" or "DestinationDirectory".
+    
+    .OUTPUTS
+    One PS Object per DestinationDirectory given:
+        [string]SourceMachine           Name of machine running the function.
+        [string]DestinationDirectory    Speed test between here and SourceMachine.
+        [int]FileSizeMB                 Size of file.
+        MbPerSecond                     Speed in MB per second.
+    
+    .NOTES
+    None.
+    
+    .EXAMPLE
+    Test-NetworkSpeed -DestinationDirectory "\\Server\Share"
+
+    Measures the network speed between the host machine and the computer hosting the file share by copying a 100 MB text file to the destination 5 times and calculating the average speed in MB per second.
+
+    .EXAMPLE
+    Test-NetworkSpeed -DestinationDirectory "\\Server\Share" -Count 10 -FileSizeMB 200
+
+    Measures the network speed between the host machine and the computer hosting the file share by copying a 200 MB text file to the destination 10 times and calculating the average speed in MB per second.
+
+    .EXAMPLE
+    Test-NetworkSpeed -DestinationDirectory "\\Server\Share","\\Server2\Share" -Count 10 -FileSizeMB 200
+
+    Measures the network speed between the host machine and the computers hosting the file shares by copying a 200 MB text file to the destinations 10 times each and calculating the average speed in MB per second.
+
+    .EXAMPLE
+    "\\Server\Share","\\Server2\Share" | Test-NetworkSpeed -Count 10 -FileSizeMB 200
+
+    Measures the network speed between the host machine and the computers hosting the file shares by copying a 200 MB text file to the destinations 10 times each and calculating the average speed in MB per second.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically 
+    #>
+
+    [CmdletBinding()]
+    param(
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias("FullName")]
+        [string[]]$DestinationDirectory,
+
+        [int]$Count = 5,
+
+        [int]$FileSizeMB = 100
+    )
+
+    begin{
+        $sourceFilePath = "$PSScriptRoot\TextFile.txt"
+        $fileContent = "1" * (1MB * $FileSizeMB)
+        New-Item -Path $sourceFilePath -ItemType File -Value $fileContent -Force | Out-Null
+        $results = @()
+    }
+
+    process{
+        foreach($dir in $DestinationDirectory){
+            $destinationFilePath = "$dir\TextFile.txt"
+            $totalMBPerSecond = 0
+         
+            for ($i = 0; $i -lt $Count; $i++) {
+                $copy = Measure-Command -Expression { Copy-Item -Path $sourceFilePath -Destination $destinationFilePath -Force }
+                $copyMilliseconds = $copy.Milliseconds
+                $MBPerSecond = [Math]::Round($FileSizeMB / $copyMilliseconds * 1000) 
+                $totalMBPerSecond += $MBPerSecond
+            }
+
+            $averageMBPerSecond = [Math]::Round($totalMBPerSecond / $count)
+
+            $results += [PSCustomObject]@{
+                SourceMachine = $env:ComputerName;
+                DestinationDirectory = $dir;
+                FileSizeMB = $FileSizeMB;
+                MbPerSecond = $averageMBPerSecond
+            }
+
+            Remove-Item -Path $destinationFilePath -Force
+        }
+    }
+
+    end{
+        Remove-Item -Path $sourceFilePath -Force
+        return $results            
     }
 }

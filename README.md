@@ -1,5 +1,5 @@
 # PSSystemAdministrator
-This module contains functions useful for administrating a Windows Active Directory domain. Many of the functions are designed to work with eachother. Functions that gather information on users or computers can be piped into functions that take an action. For instance, you can pipe a function that returns computers that have not logged onto the network for 30 days into a function that disables computer accounts. In a single line of code, you can disable all the inactive computers in active directory. There are a wide variety of functions that perform other tasks like sending magic packets for wake on lan, measuring directory and sub-directory sizes, gathering large files, and other tasks. Every function is fully documented and works with the `Get-Help` function. 
+This module contains functions useful for administrating a Windows Active Directory domain with a single DHCP scope. Many of the functions are designed to work with eachother. Functions that gather information on users or computers can be piped into functions that take an action. For instance, you can pipe a function that returns computers that have not logged onto the network for 30 days into a function that disables computer accounts. In a single line of code, you can disable all the inactive computers in active directory. There are a wide variety of functions that perform other tasks like sending magic packets for wake on lan, measuring directory and sub-directory sizes, gathering large files, and other tasks. Every function is fully documented and works with the `Get-Help` function. 
 
 This module is written for PowerShell Core and tested with Windows 10 machines. I am actively developing this module alongside my work as a system administrator. I use this module every day.
 
@@ -7,7 +7,6 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 1. Download the PSSystemAdministrator.psm1 file.
 2. Open the PowerShell modules folder on your computer.
    - For PowerShell Core it is located here: \Documents\PowerShell\Modules
-   - For PowerShell 5 it is located here: \Documents\WindowsPowerShell\Modules
 3. Create a folder named “PSSystemAdministrator”.
 4. Place the PSSystemAdministrator.psm1 file in the new folder.
 5. Open your version of PowerShell and run the following command: 
@@ -16,6 +15,8 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 7. Open a new PowerShell session and you are good to go.
 
 ## Functions
+`Add-DHCPReservation` Adds a reservation in DHCP for a computer.
+
 `Disable-Computer` Disables a computer.
 
 `Disable-User` Disables a user.
@@ -35,6 +36,7 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 `Get-ChildItemLastWriteTime` Gets all files in a directory and returns information including last write time.
 
 `Get-ComputerCurrentUser` Gets the current user logged onto a computer.
+
 `Get-ComputerDriveInformation` Gets information about the drives on a computer.
 
 `Get-ComputerFailedLogonEvent` Gets failed logon events from a computer in the last day.
@@ -79,6 +81,10 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 
 `Get-LargeFile` Gets files larger than 500 MB from a directory.
 
+`Get-LockedOutUser` Gets locked out users from Active Directory.
+
+`Get-LockedOutUserEvent` Gets events about user accounts getting locked in Active Directory.
+
 `Get-OfflineComputer` Gets all computers that are offline. 
 
 `Get-OnlineComputer` Gets computers that are online.
@@ -99,9 +105,11 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 
 `Remove-Computer` Removes a computer from Active Directory.
 
+`Remove-DHCPReservation` Removes a reservation for a computer in DHCP.
+
 `Remove-User` Removes a user from Active Directory.
 
-`Set-ComputerIP` Sets the IP address of a computer.
+`Set-ComputerIPAddress` Sets the IP address of a computer.
 
 `Set-UserChangePassword` Sets user account to require a password change at the next log on.
 
