@@ -114,3 +114,5 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 `Set-UserChangePassword` Sets user account to require a password change at the next log on.
 
 `Start-Computer` Starts a remote computer by sending a magic packet.
+
+`Test-NetworkSpeed` Tests the network speed between the machine running this function and a remote machine.
