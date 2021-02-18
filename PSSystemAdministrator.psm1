@@ -3585,3 +3585,76 @@ function Start-Computer{
         $UdpClient.Close()
     }
 }
+
+function Test-NetworkSpeed{
+    <#
+    .SYNOPSIS
+        
+    .DESCRIPTION
+        
+    .PARAMETER Name
+    
+    .INPUTS
+    
+    .OUTPUTS
+    
+    .NOTES
+    
+    .EXAMPLE
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically 
+    #>
+
+    [CmdletBinding()]
+    param(
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias("FullName")]
+        [string[]]$DestinationDirectory,
+
+        [int]$Count = 5,
+
+        [int]$FileSizeMB = 100
+    )
+
+    begin{
+        $sourceFilePath = "$PSScriptRoot\TextFile.txt"
+        $fileContent = "1" * (1MB * $FileSizeMB)
+        New-Item -Path $sourceFilePath -ItemType File -Value $fileContent -Force | Out-Null
+        $results = @()
+    }
+
+    process{
+        foreach($dir in $DestinationDirectory){
+            $destinationFilePath = "$dir\TextFile.txt"
+            $totalMBPerSecond = 0
+         
+            for ($i = 0; $i -lt $Count; $i++) {
+                $copy = Measure-Command -Expression { Copy-Item -Path $sourceFilePath -Destination $destinationFilePath -Force }
+                $copyMilliseconds = $copy.Milliseconds
+                $MBPerSecond = [Math]::Round($FileSizeMB / $copyMilliseconds * 1000) 
+                $totalMBPerSecond += $MBPerSecond
+            }
+
+            $averageMBPerSecond = [Math]::Round($totalMBPerSecond / $count)
+
+            $results += [PSCustomObject]@{
+                SourceMachine = $env:ComputerName;
+                DestinationDirectory = $dir;
+                FileSizeMB = $FileSizeMB;
+                MbPerSecond = $averageMBPerSecond
+            }
+
+            Remove-Item -Path $destinationFilePath -Force
+        }
+    }
+
+    end{
+        Remove-Item -Path $sourceFilePath -Force
+        return $results            
+    }
+}
