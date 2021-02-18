@@ -3616,6 +3616,7 @@ function Test-NetworkSpeed{
         MbPerSecond                     Speed in MB per second.
     
     .NOTES
+    None.
     
     .EXAMPLE
     Test-NetworkSpeed -DestinationDirectory "\\Server\Share"
