@@ -3589,18 +3589,53 @@ function Start-Computer{
 function Test-NetworkSpeed{
     <#
     .SYNOPSIS
+    Tests the network speed between the machine running this function and a remote machine.
         
     .DESCRIPTION
+    This function measures the network speed, in MB per second, between the machine running this function and a remote machine. It does this by creating a text file in the directory the module is located and copying it to a remote directory supplied by the user.
+    
+    The user must provide a directory to test the speed to. The user can adjust the size of the file in MB. The function will copy the file over to the destination directory 5 times and calculate the average MB per second. The user can adjust the number of tests.
         
-    .PARAMETER Name
+    .PARAMETER DestinationDirectory
+    The function will test the speed between the local machine and this location.
+  
+    .PARAMETER Count
+    The number of times the speed will be tested before calculating the average MB per second.
+
+    .PARAMETER FileSizeMB
+    The size of the file that will be used to test the network speed.
     
     .INPUTS
+    PS objects with a property named "FullName" or "DestinationDirectory".
     
     .OUTPUTS
+    One PS Object per DestinationDirectory given:
+        [string]SourceMachine           Name of machine running the function.
+        [string]DestinationDirectory    Speed test between here and SourceMachine.
+        [int]FileSizeMB                 Size of file.
+        MbPerSecond                     Speed in MB per second.
     
     .NOTES
     
     .EXAMPLE
+    Test-NetworkSpeed -DestinationDirectory "\\Server\Share"
+
+    Measures the network speed between the host machine and the computer hosting the file share by copying a 100 MB text file to the destination 5 times and calculating the average speed in MB per second.
+
+    .EXAMPLE
+    Test-NetworkSpeed -DestinationDirectory "\\Server\Share" -Count 10 -FileSizeMB 200
+
+    Measures the network speed between the host machine and the computer hosting the file share by copying a 200 MB text file to the destination 10 times and calculating the average speed in MB per second.
+
+    .EXAMPLE
+    Test-NetworkSpeed -DestinationDirectory "\\Server\Share","\\Server2\Share" -Count 10 -FileSizeMB 200
+
+    Measures the network speed between the host machine and the computers hosting the file shares by copying a 200 MB text file to the destinations 10 times each and calculating the average speed in MB per second.
+
+    .EXAMPLE
+    "\\Server\Share","\\Server2\Share" | Test-NetworkSpeed -Count 10 -FileSizeMB 200
+
+    Measures the network speed between the host machine and the computers hosting the file shares by copying a 200 MB text file to the destinations 10 times each and calculating the average speed in MB per second.
     
     .LINK
     By Ben Peterson
