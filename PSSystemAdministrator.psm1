@@ -2540,19 +2540,22 @@ function Get-LockedOutUserEvent{
 function Get-OfflineComputer{
     <#
     .SYNOPSIS
-    Gets all computers that are offline.  
+    Gets computers that are offline.
 
     .DESCRIPTION
-    Gets all computers in Active Directory that are offline with information including name, DNS host name, and distinguished name. By default searches the whole AD. Can be limited to a specific organizational unit.
+    Gets computers that are offline with information including name, DNS host name, and distinguished name. 
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
+
+    .PARAMETER PingTimeoutMS
+    The time in milliseconds to wait for each server to respond to the ping. Default is 100.
 
     .INPUTS
     None.
 
     .OUTPUTS
-    PS objects with information including Name, DNSHostName, and DistinguishedName.
+    PS objects containing Name, DNSHostName, and DistinguishedName.
 
     .NOTES
     Firewalls must be configured to allow ping requests.
@@ -2560,12 +2563,12 @@ function Get-OfflineComputer{
     .EXAMPLE
     Get-OfflineComputer
 
-    Returns computer AD Objects for all AD computers that are offline.
+    Returns list of all AD computers that are currently offline.
 
     .EXAMPLE
-    Get-OfflineComputer -OrganizationalUnit "WorkStations"
+    Get-OfflineComputer -OrganizationalUnit 'Department X'
 
-    Returns computer AD objects for all AD computers that are offline in the "Workstations" organizational unit.
+    Returns the offline computers from the 'Department X' organizational unit.
 
     .LINK
     By Ben Peterson
@@ -2576,26 +2579,36 @@ function Get-OfflineComputer{
     #>
 
     [CmdletBinding()]
-    Param(
-        [string]$OrganizationalUnit = ""
+    Param (
+        [string]$OrganizationalUnit = "",
+        [int]$PingTimeoutMS = 100
     )
 
-    if($OrganizationalUnit -eq ""){
-        $computers = Get-ADComputer -Filter *
-    }else{
-        $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit
+    begin {
+        if ($OrganizationalUnit -eq "") {
+            $computers = Get-ADComputer -Filter *
+        } else {
+            $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit
+        }
+        $pingTasks = New-Object 'System.Collections.Generic.Dictionary[string, System.Threading.Tasks.Task]'
     }
 
-    $offlineComputers = @()
-    
-    foreach($computer in $computers){
-    
-        if(!(Test-Connection -ComputerName ($computer).name -Count 1 -Quiet)){
-            $offlineComputers += $computer
+    process {
+        foreach ($computer in $computers) {
+            $ping = New-Object -TypeName 'System.Net.NetworkInformation.Ping'
+            $pingTasks.Add($computer.Name, $ping.SendPingAsync($computer.Name, $PingTimeoutMS))
         }
     }
-    
-    return $offlineComputers
+
+    end {
+        while ($pingTasks.Values.IsCompleted -contains $false) {
+            Start-Sleep -Milliseconds $PingTimeoutMS
+        }
+
+        $computers | Where-Object {
+            $pingTasks[$_.Name].Result.Status -ne 0
+        }
+    }
 }
 
 function Get-OnlineComputer{
