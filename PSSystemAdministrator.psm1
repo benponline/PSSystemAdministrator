@@ -61,7 +61,9 @@ function Add-DHCPReservation{
         [string]$ComputerName,
 
         [Parameter(Mandatory=$true)]
-        [string]$IPAddress
+        [string]$IPAddress,
+
+        [string]$Description = ""
     )
 
     $dhcpServers = (Get-DhcpServerInDC).DnsName
@@ -91,7 +93,7 @@ function Add-DHCPReservation{
         $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServer -ScopeId $scopeId -AllLeases
         $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
 
-        Add-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer -IPAddress $IPAddress -ClientId $clientId
+        Add-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer -IPAddress $IPAddress -ClientId $clientId -Description $Description
     }
 }
 
@@ -1960,6 +1962,72 @@ function Get-CredentialExportToXML{
 
     $credential = Get-Credential
     Export-Clixml -Path "$Path\$FileName.xml" -InputObject $credential
+}
+
+function Get-DHCPReservation{
+    <#
+    .SYNOPSIS
+    Gets all reservations for a computer in DHCP.
+
+    .DESCRIPTION
+    This function returns all IPv4 reservations or the reservations for a specific computer from all DHCP servers.
+
+    .PARAMETER ComputerName
+    Host name of the computer in the reservation that will be returned.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+    This function is meant to be used in a domain with one DHCP scope.
+
+    .EXAMPLE
+    Get-DHCPReservation -ComputerName "Computer1"
+
+    Gets any reservations for "Computer1" in all available DHCP servers in the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [Parameter()]
+        [string]$ComputerName = ""
+    )
+
+    $dhcpServers = (Get-DhcpServerInDC).DnsName
+    $output = @()
+
+    if($ComputerName -EQ ""){
+        $hostName = "";
+    }else{
+        $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
+    }
+
+    foreach($server in $dhcpServers){
+        $dhcpServer = $server.split(".")[0]
+        $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
+        $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer
+
+        foreach($r in $reservations){
+            $r | Add-Member -MemberType NoteProperty -Name "DHCPServer" -Value $server
+            $output += $r
+        }
+    }
+
+    if($hostName -NE ""){
+        $output = $output | Where-Object -Property Name -EQ $hostName
+    }
+
+    return $output | Select-Object -Property DHCPServer,AddressState,ClientId,Description,IPAddress,Name,ScopeId,Type
 }
 
 function Get-DirectorySize{
