@@ -171,7 +171,7 @@ function Disable-User{
     User Disables a user.
 
     .DESCRIPTION
-    Disables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
+    Disables a user or group of users by passing SamAccountName or user AD objects to this funtion. 
 
     .PARAMETER SamAccountName
     This is the user name of the user that will be disabled.
@@ -229,6 +229,73 @@ function Disable-User{
 
     end{
         return $disabledUsers
+    }
+}
+
+function Enable-User {
+    <#
+    .SYNOPSIS
+    User Disables a user.
+
+    .DESCRIPTION
+    Disables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
+
+    .PARAMETER SamAccountNames
+    This is the user name of the user that will be disabled.
+
+    .INPUTS
+    User AD objects can be passed to this function.
+
+    .OUTPUTS
+    An array of user AD objects. One for each user that this function disables.
+
+    .NOTES
+
+    .EXAMPLE 
+    Enable-User -SamAccountName "User1"
+
+    Enables the user named User1 in Active Directory.
+
+    .EXAMPLE
+    "User1","User2" | Enable-User
+
+    Enables users User1 and User2 in Active Directory.
+
+    .EXAMPLE
+    Get-ADUser "User1" | Enable-User
+
+    Enables User1 in Active Directory.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [string]$SamAccountName
+    )
+
+    begin{
+        $enabledUsers = @()
+    }
+
+    process{
+        $user = Get-ADUser $SamAccountName
+        $user | Enable-ADAccount
+
+        #Gets updated AD user object to pass back to the host.
+        Start-Sleep -Seconds 1
+        $user = Get-ADUser $SamAccountName
+        $enabledUsers += $user
+    }
+
+    end{
+        return $enabledUsers
     }
 }
 
