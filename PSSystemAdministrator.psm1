@@ -240,7 +240,7 @@ function Enable-User {
     .DESCRIPTION
     Disables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
 
-    .PARAMETER SamAccountNames
+    .PARAMETER SamAccountName
     This is the user name of the user that will be disabled.
 
     .INPUTS
