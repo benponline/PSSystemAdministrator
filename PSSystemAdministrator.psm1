@@ -168,7 +168,7 @@ function Disable-Computer{
 function Disable-User{
     <#
     .SYNOPSIS
-    User Disables a user.
+    Disables a user.
 
     .DESCRIPTION
     Disables a user or group of users by passing SamAccountName or user AD objects to this funtion. 
@@ -232,16 +232,84 @@ function Disable-User{
     }
 }
 
-function Enable-User {
+function X-Enable-Computer{
     <#
     .SYNOPSIS
-    User Disables a user.
+    Enables a computer.
 
     .DESCRIPTION
-    Disables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
+    Enables a computer or group of computers by passing host names or computer AD objects to this function. 
+
+    .PARAMETER Name
+    This is the host name of the computer that will be enable.
+
+    .INPUTS
+    Computer AD objects can be passed to this function from the pipeline.
+
+    .OUTPUTS
+    An array of computer AD objects. One for each computer that this function disables.
+
+    .NOTES
+
+    .EXAMPLE 
+    Enable-Computer -Name "Computer1"
+
+    Enables the computer named "Computer1" in Active Directory.
+
+    .EXAMPLE
+    "Computer1","Computer2" | Enable-Computer
+
+    Enables computers Computer1 and Computer2 in Active Directory.
+
+    .EXAMPLE
+    Get-ADComputer Computer1 | Enable-Computer
+
+    Enables Computer1 in Active Directory.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('ComputerName')]
+        [string]$Name
+    )
+
+    begin{
+        $enabledComputers = @()
+    }
+
+    process{
+        $computer = Get-ADComputer $Name
+        $computer | Enable-ADAccount
+
+        #Updates computer object to show disabled status.
+        Start-Sleep -Seconds 1
+        $computer = Get-ADComputer $Name
+        $enabledComputers += $computer
+    }
+
+    end{
+        return $enabledComputers
+    }
+}
+
+function X-Enable-User {
+    <#
+    .SYNOPSIS
+    Enables a user.
+
+    .DESCRIPTION
+    Enables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
 
     .PARAMETER SamAccountName
-    This is the user name of the user that will be disabled.
+    This is the user name of the user that will be enabled.
 
     .INPUTS
     User AD objects can be passed to this function.
@@ -3840,5 +3908,65 @@ function Test-NetworkSpeed{
     end{
         Remove-Item -Path $sourceFilePath -Force
         return $results            
+    }
+}
+
+function Unlock-User{
+    <#
+    .SYNOPSIS
+    Unlocks a user account.
+
+    .DESCRIPTION
+    Unlocks an Active Directory user or group of users by passing SamAccountNames or user AD objects to this funtion. You can unlock a user account that was locked out due to too many failed logon attempts.
+
+    .PARAMETER SamAccountName
+    This is the user name of the user that will be unlocked.
+
+    .INPUTS
+    User AD objects can be passed to this function.
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE 
+    Unlock-User -Name "User1"
+
+    Unlocks the user named User1 in Active Directory.
+
+    .EXAMPLE
+    "User1","User2" | Unlock-User
+
+    Unlocks users User1 and User2 in Active Directory.
+
+    .EXAMPLE
+    Get-ADUser "User1" | Unlock-User
+
+    Unlocks User1 in Active Directory.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [string]$SamAccountName
+    )
+
+    begin{
+        $users = [System.Collections.Generic.List[psobject]]::new()
+    }
+
+    process{
+        $users.Add((Get-ADUser $SamAccountName))
+    }
+
+    end{
+        $users | Unlock-ADAccount
     }
 }
