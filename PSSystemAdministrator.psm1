@@ -3870,6 +3870,7 @@ function Test-NetworkSpeed{
 
         [int]$Count = 5,
 
+        [ValidateRange(1,1999)]
         [int]$FileSizeMB = 100
     )
 
