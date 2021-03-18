@@ -112,7 +112,7 @@ function Disable-Computer{
     Computer AD objects can be passed to this function from the pipeline.
 
     .OUTPUTS
-    An array of computer AD objects. One for each computer that this function disables.
+    None.
 
     .NOTES
 
@@ -147,21 +147,15 @@ function Disable-Computer{
     )
 
     begin{
-        $disabledComputers = @()
+        $computers = @()
     }
 
     process{
-        $computer = Get-ADComputer $Name
-        $computer | Disable-ADAccount
-
-        #Updates computer object to show disabled status.
-        Start-Sleep -Seconds 1
-        $computer = Get-ADComputer $Name
-        $disabledComputers += $computer
+        $computers += $Name
     }
 
     end{
-        return $disabledComputers
+        $computers | Get-ADComputer | Disable-ADAccount
     }
 }
 
@@ -180,7 +174,7 @@ function Disable-User{
     User AD objects can be passed to this function.
 
     .OUTPUTS
-    An array of user AD objects. One for each user that this function disables.
+    None.
 
     .NOTES
 
@@ -214,25 +208,19 @@ function Disable-User{
     )
 
     begin{
-        $disabledUsers = @()
+        $users = @()
     }
 
     process{
-        $user = Get-ADUser $SamAccountName
-        $user | Disable-ADAccount
-
-        #Gets updated AD user object to pass back to the host.
-        Start-Sleep -Seconds 1
-        $user = Get-ADUser $SamAccountName
-        $disabledUsers += $user
+        $users += $SamAccountName
     }
 
     end{
-        return $disabledUsers
+        $users | Get-ADUser | Disable-ADAccount
     }
 }
 
-function X-Enable-Computer{
+function Enable-Computer{
     <#
     .SYNOPSIS
     Enables a computer.
@@ -247,7 +235,7 @@ function X-Enable-Computer{
     Computer AD objects can be passed to this function from the pipeline.
 
     .OUTPUTS
-    An array of computer AD objects. One for each computer that this function disables.
+    None.
 
     .NOTES
 
@@ -282,25 +270,19 @@ function X-Enable-Computer{
     )
 
     begin{
-        $enabledComputers = @()
+        $computers = @()
     }
 
     process{
-        $computer = Get-ADComputer $Name
-        $computer | Enable-ADAccount
-
-        #Updates computer object to show disabled status.
-        Start-Sleep -Seconds 1
-        $computer = Get-ADComputer $Name
-        $enabledComputers += $computer
+        $computers += $Name
     }
 
     end{
-        return $enabledComputers
+        $computers | Get-ADComputer | Enable-ADAccount
     }
 }
 
-function X-Enable-User {
+function Enable-User { 
     <#
     .SYNOPSIS
     Enables a user.
@@ -315,7 +297,7 @@ function X-Enable-User {
     User AD objects can be passed to this function.
 
     .OUTPUTS
-    An array of user AD objects. One for each user that this function disables.
+    None.
 
     .NOTES
 
@@ -349,21 +331,15 @@ function X-Enable-User {
     )
 
     begin{
-        $enabledUsers = @()
+        $users = @()
     }
 
     process{
-        $user = Get-ADUser $SamAccountName
-        $user | Enable-ADAccount
-
-        #Gets updated AD user object to pass back to the host.
-        Start-Sleep -Seconds 1
-        $user = Get-ADUser $SamAccountName
-        $enabledUsers += $user
+        $users += $SamAccountName
     }
 
     end{
-        return $enabledUsers
+        $users | Get-ADUser | Enable-ADAccount
     }
 }
 
