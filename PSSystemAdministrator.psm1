@@ -706,8 +706,8 @@ function Get-ChildItemLastAccessTime{
     }
 
     process{
-        $files += Get-ChildItem -Path $Path -File -Recurse | 
-            Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+        $files += Get-ChildItem -Path $Path -File -Recurse | Get-ItemLastAccessTime
+            #Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
     }
 
     end{
@@ -763,8 +763,8 @@ function Get-ChildItemLastWriteTime{
     }
 
     process{
-        $files += Get-ChildItem -Path $Path -File -Recurse |
-            Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+        $files += Get-ChildItem -Path $Path -File -Recurse | Get-ItemLastWriteTime
+            #Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
     }
 
     end{
@@ -2493,6 +2493,132 @@ function Get-InactiveUser{
     }
 
     return $users
+}
+
+function Get-ItemLastAccessTime{
+    <#
+    .SYNOPSIS
+    Gets the last access time from an item.
+    
+    .DESCRIPTION
+    Gets an item's file name, last access time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Full path to item.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes FileNames, LastAccessTime, SizeMB, and FullName.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-ItemLastAccessTime -Path "C:\Directory1\file.txt"
+
+    Gets information on file.txt.
+
+    .EXAMPLE
+    "C:\Directory1\file.txt","C:\Directory2\file2.txt" | Get-ItemLastAccessTime
+
+    Gets information on file.txt and file2.txt.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [string[]]$Path
+    )
+
+    begin{
+        $paths = @()
+        $items = @()
+    }
+
+    process{
+        foreach($p in $Path){
+            $paths += $p
+        }
+    }
+
+    end{
+        foreach($p in $paths){
+            $items += Get-Item -Path $p | Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+        }
+
+        return $items
+    }
+}
+
+function Get-ItemLastWriteTime{
+    <#
+    .SYNOPSIS
+    Gets the last write time from an item.
+    
+    .DESCRIPTION
+    Gets an item's file name, last write time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Full path to item.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes FileNames, LastWriteTime, SizeMB, and FullName.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-ItemLastWriteTime -Path "C:\Directory1\file.txt"
+
+    Gets information on file.txt.
+
+    .EXAMPLE
+    "C:\Directory1\file.txt","C:\Directory2\file2.txt" | Get-ItemLastWriteTime
+
+    Gets information on file.txt and file2.txt.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>    
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [string[]]$Path
+    )
+
+    begin{
+        $items = @()
+        $paths = @()
+    }
+
+    process{
+        foreach($p in $Path){
+            $paths += $p
+        }
+    }
+
+    end{
+        foreach($p in $paths){
+            $items += Get-ChildItem -Path $p | Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+        }
+
+        return $items
+    }
 }
 
 function Get-LargeFile{
