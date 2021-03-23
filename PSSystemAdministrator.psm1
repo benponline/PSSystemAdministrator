@@ -707,7 +707,6 @@ function Get-ChildItemLastAccessTime{
 
     process{
         $files += Get-ChildItem -Path $Path -File -Recurse | Get-ItemLastAccessTime
-            #Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
     }
 
     end{
@@ -764,7 +763,6 @@ function Get-ChildItemLastWriteTime{
 
     process{
         $files += Get-ChildItem -Path $Path -File -Recurse | Get-ItemLastWriteTime
-            #Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
     }
 
     end{
