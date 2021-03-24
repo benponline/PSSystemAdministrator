@@ -3369,21 +3369,15 @@ function Move-Computer{
     
     begin{
         $domainInfo = (Get-ADDomain).DistinguishedName
-        $movedComputers = @()
+        $computers = @()
     }
 
     process{
-        $computer = Get-ADComputer -Identity $Name
-        $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
-        #Update AD computer object to show new location
-        Start-Sleep -Seconds 1
-        $computer = Get-ADComputer -Identity $Name
-        $movedComputers += $computer
+        $computers += Get-ADComputer $Name
     }
 
     end{
-        return $movedComputers
+        $computers | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
     }
 }
 
@@ -3444,21 +3438,15 @@ function Move-User{
     
     begin{
         $domainInfo = (Get-ADDomain).DistinguishedName
-        $movedUsers = @()
+        $users = @()
     }
 
     process{
-        $user = Get-ADUser -Identity $Name
-        $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
-        #Get updated AD user location
-        Start-Sleep -Seconds 1
-        $user = Get-ADUser -Identity $Name
-        $movedUsers += $user
+        $users += Get-ADUser $Name
     }
 
     end{
-        return $movedUsers
+        $users | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
     }
 }
 
@@ -3520,8 +3508,7 @@ function Remove-Computer{
     }
 
     end{
-        $computers | Remove-ADComputer
-        return $computers
+        $computers | Remove-ADComputer -Confirm:$false
     }
 }
 
@@ -3649,7 +3636,6 @@ function Remove-User{
 
     end{
         $users | Remove-ADUser -Confirm:$false
-        return $users
     }
 }
 
@@ -3812,19 +3798,16 @@ function Set-UserChangePassword{
     )
 
     begin{
-        $userList = @()
+        $users = @()
     }
 
     process{
-        $user = Get-ADUser $SamAccountName
-        Set-ADUser -Identity $user -ChangePasswordAtLogon $true
-        $userList += $user
+        $users += Get-ADUser $SamAccountName
     }
 
     end{
-        return $userList
+        $users | Set-ADUser -ChangePasswordAtLogon $true
     }
-    
 }
 
 function Start-Computer{
