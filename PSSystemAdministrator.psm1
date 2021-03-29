@@ -61,7 +61,9 @@ function Add-DHCPReservation{
         [string]$ComputerName,
 
         [Parameter(Mandatory=$true)]
-        [string]$IPAddress
+        [string]$IPAddress,
+
+        [string]$Description = ""
     )
 
     $dhcpServers = (Get-DhcpServerInDC).DnsName
@@ -91,7 +93,7 @@ function Add-DHCPReservation{
         $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServer -ScopeId $scopeId -AllLeases
         $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
 
-        Add-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer -IPAddress $IPAddress -ClientId $clientId
+        Add-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer -IPAddress $IPAddress -ClientId $clientId -Description $Description
     }
 }
 
@@ -110,7 +112,7 @@ function Disable-Computer{
     Computer AD objects can be passed to this function from the pipeline.
 
     .OUTPUTS
-    An array of computer AD objects. One for each computer that this function disables.
+    None.
 
     .NOTES
 
@@ -145,31 +147,25 @@ function Disable-Computer{
     )
 
     begin{
-        $disabledComputers = @()
+        $computers = @()
     }
 
     process{
-        $computer = Get-ADComputer $Name
-        $computer | Disable-ADAccount
-
-        #Updates computer object to show disabled status.
-        Start-Sleep -Seconds 1
-        $computer = Get-ADComputer $Name
-        $disabledComputers += $computer
+        $computers += $Name
     }
 
     end{
-        return $disabledComputers
+        $computers | Get-ADComputer | Disable-ADAccount
     }
 }
 
 function Disable-User{
     <#
     .SYNOPSIS
-    User Disables a user.
+    Disables a user.
 
     .DESCRIPTION
-    Disables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
+    Disables a user or group of users by passing SamAccountName or user AD objects to this funtion. 
 
     .PARAMETER SamAccountName
     This is the user name of the user that will be disabled.
@@ -178,7 +174,7 @@ function Disable-User{
     User AD objects can be passed to this function.
 
     .OUTPUTS
-    An array of user AD objects. One for each user that this function disables.
+    None.
 
     .NOTES
 
@@ -212,21 +208,138 @@ function Disable-User{
     )
 
     begin{
-        $disabledUsers = @()
+        $users = @()
     }
 
     process{
-        $user = Get-ADUser $SamAccountName
-        $user | Disable-ADAccount
-
-        #Gets updated AD user object to pass back to the host.
-        Start-Sleep -Seconds 1
-        $user = Get-ADUser $SamAccountName
-        $disabledUsers += $user
+        $users += $SamAccountName
     }
 
     end{
-        return $disabledUsers
+        $users | Get-ADUser | Disable-ADAccount
+    }
+}
+
+function Enable-Computer{
+    <#
+    .SYNOPSIS
+    Enables a computer.
+
+    .DESCRIPTION
+    Enables a computer or group of computers by passing host names or computer AD objects to this function. 
+
+    .PARAMETER Name
+    This is the host name of the computer that will be enable.
+
+    .INPUTS
+    Computer AD objects can be passed to this function from the pipeline.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+
+    .EXAMPLE 
+    Enable-Computer -Name "Computer1"
+
+    Enables the computer named "Computer1" in Active Directory.
+
+    .EXAMPLE
+    "Computer1","Computer2" | Enable-Computer
+
+    Enables computers Computer1 and Computer2 in Active Directory.
+
+    .EXAMPLE
+    Get-ADComputer Computer1 | Enable-Computer
+
+    Enables Computer1 in Active Directory.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [Alias('ComputerName')]
+        [string]$Name
+    )
+
+    begin{
+        $computers = @()
+    }
+
+    process{
+        $computers += $Name
+    }
+
+    end{
+        $computers | Get-ADComputer | Enable-ADAccount
+    }
+}
+
+function Enable-User { 
+    <#
+    .SYNOPSIS
+    Enables a user.
+
+    .DESCRIPTION
+    Enables a user or group of users by passing SamAccountNames or user AD objects to this funtion. 
+
+    .PARAMETER SamAccountName
+    This is the user name of the user that will be enabled.
+
+    .INPUTS
+    User AD objects can be passed to this function.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+
+    .EXAMPLE 
+    Enable-User -SamAccountName "User1"
+
+    Enables the user named User1 in Active Directory.
+
+    .EXAMPLE
+    "User1","User2" | Enable-User
+
+    Enables users User1 and User2 in Active Directory.
+
+    .EXAMPLE
+    Get-ADUser "User1" | Enable-User
+
+    Enables User1 in Active Directory.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [string]$SamAccountName
+    )
+
+    begin{
+        $users = @()
+    }
+
+    process{
+        $users += $SamAccountName
+    }
+
+    end{
+        $users | Get-ADUser | Enable-ADAccount
     }
 }
 
@@ -593,8 +706,7 @@ function Get-ChildItemLastAccessTime{
     }
 
     process{
-        $files += Get-ChildItem -Path $Path -File -Recurse | 
-            Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+        $files += Get-ChildItem -Path $Path -File -Recurse | Get-ItemLastAccessTime
     }
 
     end{
@@ -650,8 +762,7 @@ function Get-ChildItemLastWriteTime{
     }
 
     process{
-        $files += Get-ChildItem -Path $Path -File -Recurse |
-            Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+        $files += Get-ChildItem -Path $Path -File -Recurse | Get-ItemLastWriteTime
     }
 
     end{
@@ -1212,83 +1323,6 @@ function Get-ComputerLastLogonTime{
         return $lastLogonList
     }
 }
-
-<# Draft - Function returns drives inconsistantly.
-function Get-ComputerMappedNetworkDrive{
-    
-    .SYNOPSIS
-    Gets information about the mapped drives on a computer or computers.
-
-    .DESCRIPTION
-    Returns information from about the mapped drives on a computer, remote computer, or group of computers. The information includes computer name, drive, volume name, size, free space, and if the drive has less than 20% space left.
-
-    .PARAMETER Name
-    Specifies the computer the function will gather information from.
-
-    .INPUTS
-    You can pipe host names or AD computer objects.
-
-    .OUTPUTS
-    Returns PS objects to the host the following information about the mapped drives on a computer: computer name, drive, volume name, size, free space, and indicates those under 20% desc space remaining.
-
-    .NOTES
-    Compatible with Window 7 and newer.
-
-    Will only try to contact computers that are on and connected to the network.
-
-    .EXAMPLE
-    Get-ComputerMappedNetworlDrive
-
-    Gets mapped drive information for the local host.
-
-    .EXAMPLE
-    Get-MappedNetworlDrive -computerName computer
-
-    Gets mapped drive information for "computer".
-
-    .EXAMPLE
-    Get-DriveInformation -Filter * | Get-DriveSpace
-
-    Gets mapped drive information for all computers in AD.
-
-    .LINK
-    By Ben Peterson
-    linkedin.com/in/benponline
-    github.com/benponline
-    twitter.com/benponline
-    paypal.me/teknically
-    
-
-    [CmdletBinding()]
-    Param(
-        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('ComputerName')]
-        [string]$Name = "$env:COMPUTERNAME"
-    )
-
-    begin{
-        $mappedDrives = @()
-    }
-
-    process{
-
-        if(Test-Connection $Name -Count 1 -Quiet){
-            $mappedDrives += Get-CimInstance -ComputerName $Name -ClassName win32_mappedlogicaldisk -Property DeviceID,VolumeName,Size,FreeSpace,ProviderName | 
-                Select-Object -Property @{n="Computer";e={$Name}},`
-                @{n="Drive";e={$_.DeviceID}},`
-                @{n="VolumeName";e={$_.VolumeName}},`
-                @{n="Path";e={$_.ProviderName}},`
-                @{n="SizeGB";e={$_.Size / 1GB -as [int]}},`
-                @{n="FreeGB";e={$_.FreeSpace / 1GB -as [int]}},`
-                @{n="Under20Percent";e={if(($_.FreeSpace / $_.Size) -le 0.2){"True"}else{"False"}}}
-        }
-    }
-
-    end{
-        return $mappedDrives
-    }
-}
-#>
 
 function Get-ComputerMemory{
     <#
@@ -1962,6 +1996,72 @@ function Get-CredentialExportToXML{
     Export-Clixml -Path "$Path\$FileName.xml" -InputObject $credential
 }
 
+function Get-DHCPReservation{
+    <#
+    .SYNOPSIS
+    Gets all reservations for a computer in DHCP.
+
+    .DESCRIPTION
+    This function returns all IPv4 reservations or the reservations for a specific computer from all DHCP servers.
+
+    .PARAMETER ComputerName
+    Host name of the computer in the reservation that will be returned.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+    This function is meant to be used in a domain with one DHCP scope.
+
+    .EXAMPLE
+    Get-DHCPReservation -ComputerName "Computer1"
+
+    Gets any reservations for "Computer1" in all available DHCP servers in the domain.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [Parameter()]
+        [string]$ComputerName = ""
+    )
+
+    $dhcpServers = (Get-DhcpServerInDC).DnsName
+    $output = @()
+
+    if($ComputerName -EQ ""){
+        $hostName = "";
+    }else{
+        $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
+    }
+
+    foreach($server in $dhcpServers){
+        $dhcpServer = $server.split(".")[0]
+        $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
+        $reservations = Get-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer
+
+        foreach($r in $reservations){
+            $r | Add-Member -MemberType NoteProperty -Name "DHCPServer" -Value $server
+            $output += $r
+        }
+    }
+
+    if($hostName -NE ""){
+        $output = $output | Where-Object -Property Name -EQ $hostName
+    }
+
+    return $output | Select-Object -Property DHCPServer,AddressState,ClientId,Description,IPAddress,Name,ScopeId,Type
+}
+
 function Get-DirectorySize{
     <#
     .SYNOPSIS
@@ -2316,6 +2416,132 @@ function Get-InactiveUser{
     return $users
 }
 
+function Get-ItemLastAccessTime{
+    <#
+    .SYNOPSIS
+    Gets the last access time from an item.
+    
+    .DESCRIPTION
+    Gets an item's file name, last access time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Full path to item.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes FileNames, LastAccessTime, SizeMB, and FullName.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-ItemLastAccessTime -Path "C:\Directory1\file.txt"
+
+    Gets information on file.txt.
+
+    .EXAMPLE
+    "C:\Directory1\file.txt","C:\Directory2\file2.txt" | Get-ItemLastAccessTime
+
+    Gets information on file.txt and file2.txt.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [string[]]$Path
+    )
+
+    begin{
+        $paths = @()
+        $items = @()
+    }
+
+    process{
+        foreach($p in $Path){
+            $paths += $p
+        }
+    }
+
+    end{
+        foreach($p in $paths){
+            $items += Get-Item -Path $p | Select-Object -Property Name,LastAccessTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+        }
+
+        return $items
+    }
+}
+
+function Get-ItemLastWriteTime{
+    <#
+    .SYNOPSIS
+    Gets the last write time from an item.
+    
+    .DESCRIPTION
+    Gets an item's file name, last write time, size in MB, and full name.
+    
+    .PARAMETER Path
+    Full path to item.
+
+    .INPUTS
+    You can pipe multiple paths to this function.
+    
+    .OUTPUTS
+    Array of PS objects that includes FileNames, LastWriteTime, SizeMB, and FullName.
+    
+    .NOTES
+
+    .EXAMPLE
+    Get-ItemLastWriteTime -Path "C:\Directory1\file.txt"
+
+    Gets information on file.txt.
+
+    .EXAMPLE
+    "C:\Directory1\file.txt","C:\Directory2\file2.txt" | Get-ItemLastWriteTime
+
+    Gets information on file.txt and file2.txt.
+    
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>    
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [string[]]$Path
+    )
+
+    begin{
+        $items = @()
+        $paths = @()
+    }
+
+    process{
+        foreach($p in $Path){
+            $paths += $p
+        }
+    }
+
+    end{
+        foreach($p in $paths){
+            $items += Get-ChildItem -Path $p | Select-Object -Property Name,LastWriteTime,@{n='SizeMB';e={[math]::Round(($_.Length/1MB),3)}},FullName
+        }
+
+        return $items
+    }
+}
+
 function Get-LargeFile{
     <#
     .SYNOPSIS
@@ -2540,19 +2766,22 @@ function Get-LockedOutUserEvent{
 function Get-OfflineComputer{
     <#
     .SYNOPSIS
-    Gets all computers that are offline.  
+    Gets computers that are offline.
 
     .DESCRIPTION
-    Gets all computers in Active Directory that are offline with information including name, DNS host name, and distinguished name. By default searches the whole AD. Can be limited to a specific organizational unit.
+    Gets computers that are offline with information including name, DNS host name, and distinguished name. 
 
     .PARAMETER OrganizationalUnit
     Focuses the function on a specific AD organizational unit.
+
+    .PARAMETER PingTimeoutMS
+    The time in milliseconds to wait for each server to respond to the ping. Default is 100.
 
     .INPUTS
     None.
 
     .OUTPUTS
-    PS objects with information including Name, DNSHostName, and DistinguishedName.
+    PS objects containing Name, DNSHostName, and DistinguishedName.
 
     .NOTES
     Firewalls must be configured to allow ping requests.
@@ -2560,12 +2789,12 @@ function Get-OfflineComputer{
     .EXAMPLE
     Get-OfflineComputer
 
-    Returns computer AD Objects for all AD computers that are offline.
+    Returns list of all AD computers that are currently offline.
 
     .EXAMPLE
-    Get-OfflineComputer -OrganizationalUnit "WorkStations"
+    Get-OfflineComputer -OrganizationalUnit 'Department X'
 
-    Returns computer AD objects for all AD computers that are offline in the "Workstations" organizational unit.
+    Returns the offline computers from the 'Department X' organizational unit.
 
     .LINK
     By Ben Peterson
@@ -2576,26 +2805,36 @@ function Get-OfflineComputer{
     #>
 
     [CmdletBinding()]
-    Param(
-        [string]$OrganizationalUnit = ""
+    Param (
+        [string]$OrganizationalUnit = "",
+        [int]$PingTimeoutMS = 100
     )
 
-    if($OrganizationalUnit -eq ""){
-        $computers = Get-ADComputer -Filter *
-    }else{
-        $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit
+    begin {
+        if ($OrganizationalUnit -eq "") {
+            $computers = Get-ADComputer -Filter *
+        } else {
+            $computers = Get-OUComputer -OrganizationalUnit $OrganizationalUnit
+        }
+        $pingTasks = New-Object 'System.Collections.Generic.Dictionary[string, System.Threading.Tasks.Task]'
     }
 
-    $offlineComputers = @()
-    
-    foreach($computer in $computers){
-    
-        if(!(Test-Connection -ComputerName ($computer).name -Count 1 -Quiet)){
-            $offlineComputers += $computer
+    process {
+        foreach ($computer in $computers) {
+            $ping = New-Object -TypeName 'System.Net.NetworkInformation.Ping'
+            $pingTasks.Add($computer.Name, $ping.SendPingAsync($computer.Name, $PingTimeoutMS))
         }
     }
-    
-    return $offlineComputers
+
+    end {
+        while ($pingTasks.Values.IsCompleted -contains $false) {
+            Start-Sleep -Milliseconds $PingTimeoutMS
+        }
+
+        $computers | Where-Object {
+            $pingTasks[$_.Name].Result.Status -ne 0
+        }
+    }
 }
 
 function Get-OnlineComputer{
@@ -3053,21 +3292,15 @@ function Move-Computer{
     
     begin{
         $domainInfo = (Get-ADDomain).DistinguishedName
-        $movedComputers = @()
+        $computers = @()
     }
 
     process{
-        $computer = Get-ADComputer -Identity $Name
-        $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
-        #Update AD computer object to show new location
-        Start-Sleep -Seconds 1
-        $computer = Get-ADComputer -Identity $Name
-        $movedComputers += $computer
+        $computers += Get-ADComputer $Name
     }
 
     end{
-        return $movedComputers
+        $computers | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
     }
 }
 
@@ -3128,21 +3361,15 @@ function Move-User{
     
     begin{
         $domainInfo = (Get-ADDomain).DistinguishedName
-        $movedUsers = @()
+        $users = @()
     }
 
     process{
-        $user = Get-ADUser -Identity $Name
-        $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
-
-        #Get updated AD user location
-        Start-Sleep -Seconds 1
-        $user = Get-ADUser -Identity $Name
-        $movedUsers += $user
+        $users += Get-ADUser $Name
     }
 
     end{
-        return $movedUsers
+        $users | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
     }
 }
 
@@ -3204,8 +3431,7 @@ function Remove-Computer{
     }
 
     end{
-        $computers | Remove-ADComputer
-        return $computers
+        $computers | Remove-ADComputer -Confirm:$false
     }
 }
 
@@ -3333,7 +3559,6 @@ function Remove-User{
 
     end{
         $users | Remove-ADUser -Confirm:$false
-        return $users
     }
 }
 
@@ -3496,19 +3721,16 @@ function Set-UserChangePassword{
     )
 
     begin{
-        $userList = @()
+        $users = @()
     }
 
     process{
-        $user = Get-ADUser $SamAccountName
-        Set-ADUser -Identity $user -ChangePasswordAtLogon $true
-        $userList += $user
+        $users += Get-ADUser $SamAccountName
     }
 
     end{
-        return $userList
+        $users | Set-ADUser -ChangePasswordAtLogon $true
     }
-    
 }
 
 function Start-Computer{
@@ -3616,7 +3838,7 @@ function Test-NetworkSpeed{
         MbPerSecond                     Speed in MB per second.
     
     .NOTES
-    None.
+    This function does not return consistent results. Do not assume the results returned are completely accurate.
     
     .EXAMPLE
     Test-NetworkSpeed -DestinationDirectory "\\Server\Share"
@@ -3654,6 +3876,7 @@ function Test-NetworkSpeed{
 
         [int]$Count = 5,
 
+        [ValidateRange(1,1999)]
         [int]$FileSizeMB = 100
     )
 
@@ -3692,5 +3915,67 @@ function Test-NetworkSpeed{
     end{
         Remove-Item -Path $sourceFilePath -Force
         return $results            
+    }
+}
+
+function Unlock-User{
+    <#
+    .SYNOPSIS
+    Unlocks a user account.
+
+    .DESCRIPTION
+    Unlocks an Active Directory user or group of users by passing SamAccountNames or user AD objects to this funtion. You can unlock a user account that was locked out due to too many failed logon attempts.
+
+    .PARAMETER SamAccountName
+    This is the user name of the user that will be unlocked.
+
+    .INPUTS
+    User AD objects can be passed to this function.
+
+    .OUTPUTS
+    None.
+
+    .NOTES
+    None.
+
+    .EXAMPLE 
+    Unlock-User -Name "User1"
+
+    Unlocks the user named User1 in Active Directory.
+
+    .EXAMPLE
+    "User1","User2" | Unlock-User
+
+    Unlocks users User1 and User2 in Active Directory.
+
+    .EXAMPLE
+    Get-ADUser "User1" | Unlock-User
+
+    Unlocks User1 in Active Directory.
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
+        [string]$SamAccountName
+    )
+
+    begin{
+        $users = [System.Collections.Generic.List[psobject]]::new()
+    }
+
+    process{
+        $users.Add((Get-ADUser $SamAccountName))
+    }
+
+    end{
+        $users | Unlock-ADAccount
     }
 }
