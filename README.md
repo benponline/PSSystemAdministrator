@@ -21,6 +21,10 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 
 `Disable-User` Disables a user.
 
+`Enable-Computer` Enables an AD computer account.
+
+`Enable-User` Enables an AD user account.
+
 `Enable-WakeOnLan` Configures a computer to allow wake on lan.
 
 `Get-AccessedFile` Gets all files in a directory that have been accessed in the last 24 hours.
@@ -67,6 +71,8 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 
 `Get-CredentialExportToXML` Gets credentials from the user and exports them to location provided by the user.
 
+`Get-DHCPReservation` Gets all reservations for a computer in DHCP.
+
 `Get-DirectorySize` Gets the size of a directory.
 
 `Get-DisabledComputer` Gets a list of all computers that are disabled.
@@ -78,6 +84,10 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 `Get-InactiveFile` Gets all files in a directory that have not been accessed in the last 24 hours.
 
 `Get-InactiveUser` Gets a list of all users that have not logged on to the domain for 30 days.
+
+`Get-ItemLastAccessTime` Gets the last access time from an item.
+
+`Get-ItemLastWriteTime` Gets the last write time from an item.
 
 `Get-LargeFile` Gets files larger than 500 MB from a directory.
 
@@ -116,3 +126,5 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 `Start-Computer` Starts a remote computer by sending a magic packet.
 
 `Test-NetworkSpeed` Tests the network speed between the machine running this function and a remote machine.
+
+`Unlock-User` Unlocks an AD user account.
