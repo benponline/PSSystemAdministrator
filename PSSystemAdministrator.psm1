@@ -3933,8 +3933,10 @@ function Unlock-User{
     User AD objects can be passed to this function.
 
     .OUTPUTS
+    None.
 
     .NOTES
+    None.
 
     .EXAMPLE 
     Unlock-User -Name "User1"
