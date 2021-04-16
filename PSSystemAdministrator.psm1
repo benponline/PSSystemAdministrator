@@ -1,5 +1,5 @@
 <#
-This module is meant to be used in a Windows Domain by a domain administrator.
+This module is meant to be used in a Windows Domain by a domain administrator with PowerShell 7.
 
 By:
 Ben Peterson
