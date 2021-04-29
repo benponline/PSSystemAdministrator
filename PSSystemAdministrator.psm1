@@ -42,6 +42,8 @@ function Add-DHCPReservation{
 
     If a reservation with the computer or IP address passed to the function already exists, then the function will stop and notify you which DHCP server it is located on. 
 
+    If this function fails because it is unable to run the Get-DhcpServerInDC command, then run 'Import-Module DhcpServer -SkipEditionCheck' in Powershell to install the needed module.
+
     .EXAMPLE
     Add-DHCPReservation -ComputerName "Computer1" -IPAddress 10.10.10.123
 
@@ -55,7 +57,7 @@ function Add-DHCPReservation{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory=$true)]
         [string]$ComputerName,
@@ -66,9 +68,11 @@ function Add-DHCPReservation{
         [string]$Description = ""
     )
 
+    Import-Module DhcpServer -SkipEditionCheck
     $dhcpServers = (Get-DhcpServerInDC).DnsName
     $hostName = (Get-ADComputer -Identity $ComputerName).DNSHostName
 
+    $reservationExists = $false
     foreach($server in $dhcpServers){
         $dhcpServer = $server.split(".")[0]
         $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
@@ -77,23 +81,31 @@ function Add-DHCPReservation{
         # Check for reservations that already contain the host name or ip address passed to the funciton.
         foreach($r in $reservations){
             if($r.Name -EQ $hostName){
-                return "The computer $hostName already has a reservation on $dhcpServer"
+                Write-Host "The computer $hostName already has a reservation on $dhcpServer"
+                $reservationExists = $true
             }
 
             if($r.IPAddress -EQ $IPAddress){
-                return "The IP address $IPAddress already has a reservation on $dhcpServer"
+                Write-Host "The IP address $IPAddress already has a reservation on $dhcpServer"
+                $reservationExists = $true
             }
-
         }
+    }
+
+    if($reservationExists -eq $true){
+        return
     }
 
     foreach($server in $dhcpServers){
         $dhcpServer = $server.split(".")[0]
         $scopeId = (Get-DhcpServerv4Scope -ComputerName $dhcpServer | Select-Object -First 1).ScopeId
         $dhcpLeases = Get-DhcpServerv4Lease -ComputerName $dhcpServer -ScopeId $scopeId -AllLeases
+
         $clientId = ($dhcpLeases | Where-Object -Property HostName -EQ $hostName | Select-Object -First 1).ClientId
 
-        Add-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer -IPAddress $IPAddress -ClientId $clientId -Description $Description
+        if ($PSCmdlet.ShouldProcess($server, "Adding dhcp reservation for $ComputerName for $IPAddress")) {
+            Add-DhcpServerv4Reservation -ScopeId $scopeId -ComputerName $dhcpServer -IPAddress $IPAddress -ClientId $clientId -Description $Description -Name $hostName
+        }
     }
 }
 
@@ -139,7 +151,7 @@ function Disable-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('ComputerName')]
@@ -155,7 +167,13 @@ function Disable-Computer{
     }
 
     end{
-        $computers | Get-ADComputer | Disable-ADAccount
+        foreach ($computer in $computers){
+
+            if($PSCmdlet.ShouldProcess($computer)){
+                $computer | Get-ADComputer | Disable-ADAccount
+            }
+
+        }
     }
 }
 
@@ -201,7 +219,7 @@ function Disable-User{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [string]$SamAccountName
@@ -216,7 +234,11 @@ function Disable-User{
     }
 
     end{
-        $users | Get-ADUser | Disable-ADAccount
+        foreach ($user in $users){
+            if($PSCmdlet.ShouldProcess($user)){
+                $user | Get-ADUser | Disable-ADAccount
+            }
+        }
     }
 }
 
@@ -262,7 +284,7 @@ function Enable-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [Alias('ComputerName')]
@@ -278,7 +300,12 @@ function Enable-Computer{
     }
 
     end{
-        $computers | Get-ADComputer | Enable-ADAccount
+        foreach ($computer in $computers){
+
+            if($PSCmdlet.ShouldProcess($computer)){
+                $computer | Get-ADComputer | Enable-ADAccount
+            }
+        }
     }
 }
 
@@ -324,7 +351,7 @@ function Enable-User {
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true,Mandatory=$True)]
         [string]$SamAccountName
@@ -339,7 +366,12 @@ function Enable-User {
     }
 
     end{
-        $users | Get-ADUser | Enable-ADAccount
+        foreach ($user in $users){
+            
+            if($PSCmdlet.ShouldProcess($user)){
+                $user | Get-ADUser | Enable-ADAccount
+            }
+        }
     }
 }
 
@@ -403,7 +435,10 @@ function Enable-WakeOnLan{
         $cimSession = New-CimSession -ComputerName $Name
         $computerMAC = (Get-DhcpServerv4Lease -ComputerName $domainController -ScopeId $scopeID | Where-Object -Property hostname -match $Name).clientid
         $adapterName = (Get-NetAdapter -CimSession $cimSession | Where-Object -Property MacAddress -match $computerMAC).Name
-        Enable-NetAdapterPowerManagement -CimSession $cimSession -Name $adapterName -WakeOnMagicPacket
+
+        if($PSCmdlet.ShouldProcess($Name)){
+            Enable-NetAdapterPowerManagement -CimSession $cimSession -Name $adapterName -WakeOnMagicPacket
+        }
     }
 
     end{}
@@ -3280,7 +3315,7 @@ function Move-Computer{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
@@ -3300,7 +3335,12 @@ function Move-Computer{
     }
 
     end{
-        $computers | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+        foreach ($computer in $computers){
+            
+            if ($PSCmdlet.ShouldProcess($computer)) {
+                $computer | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+            }
+        }
     }
 }
 
@@ -3349,7 +3389,7 @@ function Move-User{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias("SamAccountName")]
@@ -3369,7 +3409,12 @@ function Move-User{
     }
 
     end{
-        $users | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+        foreach ($user in $users){
+            
+            if ($PSCmdlet.ShouldProcess($user)) {
+                $user | Move-ADObject -TargetPath "ou=$DestinationOU,$domainInfo"
+            }
+        }
     }
 }
 
@@ -3415,7 +3460,7 @@ function Remove-Computer{
     paypal.me/teknically
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [Alias('ComputerName')]
@@ -3431,7 +3476,12 @@ function Remove-Computer{
     }
 
     end{
-        $computers | Remove-ADComputer -Confirm:$false
+        foreach ($computer in $computers){
+            
+            if ($PSCmdlet.ShouldProcess($computer)) {
+                $computer | Remove-ADComputer -Confirm:$false
+            }
+        }
     }
 }
 
@@ -3470,7 +3520,7 @@ function Remove-DHCPReservation{
     paypal.me/teknically
     #>
 
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory=$true)]
         [string]$ComputerName
@@ -3496,7 +3546,10 @@ function Remove-DHCPReservation{
         }
 
         if($isReserved -EQ $true){
-            Remove-DhcpServerv4Reservation -ScopeId $scopeId -ClientId $clientId -ComputerName $dhcpServer
+
+            if ($PSCmdlet.ShouldProcess($dhcpServer, "Removing DHCP reservation for $ComputerName")) {
+                Remove-DhcpServerv4Reservation -ScopeId $scopeId -ClientId $clientId -ComputerName $dhcpServer
+            }
         }
     }
 }
@@ -3543,7 +3596,7 @@ function Remove-User{
     paypal.me/teknically
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
         [parameter(ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
         [string]$SamAccountName
@@ -3558,7 +3611,13 @@ function Remove-User{
     }
 
     end{
-        $users | Remove-ADUser -Confirm:$false
+
+        foreach ($user in $users){
+
+            if ($PSCmdlet.ShouldProcess($user)) {
+                $user | Remove-ADUser -Confirm:$false
+            }
+        }
     }
 }
 
