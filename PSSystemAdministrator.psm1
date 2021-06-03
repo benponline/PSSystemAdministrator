@@ -3270,6 +3270,54 @@ function Get-UserLastLogonTime{
     }
 }
 
+function Disconnect-Users{
+    <#
+    .SYNOPSIS
+    
+    .DESCRIPTION
+    
+    .PARAMETER Name
+
+    .PARAMETER OrganizationalUnit
+
+    .INPUTS
+
+    .OUTPUTS
+
+    .NOTES
+
+    .EXAMPLE
+
+    .LINK
+    By Ben Peterson
+    linkedin.com/in/benponline
+    github.com/benponline
+    twitter.com/benponline
+    paypal.me/teknically
+    #>
+
+    #[cmdletbinding(SupportsShouldProcess)]
+    param(
+        [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
+        [Alias('Name')]
+        [string]$ComputerName
+    )
+
+    begin{
+        $computers = @()
+    }
+
+    process{
+        $computers += $ComputerName
+    }
+
+    end{
+        foreach($computer in $computers){
+            Invoke-CimMethod -ClassName Win32_Operatingsystem -ComputerName $computer -MethodName Win32Shutdown -Arguments @{ Flags = 4 } | Out-Null
+        }
+    }
+}
+
 function Move-Computer{
     <#
     .SYNOPSIS
