@@ -3273,20 +3273,32 @@ function Get-UserLastLogonTime{
 function Disconnect-Users{
     <#
     .SYNOPSIS
+    Signs out all users on a computer.
     
     .DESCRIPTION
+    This function signs out all users on a remote computer. 
     
     .PARAMETER Name
-
-    .PARAMETER OrganizationalUnit
+    This is the hostname of the computer where the users will be logged out.
 
     .INPUTS
+    AD computer objects.
 
     .OUTPUTS
+    None.
 
     .NOTES
+    None.
 
     .EXAMPLE
+    Disconnect-Users -Name Computer1
+
+    This commmand signs out all users on "Computer1".
+
+    .Example
+    Get-OUComputer -OrganizationalUnit "Department A" | Disconnect-Users
+
+    This command signs out all users on all computer located in the "Department A" OU.
 
     .LINK
     By Ben Peterson
@@ -3299,8 +3311,8 @@ function Disconnect-Users{
     #[cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias('Name')]
-        [string]$ComputerName
+        [Alias('ComputerName')]
+        [string]$Name
     )
 
     begin{
@@ -3308,7 +3320,7 @@ function Disconnect-Users{
     }
 
     process{
-        $computers += $ComputerName
+        $computers += $Name
     }
 
     end{
