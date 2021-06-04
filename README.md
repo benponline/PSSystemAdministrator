@@ -21,6 +21,8 @@ This module is written for PowerShell Core and tested with Windows 10 machines. 
 
 `Disable-User` Disables a user.
 
+`Disconnect-Users` Signs out all users on a computer.
+
 `Enable-Computer` Enables an AD computer account.
 
 `Enable-User` Enables an AD user account.
