@@ -3452,8 +3452,8 @@ function Move-User{
     [cmdletbinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory=$true,ValueFromPipeline=$True,ValueFromPipelineByPropertyName=$true)]
-        [Alias("SamAccountName")]
-        [string]$Name,
+        [Alias("Name")]
+        [string]$SamAccountName,
         
         [Parameter(Mandatory=$true)]
         [string]$DestinationOU
@@ -3465,7 +3465,7 @@ function Move-User{
     }
 
     process{
-        $users += Get-ADUser $Name
+        $users += Get-ADUser $SamAccountName
     }
 
     end{
